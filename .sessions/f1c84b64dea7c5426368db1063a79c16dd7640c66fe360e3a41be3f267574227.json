@@ -1,0 +1,27 @@
+{
+  "id": "f1c84b64dea7c5426368db1063a79c16dd7640c66fe360e3a41be3f267574227",
+  "encryptedConnectionUri": {
+    "iv": "5B73tyDzC7dqi7Jn",
+    "tag": "9zmXyCCqTmUDQyiBrj45SA==",
+    "ciphertext": "fUmU9QEvwndAkLKJdfEaZiAjCT+x8p8njYFjGO9AsZCBGJssD51v2aTGHV0p+ZOmxCIh9uxn1A=="
+  },
+  "createdAt": 1786814609821,
+  "updatedAt": 1786814609821,
+  "expiresAt": 1787419409821,
+  "principal": {
+    "userId": "user:admin",
+    "username": "admin",
+    "roles": [
+      "admin"
+    ],
+    "mustChangePassword": false
+  },
+  "metadata": {
+    "host": "127.0.0.1",
+    "port": 27018,
+    "database": null,
+    "protocol": "liorandb",
+    "tls": false,
+    "transport": "auto"
+  }
+}
