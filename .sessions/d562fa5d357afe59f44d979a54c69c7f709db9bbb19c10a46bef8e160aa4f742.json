@@ -1,13 +1,13 @@
 {
-  "id": "f1c84b64dea7c5426368db1063a79c16dd7640c66fe360e3a41be3f267574227",
+  "id": "d562fa5d357afe59f44d979a54c69c7f709db9bbb19c10a46bef8e160aa4f742",
   "encryptedConnectionUri": {
-    "iv": "5B73tyDzC7dqi7Jn",
-    "tag": "9zmXyCCqTmUDQyiBrj45SA==",
-    "ciphertext": "fUmU9QEvwndAkLKJdfEaZiAjCT+x8p8njYFjGO9AsZCBGJssD51v2aTGHV0p+ZOmxCIh9uxn1A=="
+    "iv": "7maAhsPDBgBCelV0",
+    "tag": "osm8IntWUDGBMtT8syzyjw==",
+    "ciphertext": "R3kl6C4ZjQIYncMdsJ6W0557W28q4exjq4FKjcm2Ynu6qT7v0fAVZ/EO/IQpSernEzQY9XvISw=="
   },
-  "createdAt": 1786814609821,
-  "updatedAt": 1786814609821,
-  "expiresAt": 1787419409821,
+  "createdAt": 1786859854189,
+  "updatedAt": 1786859854189,
+  "expiresAt": 1787464654189,
   "principal": {
     "userId": "user:admin",
     "username": "admin",
