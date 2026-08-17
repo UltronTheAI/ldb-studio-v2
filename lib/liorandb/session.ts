@@ -10,7 +10,7 @@ import type { SanitizedConnectionMetadata } from "./connection";
 
 const COOKIE_NAME = "liorandb_studio_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-const SESSION_DIR = path.join(process.cwd(), ".sessions");
+const SESSION_DIR = process.env.STUDIO_SESSION_DIR ?? path.join(process.cwd(), ".sessions");
 const KEY_SALT = "liorandb-studio-session";
 
 interface EncryptedValue {
@@ -45,7 +45,7 @@ export interface StudioSession {
 }
 
 function getSecretKey(): Buffer {
-  const secret = process.env.STUDIO_SESSION_SECRET;
+  const secret = process.env.STUDIO_SESSION_SECRET?.trim();
 
   if (!secret || secret.trim().length < 16) {
     if (process.env.NODE_ENV !== "production") {
