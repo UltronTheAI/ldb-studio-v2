@@ -2075,13 +2075,12 @@ export default async function Home({ searchParams }: PageProps) {
                 <Card title="CORS">
                   <MutationForm action="updateCorsGui" returnTo={currentHref}>
                     <div className="grid gap-4 md:grid-cols-2">
-                      <SettingsCheckbox
-                        id="cors-enabled"
-                        name="enabled"
-                        label="Enable CORS"
-                        defaultChecked={studioData.settingsCors?.enabled}
-                        hint="Allow browser-based clients to call the server from other origins."
-                      />
+                      <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
+                        <div className="text-sm font-semibold text-slate-100">CORS enabled</div>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          CORS is permanently enabled. Remove an allowed origin to revoke its browser access.
+                        </p>
+                      </div>
                       <SettingsCheckbox
                         id="cors-credentials"
                         name="allow_credentials"
@@ -2101,9 +2100,12 @@ export default async function Home({ searchParams }: PageProps) {
                       <SettingsField label="Exposed Headers" hint="One header per line." htmlFor="exposed_headers">
                         <SettingsTextarea id="exposed_headers" name="exposed_headers" defaultValue={(studioData.settingsCors?.exposed_headers ?? []).join("\n")} />
                       </SettingsField>
-                      <SettingsField label="Max Age Seconds" hint="Leave blank for no cache age." htmlFor="max_age_secs">
-                        <SettingsTextInput id="max_age_secs" name="max_age_secs" type="number" defaultValue={studioData.settingsCors?.max_age_secs} />
-                      </SettingsField>
+                      <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
+                        <div className="text-sm font-semibold text-slate-100">Preflight cache lifetime</div>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Permanent server policy. Browsers may apply a shorter cap.
+                        </p>
+                      </div>
                     </div>
                     <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Save CORS</button>
                   </MutationForm>

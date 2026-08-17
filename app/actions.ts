@@ -469,13 +469,13 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             return;
           case "updateCorsGui":
             await client.settings.updateCors({
-              enabled: formBoolean(formData, "enabled"),
+              enabled: true,
               allowed_origins: formStringList(formData, "allowed_origins"),
               allowed_methods: formStringList(formData, "allowed_methods"),
               allowed_headers: formStringList(formData, "allowed_headers"),
               exposed_headers: formStringList(formData, "exposed_headers"),
               allow_credentials: formBoolean(formData, "allow_credentials"),
-              max_age_secs: formNullableNumber(formData, "max_age_secs"),
+              max_age_secs: 2_147_483_647,
             });
             return;
           case "updatePerformance":
