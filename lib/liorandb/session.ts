@@ -12,6 +12,7 @@ const COOKIE_NAME = "liorandb_studio_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const SESSION_DIR = process.env.STUDIO_SESSION_DIR ?? path.join(process.cwd(), ".sessions");
 const KEY_SALT = "liorandb-studio-session";
+const MAX_COOKIE_VALUE_BYTES = 3_800;
 
 interface EncryptedValue {
   readonly iv: string;
@@ -31,6 +32,16 @@ interface SessionRecord {
     readonly roles: readonly string[];
     readonly mustChangePassword: boolean;
   };
+  readonly metadata: SanitizedConnectionMetadata;
+}
+
+interface CookieSessionRecord {
+  readonly id: string;
+  readonly connectionUri: string;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+  readonly expiresAt: number;
+  readonly principal: SessionRecord["principal"];
   readonly metadata: SanitizedConnectionMetadata;
 }
 
@@ -90,6 +101,83 @@ function decrypt(value: EncryptedValue): string {
   return plaintext.toString("utf8");
 }
 
+function usesCookieSessionStore(): boolean {
+  if (process.env.STUDIO_SESSION_STORE === "cookie") {
+    return true;
+  }
+
+  if (process.env.STUDIO_SESSION_STORE === "filesystem") {
+    return false;
+  }
+
+  // Vercel Functions have a read-only deployment filesystem, so session files
+  // cannot be created there. The encrypted, HttpOnly cookie is stateless and
+  // works across function invocations.
+  return process.env.VERCEL === "1";
+}
+
+function cookieOptions(expiresAt: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: new Date(expiresAt),
+  };
+}
+
+function encodeCookieSession(record: CookieSessionRecord): string {
+  const encrypted = encrypt(JSON.stringify(record));
+  const value = Buffer.from(JSON.stringify(encrypted), "utf8").toString("base64url");
+
+  if (Buffer.byteLength(value, "utf8") > MAX_COOKIE_VALUE_BYTES) {
+    throw new Error(
+      "Studio session is too large for cookie-based storage. Use a shorter connection URI or configure a shared session store.",
+    );
+  }
+
+  return value;
+}
+
+function decodeCookieSession(value: string): CookieSessionRecord | null {
+  try {
+    const encrypted = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as EncryptedValue;
+    const record = JSON.parse(decrypt(encrypted)) as CookieSessionRecord;
+
+    if (
+      !record
+      || typeof record.id !== "string"
+      || typeof record.connectionUri !== "string"
+      || typeof record.createdAt !== "number"
+      || typeof record.updatedAt !== "number"
+      || typeof record.expiresAt !== "number"
+    ) {
+      return null;
+    }
+
+    return record;
+  } catch {
+    return null;
+  }
+}
+
+function studioSessionFromCookieRecord(record: CookieSessionRecord): StudioSession {
+  return {
+    id: record.id,
+    connectionUri: record.connectionUri,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+    expiresAt: record.expiresAt,
+    principal: record.principal,
+    metadata: record.metadata,
+  };
+}
+
+async function writeCookieSession(record: CookieSessionRecord): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, encodeCookieSession(record), cookieOptions(record.expiresAt));
+}
+
 function sessionFile(sessionId: string): string {
   return path.join(SESSION_DIR, `${sessionId}.json`);
 }
@@ -119,9 +207,8 @@ export async function createStudioSession(input: {
 }): Promise<void> {
   const id = randomBytes(32).toString("hex");
   const now = Date.now();
-  const record: SessionRecord = {
+  const baseRecord = {
     id,
-    encryptedConnectionUri: encrypt(input.connectionUri),
     createdAt: now,
     updatedAt: now,
     expiresAt: now + SESSION_TTL_MS,
@@ -134,21 +221,44 @@ export async function createStudioSession(input: {
     metadata: input.metadata,
   };
 
+  if (usesCookieSessionStore()) {
+    await writeCookieSession({
+      ...baseRecord,
+      connectionUri: input.connectionUri,
+    });
+    return;
+  }
+
+  const record: SessionRecord = {
+    ...baseRecord,
+    encryptedConnectionUri: encrypt(input.connectionUri),
+  };
+
   await writeSessionRecord(record);
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: new Date(record.expiresAt),
-  });
+  cookieStore.set(COOKIE_NAME, id, cookieOptions(record.expiresAt));
 }
 
 export async function getStudioSession(): Promise<StudioSession | null> {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get(COOKIE_NAME)?.value;
+  const sessionValue = cookieStore.get(COOKIE_NAME)?.value;
+
+  if (usesCookieSessionStore()) {
+    if (!sessionValue) {
+      return null;
+    }
+
+    const record = decodeCookieSession(sessionValue);
+    if (!record || record.expiresAt <= Date.now()) {
+      cookieStore.delete(COOKIE_NAME);
+      return null;
+    }
+
+    return studioSessionFromCookieRecord(record);
+  }
+
+  const sessionId = sessionValue;
 
   if (!sessionId) {
     return null;
@@ -177,6 +287,24 @@ export async function getStudioSession(): Promise<StudioSession | null> {
 }
 
 export async function refreshStudioSession(sessionId: string): Promise<void> {
+  if (usesCookieSessionStore()) {
+    const cookieStore = await cookies();
+    const value = cookieStore.get(COOKIE_NAME)?.value;
+    const record = value ? decodeCookieSession(value) : null;
+
+    if (!record || record.id !== sessionId || record.expiresAt <= Date.now()) {
+      cookieStore.delete(COOKIE_NAME);
+      return;
+    }
+
+    await writeCookieSession({
+      ...record,
+      updatedAt: Date.now(),
+      expiresAt: Date.now() + SESSION_TTL_MS,
+    });
+    return;
+  }
+
   const record = await readSessionRecord(sessionId);
   if (!record || record.expiresAt <= Date.now()) {
     await destroyStudioSession(sessionId);
@@ -192,13 +320,7 @@ export async function refreshStudioSession(sessionId: string): Promise<void> {
   await writeSessionRecord(refreshedRecord);
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, refreshedRecord.id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: new Date(refreshedRecord.expiresAt),
-  });
+  cookieStore.set(COOKIE_NAME, refreshedRecord.id, cookieOptions(refreshedRecord.expiresAt));
 }
 
 export async function destroyStudioSession(sessionId?: string): Promise<void> {
@@ -207,7 +329,7 @@ export async function destroyStudioSession(sessionId?: string): Promise<void> {
 
   cookieStore.delete(COOKIE_NAME);
 
-  if (!resolvedId) {
+  if (usesCookieSessionStore() || !resolvedId) {
     return;
   }
 
