@@ -130,17 +130,19 @@ export function StudioClientEffects() {
     return null;
   }
 
-  const toneClassName =
-    toast.tone === "error"
-      ? "border-rose-500/40 bg-rose-500/15 text-rose-100"
-      : "border-emerald-500/40 bg-emerald-500/15 text-emerald-100";
+  const isError = toast.tone === "error";
 
   return (
     <div className="pointer-events-none fixed bottom-6 right-6 z-[100] max-w-md">
       <div
-        className={`rounded-xl border px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur ${toneClassName}`}
+        className="flex items-center gap-3 rounded-xl border border-[#38342f] bg-[#181715] px-4 py-3.5 text-sm text-[#faf9f5] shadow-[0_12px_32px_rgba(20,20,19,0.3)] backdrop-blur"
       >
-        <div className="text-sm font-medium">{toast.message}</div>
+        <span
+          className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+            isError ? "bg-[#c64545]" : "bg-[#5db872]"
+          }`}
+        />
+        <div className="font-medium leading-5">{toast.message}</div>
       </div>
     </div>
   );

@@ -37,7 +37,10 @@ import {
 } from "@/lib/liorandb/json";
 import {
   ArchiveIcon,
+  ArrowRightIcon,
   BoxesIcon,
+  CheckIcon,
+  ClaudeSpikeIcon,
   DatabaseIcon,
   HardDriveDownloadIcon,
   KeyRoundIcon,
@@ -146,15 +149,15 @@ function hrefFor(section: Section, params: Record<string, string | undefined> = 
 }
 
 function fieldClassName() {
-  return "w-full rounded-xl border border-[#313244] bg-[#181825] px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-400";
+  return "w-full rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-3.5 py-2.5 text-sm text-[#141413] outline-none transition placeholder:text-[#8e8b82] focus:border-[#cc785c] focus:ring-2 focus:ring-[#cc785c]/15";
 }
 
 function editorClassName() {
-  return "editor-scroll w-full rounded-xl border border-[#313244] bg-[#11111b] px-4 py-4 font-mono text-sm text-cyan-100 outline-none transition focus:border-cyan-400";
+  return "editor-scroll w-full rounded-lg border border-[#2e2b27] bg-[#181715] px-4 py-3.5 font-mono text-sm text-[#faf9f5] outline-none transition focus:border-[#cc785c] focus:ring-1 focus:ring-[#cc785c]/25";
 }
 
 function labelClassName() {
-  return "mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400";
+  return "mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6c6a64]";
 }
 
 function formatTimestamp(timestampMs: number): string {
@@ -433,14 +436,25 @@ function Card({
   title,
   children,
   className = "",
+  dark = false,
 }: {
   readonly title: string;
   readonly children: ReactNode;
   readonly className?: string;
+  readonly dark?: boolean;
 }) {
+  if (dark) {
+    return (
+      <section className={`rounded-xl border border-[#2e2b27] bg-[#181715] p-6 text-[#faf9f5] shadow-[0_4px_20px_rgba(20,20,19,0.12)] ${className}`}>
+        <h2 className="font-serif-display mb-4 text-xl font-normal tracking-[-0.02em] text-[#faf9f5]">{title}</h2>
+        {children}
+      </section>
+    );
+  }
+
   return (
-    <section className={`rounded-2xl border border-[#313244] bg-[#181825] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.18)] ${className}`}>
-      <h2 className="mb-4 text-lg font-semibold text-slate-100">{title}</h2>
+    <section className={`rounded-xl border border-[#e6dfd8] bg-[#efe9de] p-6 text-[#141413] shadow-[0_2px_12px_rgba(20,20,19,0.03)] ${className}`}>
+      <h2 className="font-serif-display mb-4 text-xl font-normal tracking-[-0.02em] text-[#141413]">{title}</h2>
       {children}
     </section>
   );
@@ -449,7 +463,7 @@ function Card({
 function JsonBlock({ value }: { readonly value: unknown }) {
   return (
     <pre
-      className="editor-scroll overflow-x-auto rounded-xl border border-[#313244] bg-[#11111b] p-4 font-mono text-xs leading-6 text-slate-100"
+      className="editor-scroll overflow-x-auto rounded-lg border border-[#2e2b27] bg-[#181715] p-4 font-mono text-xs leading-6 text-[#faf9f5]"
       dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(value) }}
     />
   );
@@ -464,11 +478,11 @@ function JsonPreview({
 }) {
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8e8b82]">
         {title}
       </div>
       <pre
-        className="editor-scroll overflow-x-auto rounded-xl border border-[#313244] bg-[#11111b] p-4 font-mono text-xs leading-6 text-slate-100"
+        className="editor-scroll overflow-x-auto rounded-lg border border-[#2e2b27] bg-[#181715] p-4 font-mono text-xs leading-6 text-[#faf9f5]"
         dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(value) }}
       />
     </div>
@@ -490,19 +504,20 @@ function StatTile({
 }: {
   readonly label: string;
   readonly value: ReactNode;
-  readonly tone?: "slate" | "cyan" | "emerald" | "amber";
+  readonly tone?: "slate" | "cyan" | "emerald" | "amber" | "coral";
 }) {
   const toneClassName = {
-    slate: "border-[#313244] bg-[#11111b] text-slate-100",
-    cyan: "border-cyan-500/30 bg-cyan-500/10 text-cyan-100",
-    emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
-    amber: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+    slate: "border-[#e6dfd8] bg-[#faf9f5] text-[#141413]",
+    cyan: "border-[#5db8a6]/40 bg-[#5db8a6]/10 text-[#1f1e1b]",
+    emerald: "border-[#5db872]/40 bg-[#5db872]/10 text-[#1f1e1b]",
+    amber: "border-[#e8a55a]/40 bg-[#e8a55a]/10 text-[#1f1e1b]",
+    coral: "border-[#cc785c]/40 bg-[#cc785c]/10 text-[#141413]",
   }[tone];
 
   return (
-    <div className={`rounded-xl border p-4 ${toneClassName}`}>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">{label}</div>
-      <div className="mt-3 break-all text-lg font-semibold">{value}</div>
+    <div className={`rounded-lg border p-4 transition ${toneClassName}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6c6a64]">{label}</div>
+      <div className="font-serif-display mt-2 break-all text-xl font-normal tracking-tight text-[#141413]">{value}</div>
     </div>
   );
 }
@@ -515,11 +530,11 @@ function DetailList({
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {items.map((item) => (
-        <div key={item.label} className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+        <div key={item.label} className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-3.5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8e8b82]">
             {item.label}
           </div>
-          <div className="mt-2 break-all text-sm font-medium text-slate-100">{item.value}</div>
+          <div className="mt-1.5 break-all text-sm font-medium text-[#141413]">{item.value}</div>
         </div>
       ))}
     </div>
@@ -534,16 +549,16 @@ function TerminalBlock({
   readonly lines: readonly string[];
 }) {
   return (
-    <div className="rounded-xl border border-[#313244] bg-[#11111b]">
-      <div className="flex items-center gap-2 border-b border-[#313244] px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-        <span className="ml-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+    <div className="rounded-xl border border-[#2e2b27] bg-[#181715] text-[#faf9f5] shadow-[0_4px_16px_rgba(20,20,19,0.15)]">
+      <div className="flex items-center gap-2 border-b border-[#2e2b27] bg-[#1f1e1b] px-4 py-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-[#c64545]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#e8a55a]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#5db872]" />
+        <span className="ml-3 font-mono text-xs uppercase tracking-[0.18em] text-[#a09d96]">
           {title}
         </span>
       </div>
-      <div className="space-y-2 px-4 py-4 font-mono text-sm text-cyan-100">
+      <div className="editor-scroll space-y-2 overflow-x-auto p-4 font-mono text-sm leading-6 text-[#faf9f5]">
         {lines.map((line, index) => (
           <div key={`${title}-${index}`} className="break-all">
             {line}
@@ -563,33 +578,33 @@ function DocumentCard({
 }) {
   const entries = Object.entries(value);
   return (
-    <div className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5 shadow-[0_1px_4px_rgba(20,20,19,0.03)]">
+      <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#ebe6df] pb-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-            Document
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8e8b82]">
+            Document #{index + 1}
           </div>
-          <div className="mt-1 font-semibold text-slate-100">
+          <div className="font-mono text-sm font-medium text-[#141413]">
             {String(value._id ?? `row-${index + 1}`)}
           </div>
         </div>
-        <span className="rounded-full bg-[#181825] px-3 py-1 text-xs font-semibold text-slate-300">
+        <span className="rounded-full border border-[#e6dfd8] bg-[#efe9de] px-3 py-1 text-xs font-medium text-[#3d3d3a]">
           {entries.length} fields
         </span>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {entries.map(([key, fieldValue]) => (
-          <div key={key} className="rounded-xl border border-[#313244] bg-[#181825] px-3 py-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          <div key={key} className="rounded-lg border border-[#e6dfd8] bg-[#efe9de] px-3.5 py-2.5">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6c6a64]">
               {key}
             </div>
-            <div className="mt-2 text-sm text-slate-100">
+            <div className="mt-1.5 text-sm text-[#141413]">
               {typeof fieldValue === "object" && fieldValue !== null ? (
-                <pre className="overflow-x-auto font-mono text-xs leading-5 text-slate-300">
+                <pre className="editor-scroll overflow-x-auto rounded border border-[#2e2b27] bg-[#181715] p-2.5 font-mono text-xs leading-5 text-[#faf9f5]">
                   {prettyJson(fieldValue)}
                 </pre>
               ) : (
-                String(fieldValue)
+                <span className="font-mono text-xs">{String(fieldValue)}</span>
               )}
             </div>
           </div>
@@ -634,12 +649,12 @@ function SettingsField({
   readonly children: ReactNode;
 }) {
   return (
-    <div className="grid gap-3 rounded-xl border border-[#313244] bg-[#11111b] px-4 py-4 md:grid-cols-[220px_1fr] md:items-start">
+    <div className="grid gap-3 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] px-4 py-4 md:grid-cols-[220px_1fr] md:items-start">
       <div className="space-y-1">
-        <label className="block text-sm font-semibold text-slate-100" htmlFor={htmlFor}>
+        <label className="block text-sm font-semibold text-[#141413]" htmlFor={htmlFor}>
           {label}
         </label>
-        {hint ? <p className="text-xs leading-5 text-slate-500">{hint}</p> : null}
+        {hint ? <p className="text-xs leading-5 text-[#6c6a64]">{hint}</p> : null}
       </div>
       <div>{children}</div>
     </div>
@@ -692,11 +707,11 @@ function SettingsCheckbox(props: {
   readonly hint?: string;
 }) {
   return (
-    <label htmlFor={props.id} className="flex items-start gap-3 rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
-      <input id={props.id} name={props.name} type="checkbox" defaultChecked={props.defaultChecked} className="mt-1 h-4 w-4 accent-cyan-500" />
+    <label htmlFor={props.id} className="flex items-start gap-3 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] px-4 py-3.5 cursor-pointer">
+      <input id={props.id} name={props.name} type="checkbox" defaultChecked={props.defaultChecked} className="mt-1 h-4 w-4 rounded accent-[#cc785c]" />
       <span className="space-y-1">
-        <span className="block text-sm font-semibold text-slate-100">{props.label}</span>
-        {props.hint ? <span className="block text-xs leading-5 text-slate-500">{props.hint}</span> : null}
+        <span className="block text-sm font-semibold text-[#141413]">{props.label}</span>
+        {props.hint ? <span className="block text-xs leading-5 text-[#6c6a64]">{props.hint}</span> : null}
       </span>
     </label>
   );
@@ -724,10 +739,10 @@ function SettingsSummaryTile({
   readonly hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</div>
-      <div className="mt-3 break-all text-lg font-semibold text-slate-100">{value}</div>
-      {hint ? <div className="mt-2 text-xs leading-5 text-slate-500">{hint}</div> : null}
+    <div className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] px-4 py-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8e8b82]">{label}</div>
+      <div className="font-serif-display mt-2 break-all text-xl font-normal text-[#141413]">{value}</div>
+      {hint ? <div className="mt-1.5 text-xs leading-5 text-[#6c6a64]">{hint}</div> : null}
     </div>
   );
 }
@@ -738,9 +753,9 @@ function SectionAlert({ error }: { readonly error?: SectionError }) {
   }
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-      <strong className="block font-semibold">{error.title}</strong>
-      <span>{error.message}</span>
+    <div className="mb-4 rounded-xl border border-[#e8a55a]/50 bg-[#e8a55a]/10 px-4 py-3 text-sm text-[#3d3d3a]">
+      <strong className="block font-semibold text-[#141413]">{error.title}</strong>
+      <span className="text-[#3d3d3a]">{error.message}</span>
     </div>
   );
 }
@@ -767,29 +782,32 @@ function MutationForm({
 
 function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof getStudioSession>>>, message: string) {
   return (
-    <div className="min-h-screen bg-[#0b0c10] text-slate-100">
+    <div className="min-h-screen bg-[#faf9f5] text-[#141413]">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="sidebar-scroll flex flex-col border-r border-[#313244] bg-[#11111b] p-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+        <aside className="sidebar-scroll flex flex-col border-r border-[#e6dfd8] bg-[#f5f0e8] p-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300">
-              LioranDB Studio
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-100">Workspace</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
+            <div className="flex items-center gap-2.5">
+              <ClaudeSpikeIcon size={20} className="text-[#cc785c]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#6c6a64]">
+                LioranDB Studio
+              </p>
+            </div>
+            <h1 className="font-serif-display mt-3 text-3xl font-normal tracking-[-0.02em] text-[#141413]">Workspace</h1>
+            <p className="mt-2 text-sm leading-6 text-[#6c6a64]">
               Saved session for {session.metadata.host}:{session.metadata.port}
             </p>
           </div>
 
-          <details className="rounded-xl border border-[#313244] bg-[#181825] text-sm text-slate-300">
-            <summary className="cursor-pointer list-none px-4 py-4 select-none">
+          <details className="rounded-xl border border-[#e6dfd8] bg-[#efe9de] text-sm text-[#3d3d3a]">
+            <summary className="cursor-pointer list-none px-4 py-3.5 select-none font-medium">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
                   Stored Context
                 </div>
-                <span className="text-xs text-slate-500">Show</span>
+                <span className="text-xs text-[#8e8b82]">Details</span>
               </div>
             </summary>
-            <div className="space-y-2 border-t border-[#313244] px-4 py-4">
+            <div className="space-y-2 border-t border-[#e6dfd8] px-4 py-3.5 text-xs font-mono text-[#3d3d3a]">
               <div>Protocol: {session.metadata.protocol}</div>
               <div>Transport: {session.metadata.transport}</div>
               <div>TLS: {session.metadata.tls ? "enabled" : "disabled"}</div>
@@ -797,11 +815,11 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
             </div>
           </details>
 
-          <div className="sticky bottom-0 mt-auto rounded-xl border border-[#313244] bg-[#181825] p-4 text-sm text-slate-300">
+          <div className="sticky bottom-0 mt-auto rounded-xl border border-[#e6dfd8] bg-[#efe9de] p-4 text-sm text-[#3d3d3a]">
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="w-full rounded-xl border border-rose-500/30 px-4 py-3 font-semibold text-rose-200 transition hover:bg-rose-500/20"
+                className="w-full rounded-lg border border-[#c64545]/40 bg-[#faf9f5] px-4 py-2.5 text-sm font-semibold text-[#c64545] transition hover:bg-[#c64545] hover:text-white"
               >
                 Clear saved session
               </button>
@@ -809,13 +827,13 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
           </div>
         </aside>
 
-        <main className="flex items-center p-4 md:p-6">
-          <div className="mx-auto w-full max-w-4xl space-y-4">
+        <main className="flex items-center p-6 md:p-10">
+          <div className="mx-auto w-full max-w-3xl space-y-6">
             <Card title="Server Unreachable">
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+              <div className="rounded-lg border border-[#c64545]/30 bg-[#c64545]/10 px-4 py-3 text-sm text-[#c64545]">
                 {message}
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <StatTile label="Host" value={session.metadata.host} tone="slate" />
                 <StatTile label="Port" value={session.metadata.port} tone="amber" />
                 <StatTile label="Transport" value={session.metadata.transport} tone="cyan" />
@@ -824,7 +842,7 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
             </Card>
 
             <Card title="Next Step">
-              <p className="text-sm leading-7 text-slate-300">
+              <p className="text-sm leading-7 text-[#3d3d3a]">
                 The saved Studio session is valid, but the LioranDB server is not reachable right now.
                 Start the server again, then refresh this page. If the endpoint changed, clear the saved
                 session and reconnect with a new URI.
@@ -863,48 +881,190 @@ export default async function Home({ searchParams }: PageProps) {
   const session = await getStudioSession();
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#0b0c10] px-6 py-10 text-slate-100">
-        <div className="mx-auto flex min-h-[85vh] max-w-5xl items-center">
-          <div className="grid w-full gap-10 rounded-[32px] border border-[#313244] bg-[#11111b] p-8 shadow-[0_40px_120px_rgba(0,0,0,0.35)] md:grid-cols-[1.1fr_0.9fr] md:p-12">
-            <div className="space-y-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                LioranDB Studio
-              </p>
-              <h1 className="max-w-xl text-5xl font-semibold leading-tight text-slate-100">
-                Full-screen control plane for every driver surface.
+      <div className="min-h-screen bg-[#faf9f5] text-[#141413]">
+        {/* Editorial Top Navigation */}
+        <header className="sticky top-0 z-50 border-b border-[#e6dfd8] bg-[#faf9f5]/90 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+            <div className="flex items-center gap-2.5">
+              <ClaudeSpikeIcon size={22} className="text-[#141413]" />
+              <span className="font-serif-display text-xl font-normal tracking-tight text-[#141413]">
+                LioranDB
+              </span>
+              <span className="rounded-full border border-[#e6dfd8] bg-[#efe9de] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#6c6a64]">
+                Studio
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm font-medium text-[#6c6a64]">
+              <span className="hidden sm:inline">Version 2.0</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#5db872]" />
+              <span className="text-xs uppercase tracking-widest text-[#5db872]">Ready</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Band (6-6 Grid) */}
+        <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            {/* Left Column: Editorial Display */}
+            <div className="space-y-6 lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#e6dfd8] bg-[#efe9de] px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#cc785c]">
+                <ClaudeSpikeIcon size={14} className="text-[#cc785c]" />
+                Database Control Plane
+              </div>
+
+              <h1 className="font-serif-display text-4xl leading-[1.1] font-normal tracking-[-0.03em] text-[#141413] sm:text-5xl lg:text-6xl">
+                Meet your database thinking partner.
               </h1>
-              <p className="max-w-lg text-lg leading-8 text-slate-400">
-                Connect once with a LioranDB URI, then manage data, indexes, users, roles,
-                cluster actions, backups, and settings from a VS Code-style workspace.
+
+              <p className="max-w-xl text-lg leading-relaxed text-[#3d3d3a]">
+                A full-screen management environment for LioranDB deployments. Browse collections,
+                execute live queries, configure granular RBAC security, and inspect cluster topologies
+                with editorial clarity.
+              </p>
+
+              <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                <div className="flex items-center gap-2.5 text-sm font-medium text-[#252523]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#5db872]/20 text-[#2c7840]">
+                    <CheckIcon size={12} strokeWidth={3} />
+                  </span>
+                  Single-node & Cluster support
+                </div>
+                <div className="flex items-center gap-2.5 text-sm font-medium text-[#252523]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#5db872]/20 text-[#2c7840]">
+                    <CheckIcon size={12} strokeWidth={3} />
+                  </span>
+                  Zero external dependencies
+                </div>
+                <div className="flex items-center gap-2.5 text-sm font-medium text-[#252523]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#5db872]/20 text-[#2c7840]">
+                    <CheckIcon size={12} strokeWidth={3} />
+                  </span>
+                  Live diagnostic observability
+                </div>
+                <div className="flex items-center gap-2.5 text-sm font-medium text-[#252523]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#5db872]/20 text-[#2c7840]">
+                    <CheckIcon size={12} strokeWidth={3} />
+                  </span>
+                  Full RBAC grant manager
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Connection Card */}
+            <div className="lg:col-span-5">
+              <div className="rounded-2xl border border-[#e6dfd8] bg-[#efe9de] p-8 shadow-[0_8px_32px_rgba(20,20,19,0.06)]">
+                <div className="mb-6">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
+                    Quick Connect
+                  </div>
+                  <h2 className="font-serif-display mt-1 text-2xl font-normal tracking-tight text-[#141413]">
+                    Connect to cluster
+                  </h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#6c6a64]">
+                    Provide a standard LioranDB connection URI to establish a secure studio session.
+                  </p>
+                </div>
+
+                <form action={connectAction} className="space-y-4">
+                  {errorMessage ? (
+                    <div className="rounded-lg border border-[#c64545]/30 bg-[#c64545]/10 px-4 py-3 text-xs leading-5 text-[#c64545]">
+                      {errorMessage}
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <label className={labelClassName()} htmlFor="connectionUri">
+                      Connection URI
+                    </label>
+                    <input
+                      id="connectionUri"
+                      name="connectionUri"
+                      type="password"
+                      placeholder="liorandb://admin:secret@127.0.0.1:8080/main"
+                      className={fieldClassName()}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#cc785c] px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#a9583e] active:scale-[0.99]"
+                  >
+                    <span>Connect to Studio</span>
+                    <ArrowRightIcon size={16} />
+                  </button>
+                </form>
+
+                <div className="mt-6 rounded-lg border border-[#e6dfd8] bg-[#faf9f5] p-3 text-[11px] text-[#6c6a64]">
+                  <span className="font-semibold text-[#141413]">Default format:</span>{" "}
+                  <code className="font-mono text-[#cc785c]">liorandb://username:password@host:port/database</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Product Mockup Section (Dark Navy Obsidian Surface) */}
+        <section className="border-t border-[#e6dfd8] bg-[#181715] py-20 text-[#faf9f5]">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="mb-12 max-w-2xl">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#cc785c]">
+                Product Chrome
+              </div>
+              <h2 className="font-serif-display mt-2 text-3xl font-normal tracking-[-0.02em] text-[#faf9f5] sm:text-4xl">
+                Every driver surface in one workspace.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[#a09d96]">
+                Query documents, monitor partition placements, manage backup snapshots, and adjust server limits with instant feedback.
               </p>
             </div>
-            <Card title="Connect to LioranDB">
-              <form action={connectAction} className="space-y-4">
-                {errorMessage ? (
-                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                    {errorMessage}
-                  </div>
-                ) : null}
-                <div>
-                  <label className={labelClassName()} htmlFor="connectionUri">
-                    Connection URI
-                  </label>
-                  <input
-                    id="connectionUri"
-                    name="connectionUri"
-                    type="password"
-                    placeholder="liorandb://username:password@host:port/database"
-                    className={fieldClassName()}
-                    required
-                  />
+
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="rounded-xl border border-[#2e2b27] bg-[#1f1e1b] p-6">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#252320] text-[#cc785c]">
+                  <DatabaseIcon size={20} />
                 </div>
-                <button type="submit" className="w-full rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                  Connect
-                </button>
-              </form>
-            </Card>
+                <h3 className="font-serif-display text-lg font-normal text-[#faf9f5]">Data & Aggregations</h3>
+                <p className="mt-2 text-xs leading-5 text-[#a09d96]">
+                  Inspect JSON documents with syntax highlighting, build multi-stage aggregation pipelines, and create compound indexes.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#2e2b27] bg-[#1f1e1b] p-6">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#252320] text-[#5db8a6]">
+                  <ShieldIcon size={20} />
+                </div>
+                <h3 className="font-serif-display text-lg font-normal text-[#faf9f5]">RBAC & Sessions</h3>
+                <p className="mt-2 text-xs leading-5 text-[#a09d96]">
+                  Provision custom roles with discrete permission scopes, audit active login sessions, and enforce password rotation policies.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#2e2b27] bg-[#1f1e1b] p-6">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#252320] text-[#e8a55a]">
+                  <NetworkIcon size={20} />
+                </div>
+                <h3 className="font-serif-display text-lg font-normal text-[#faf9f5]">Cluster & Backups</h3>
+                <p className="mt-2 text-xs leading-5 text-[#a09d96]">
+                  Track Raft partition health, trigger compaction checkpoints, and configure automated hourly, daily, and weekly backup retention.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-[#2e2b27] bg-[#181715] py-12 text-xs text-[#a09d96]">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+            <div className="flex items-center gap-2">
+              <ClaudeSpikeIcon size={16} className="text-[#faf9f5]" />
+              <span className="font-serif-display text-sm text-[#faf9f5]">LioranDB Studio</span>
+            </div>
+            <div>
+              An editorial web management console built for high-performance deployments.
+            </div>
+          </div>
+        </footer>
       </div>
     );
   }
@@ -980,49 +1140,57 @@ export default async function Home({ searchParams }: PageProps) {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#0b0c10] text-slate-100">
+    <div className="min-h-screen bg-[#faf9f5] text-[#141413]">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="sidebar-scroll flex flex-col border-r border-[#313244] bg-[#11111b] p-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+        {/* Sidebar */}
+        <aside className="sidebar-scroll flex flex-col border-r border-[#e6dfd8] bg-[#f5f0e8] p-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300">
-              LioranDB Studio
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-100">Workspace</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Connected as {studioData.principal.username} on {session.metadata.host}:{session.metadata.port}
+            <div className="flex items-center gap-2">
+              <ClaudeSpikeIcon size={20} className="text-[#cc785c]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#6c6a64]">
+                LioranDB Studio
+              </p>
+            </div>
+            <h1 className="font-serif-display mt-2 text-2xl font-normal tracking-[-0.02em] text-[#141413]">
+              Workspace
+            </h1>
+            <p className="mt-1 text-xs leading-5 text-[#6c6a64]">
+              Connected as <span className="font-medium text-[#141413]">{studioData.principal.username}</span> on {session.metadata.host}:{session.metadata.port}
             </p>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="space-y-1.5">
             {navItems.map((item) => {
               const active = section === item.section;
               return (
                 <Link
                   key={item.section}
                   href={hrefFor(item.section, { database, collection, pane: dataPane })}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
                     active
-                      ? "bg-[#1e1e2e] text-cyan-200 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                      : "border border-transparent text-slate-400 hover:border-[#313244] hover:bg-[#181825]"
+                      ? "border border-[#e6dfd8] bg-[#efe9de] text-[#141413] shadow-sm"
+                      : "border border-transparent text-[#6c6a64] hover:border-[#e6dfd8] hover:bg-[#efe9de]/60 hover:text-[#141413]"
                   }`}
                 >
-                  <span className="text-slate-400">{item.icon({ size: 16 })}</span>
+                  <span className={active ? "text-[#cc785c]" : "text-[#8e8b82]"}>
+                    {item.icon({ size: 16 })}
+                  </span>
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          <details className="mt-6 rounded-xl border border-[#313244] bg-[#181825] text-sm text-slate-300">
-            <summary className="cursor-pointer list-none px-4 py-4 select-none">
+          <details className="mt-6 rounded-xl border border-[#e6dfd8] bg-[#efe9de] text-sm text-[#3d3d3a]">
+            <summary className="cursor-pointer list-none px-4 py-3 select-none font-medium">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#cc785c]">
                   Active Context
                 </div>
-                <span className="text-xs text-slate-500">Show</span>
+                <span className="text-xs text-[#8e8b82]">Details</span>
               </div>
             </summary>
-            <div className="space-y-2 border-t border-[#313244] px-4 py-4">
+            <div className="space-y-1.5 border-t border-[#e6dfd8] px-4 py-3 text-xs font-mono text-[#3d3d3a]">
               <div>Protocol: {session.metadata.protocol}</div>
               <div>Transport: {session.metadata.transport}</div>
               <div>TLS: {session.metadata.tls ? "enabled" : "disabled"}</div>
@@ -1030,11 +1198,11 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </details>
 
-          <div className="sticky bottom-0 mt-auto rounded-xl border border-[#313244] bg-[#181825] p-4 text-sm text-slate-300">
+          <div className="sticky bottom-0 mt-auto pt-6">
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="w-full rounded-xl border border-rose-500/30 px-4 py-3 font-semibold text-rose-200 transition hover:bg-rose-500/20"
+                className="w-full rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2.5 text-sm font-medium text-[#c64545] transition hover:bg-[#c64545] hover:text-white"
               >
                 Logout
               </button>
@@ -1042,13 +1210,16 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </aside>
 
-        <main className="space-y-4 overflow-hidden bg-[#0b0c10] p-4 md:p-6">
+        {/* Main Content Floor */}
+        <main className="space-y-6 overflow-hidden bg-[#faf9f5] p-6 md:p-8">
           <StudioClientEffects />
-          <div className="rounded-xl border border-[#313244] bg-[#11111b] px-5 py-4">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+
+          {/* Section Breadcrumb & Header */}
+          <div className="rounded-xl border border-[#e6dfd8] bg-[#f5f0e8] px-6 py-5 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#cc785c]">
               {section}
             </div>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-100">
+            <h2 className="font-serif-display mt-1 text-2xl font-normal tracking-[-0.02em] text-[#141413] sm:text-3xl">
               {section === "databases"
                 ? `${database || "Data"}${collection ? ` / ${collection}` : ""}`
                 : navItems.find((item) => item.section === section)?.label}
@@ -1056,16 +1227,17 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
 
           {section === "overview" ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               <Card title="Status">
                 <SectionAlert error={studioData.errors.overview} />
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <StatTile label="Live" value={studioData.live?.state ?? "Unavailable"} tone="emerald" />
-                  <StatTile label="Ready" value={studioData.ready?.state ?? "Unavailable"} tone="cyan" />
-                  <StatTile label="Principal" value={studioData.principal.username} tone="slate" />
-                  <StatTile label="Node" value={studioData.live?.node_id ?? "Unknown"} tone="amber" />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <StatTile label="Live State" value={studioData.live?.state ?? "Unavailable"} tone="emerald" />
+                  <StatTile label="Ready State" value={studioData.ready?.state ?? "Unavailable"} tone="cyan" />
+                  <StatTile label="Principal" value={studioData.principal.username} tone="coral" />
+                  <StatTile label="Cluster Node" value={studioData.live?.node_id ?? "Unknown"} tone="amber" />
                 </div>
               </Card>
+
               <Card title="Connection Details">
                 <DetailList
                   items={[
@@ -1080,9 +1252,10 @@ export default async function Home({ searchParams }: PageProps) {
                   ]}
                 />
               </Card>
-              <Card title="Readiness Transitions" className="xl:col-span-2">
+
+              <Card title="Readiness Transitions" className="xl:col-span-2" dark>
                 <TerminalBlock
-                  title="Readiness timeline"
+                  title="Readiness Timeline"
                   lines={
                     studioData.ready?.transitions.length
                       ? studioData.ready.transitions.map((transition) => prettyJson(transition))
@@ -1090,9 +1263,10 @@ export default async function Home({ searchParams }: PageProps) {
                   }
                 />
               </Card>
-              <Card title="Diagnostics" className="xl:col-span-2">
+
+              <Card title="Driver Diagnostics" className="xl:col-span-2" dark>
                 <TerminalBlock
-                  title="Driver diagnostics"
+                  title="Captured Diagnostic Events"
                   lines={
                     studioData.diagnostics.length
                       ? studioData.diagnostics.map((item) => prettyJson(item))
@@ -1104,12 +1278,12 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "databases" ? (
-            <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
               <Card title="Databases">
                 <SectionAlert error={studioData.errors.databases} />
                 <MutationForm action="createDatabase" returnTo={currentHref}>
                   <label className={labelClassName()} htmlFor="databaseName">
-                    Create database
+                    Create Database
                   </label>
                   <input
                     id="databaseName"
@@ -1120,20 +1294,24 @@ export default async function Home({ searchParams }: PageProps) {
                     title="Use only letters, numbers, underscore, dash, or dot."
                     required
                   />
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                    Create
+                  <button className="w-full rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                    Create Database
                   </button>
                 </MutationForm>
+
                 <div className="mt-6 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8e8b82]">
+                    Available Databases
+                  </div>
                   {studioData.databases.map((name) => (
                     <Link
                       key={name}
                       href={`${hrefFor("databases", { database: name, pane: dataPane })}#${dataWorkspaceId}`}
                       scroll={false}
-                      className={`block rounded-xl border px-4 py-3 text-sm ${
+                      className={`block rounded-lg border px-3.5 py-2.5 text-sm font-medium transition ${
                         database === name
-                          ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-100"
-                          : "border-[#313244] bg-[#11111b] text-slate-300"
+                          ? "border-[#cc785c]/40 bg-[#cc785c]/10 text-[#cc785c]"
+                          : "border-[#e6dfd8] bg-[#faf9f5] text-[#3d3d3a] hover:border-[#cc785c]/30 hover:bg-[#efe9de]"
                       }`}
                     >
                       {name}
@@ -1142,14 +1320,14 @@ export default async function Home({ searchParams }: PageProps) {
                 </div>
               </Card>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Card title={database ? `Collections in ${database}` : "Collections"}>
                   {database ? (
                     <>
                       <MutationForm action="createCollection" returnTo={currentHref}>
                         <input type="hidden" name="databaseName" value={database} />
                         <label className={labelClassName()} htmlFor="collectionName">
-                          Create collection
+                          Create Collection
                         </label>
                         <input
                           id="collectionName"
@@ -1160,11 +1338,12 @@ export default async function Home({ searchParams }: PageProps) {
                           title="Use only letters, numbers, underscore, dash, or dot."
                           required
                         />
-                        <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                          Create collection
+                        <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                          Create Collection
                         </button>
                       </MutationForm>
-                      <div className="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+
+                      <div className="mt-6 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                         {studioData.collections.map((name) => (
                           <Link
                             key={name}
@@ -1181,10 +1360,10 @@ export default async function Home({ searchParams }: PageProps) {
                               ids: idsInput,
                             })}#${dataWorkspaceId}`}
                             scroll={false}
-                            className={`break-all rounded-xl border px-4 py-3 text-sm ${
+                            className={`break-all rounded-lg border px-3.5 py-2.5 text-sm font-medium transition ${
                               collection === name
-                                ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-100"
-                                : "border-[#313244] bg-[#11111b] text-slate-300"
+                                ? "border-[#cc785c]/50 bg-[#cc785c]/10 text-[#cc785c]"
+                                : "border-[#e6dfd8] bg-[#faf9f5] text-[#3d3d3a] hover:border-[#cc785c]/30 hover:bg-[#efe9de]"
                             }`}
                           >
                             {name}
@@ -1193,13 +1372,13 @@ export default async function Home({ searchParams }: PageProps) {
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-slate-400">Select a database to browse collections.</p>
+                    <p className="text-sm text-[#6c6a64]">Select a database to browse collections.</p>
                   )}
                 </Card>
 
                 {database && collection ? (
                   <>
-                    <div id={dataWorkspaceId} className="flex flex-wrap gap-2 rounded-xl border border-[#313244] bg-[#11111b] p-2">
+                    <div id={dataWorkspaceId} className="flex flex-wrap gap-1.5 rounded-xl border border-[#e6dfd8] bg-[#efe9de] p-1.5">
                       {collectionTabs.map((item) => (
                         <Link
                           key={item.key}
@@ -1216,13 +1395,15 @@ export default async function Home({ searchParams }: PageProps) {
                             ids: idsInput,
                           })}#${dataWorkspaceId}`}
                           scroll={false}
-                          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                          className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
                             dataPane === item.key
-                              ? "bg-[#1e1e2e] text-cyan-200"
-                              : "text-slate-400 hover:bg-[#181825]"
+                              ? "bg-[#faf9f5] text-[#141413] shadow-sm"
+                              : "text-[#6c6a64] hover:bg-[#f5f0e8] hover:text-[#141413]"
                           }`}
                         >
-                          {item.icon({ size: 16 })}
+                          <span className={dataPane === item.key ? "text-[#cc785c]" : "text-[#8e8b82]"}>
+                            {item.icon({ size: 16 })}
+                          </span>
                           {item.label}
                         </Link>
                       ))}
@@ -1230,9 +1411,9 @@ export default async function Home({ searchParams }: PageProps) {
 
                     <Card title={`${database}.${collection}`}>
                       <SectionAlert error={studioData.errors.documents} />
-                      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                      <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                         <StatTile label="Database" value={database} tone="slate" />
-                        <StatTile label="Collection" value={collection} tone="cyan" />
+                        <StatTile label="Collection" value={collection} tone="coral" />
                         <StatTile label="Matched Count" value={studioData.documentCount} tone="emerald" />
                         <StatTile label="Loaded Rows" value={studioData.documents.length} tone="amber" />
                         <StatTile label="Indexes" value={studioData.indexes.length} tone="slate" />
@@ -1241,7 +1422,7 @@ export default async function Home({ searchParams }: PageProps) {
                       {(dataPane === "all" || dataPane === "browse") ? (
                         <div className="space-y-4">
                           <TerminalBlock
-                            title="Collection summary"
+                            title="Collection Summary"
                             lines={[
                               `$ use ${database}.${collection}`,
                               `countDocuments(${queryState.filter || "{}"}) => ${studioData.documentCount}`,
@@ -1258,7 +1439,7 @@ export default async function Home({ searchParams }: PageProps) {
                               />
                             ))
                           ) : (
-                            <div className="rounded-xl border border-dashed border-[#313244] bg-[#11111b] px-4 py-10 text-center text-sm text-slate-400">
+                            <div className="rounded-xl border border-dashed border-[#e6dfd8] bg-[#faf9f5] px-4 py-12 text-center text-sm text-[#6c6a64]">
                               No documents matched the current query.
                             </div>
                           )}
@@ -1266,8 +1447,8 @@ export default async function Home({ searchParams }: PageProps) {
                       ) : null}
 
                       {(dataPane === "all" || dataPane === "query") ? (
-                        <div className="grid gap-4 xl:grid-cols-2">
-                          <form className="space-y-4" action={dataWorkspaceHref}>
+                        <div className="grid gap-6 xl:grid-cols-2">
+                          <form className="space-y-4 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5" action={dataWorkspaceHref}>
                             <input type="hidden" name="section" value="databases" />
                             <input type="hidden" name="database" value={database} />
                             <input type="hidden" name="collection" value={collection} />
@@ -1291,12 +1472,13 @@ export default async function Home({ searchParams }: PageProps) {
                                 <input id="skip" name="skip" type="number" min="0" defaultValue={queryState.skip} className={fieldClassName()} />
                               </div>
                             </div>
-                            <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                              Execute query
+                            <button className="rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                              Execute Query
                             </button>
                           </form>
+
                           <div className="space-y-4">
-                            <form className="space-y-3" action={dataWorkspaceHref}>
+                            <form className="space-y-3 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5" action={dataWorkspaceHref}>
                               <input type="hidden" name="section" value="databases" />
                               <input type="hidden" name="database" value={database} />
                               <input type="hidden" name="collection" value={collection} />
@@ -1307,15 +1489,16 @@ export default async function Home({ searchParams }: PageProps) {
                               <input type="hidden" name="limit" value={String(queryState.limit)} />
                               <input type="hidden" name="skip" value={String(queryState.skip)} />
                               <label className={labelClassName()} htmlFor="ids">
-                                findManyByIds() input
+                                findManyByIds() Input JSON
                               </label>
                               <textarea id="ids" name="ids" defaultValue={studioData.idsInput} className={`${editorClassName()} min-h-32`} />
-                              <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">
-                                Resolve ids
+                              <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2 text-sm font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                                Resolve IDs
                               </button>
                             </form>
+
                             <TerminalBlock
-                              title="Query output"
+                              title="Query Execution Summary"
                               lines={[
                                 `$ find ${queryState.filter || "{}"}`,
                                 `countDocuments => ${studioData.documentCount}`,
@@ -1328,35 +1511,37 @@ export default async function Home({ searchParams }: PageProps) {
                       ) : null}
 
                       {(dataPane === "all" || dataPane === "write") ? (
-                        <div className="grid gap-4 xl:grid-cols-3">
+                        <div className="grid gap-6 xl:grid-cols-3">
                           <Card title="Insert">
                             <MutationForm action="insertOne" returnTo={dataWorkspaceHref}>
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="document">
-                                Insert one JSON object
+                                Insert One JSON Object
                               </label>
                               <textarea id="document" name="document" defaultValue={'{\n  "_id": "example",\n  "status": "active"\n}'} className={`${editorClassName()} min-h-40`} />
                               <label className={labelClassName()} htmlFor="idempotencyKey">
-                                Idempotency key
+                                Idempotency Key
                               </label>
                               <input id="idempotencyKey" name="idempotencyKey" className={fieldClassName()} />
-                              <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                                Insert one
+                              <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                                Insert One
                               </button>
                             </MutationForm>
+
                             <MutationForm action="insertMany" returnTo={dataWorkspaceHref} className="mt-6 space-y-3">
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="documents">
-                                Insert many JSON array
+                                Insert Many JSON Array
                               </label>
                               <textarea id="documents" name="documents" defaultValue={'[\n  { "_id": "a" },\n  { "_id": "b" }\n]'} className={`${editorClassName()} min-h-40`} />
-                              <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">
-                                Insert many
+                              <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                                Insert Many
                               </button>
                             </MutationForm>
                           </Card>
+
                           <Card title="Update">
                             <MutationForm action="updateOne" returnTo={dataWorkspaceHref}>
                               <input type="hidden" name="databaseName" value={database} />
@@ -1369,14 +1554,15 @@ export default async function Home({ searchParams }: PageProps) {
                                 Update JSON
                               </label>
                               <textarea id="updateDocument" name="update" defaultValue={'{ "$set": { "status": "updated" } }'} className={`${editorClassName()} min-h-28`} />
-                              <label className="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" name="upsert" />
+                              <label className="flex items-center gap-2 text-sm text-[#3d3d3a]">
+                                <input type="checkbox" name="upsert" className="h-4 w-4 rounded accent-[#cc785c]" />
                                 Upsert
                               </label>
-                              <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                                Update one
+                              <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                                Update One
                               </button>
                             </MutationForm>
+
                             <MutationForm action="updateMany" returnTo={dataWorkspaceHref} className="mt-6 space-y-3">
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
@@ -1388,36 +1574,38 @@ export default async function Home({ searchParams }: PageProps) {
                                 Update JSON
                               </label>
                               <textarea id="updateManyDocument" name="update" defaultValue={'{ "$set": { "status": "archived" } }'} className={`${editorClassName()} min-h-28`} />
-                              <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">
-                                Update many
+                              <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                                Update Many
                               </button>
                             </MutationForm>
                           </Card>
+
                           <Card title="Delete">
                             <MutationForm action="deleteOne" returnTo={dataWorkspaceHref}>
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="deleteFilter">
-                                Delete filter
+                                Delete Filter
                               </label>
                               <textarea id="deleteFilter" name="filter" defaultValue={'{ "_id": "example" }'} className={`${editorClassName()} min-h-28`} />
-                              <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">
-                                Delete one
+                              <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                                Delete One
                               </button>
                             </MutationForm>
+
                             <MutationForm action="deleteMany" returnTo={dataWorkspaceHref} className="mt-6 space-y-3">
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="deleteManyFilter">
-                                Delete-many filter
+                                Delete-Many Filter
                               </label>
                               <textarea id="deleteManyFilter" name="filter" defaultValue={'{ "status": "archived" }'} className={`${editorClassName()} min-h-28`} />
                               <label className={labelClassName()} htmlFor="deleteConfirm">
-                                Type DELETE to confirm
+                                Type DELETE to Confirm
                               </label>
                               <input id="deleteConfirm" name="confirmation" className={fieldClassName()} />
-                              <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">
-                                Delete many
+                              <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                                Delete Many
                               </button>
                             </MutationForm>
                           </Card>
@@ -1425,13 +1613,13 @@ export default async function Home({ searchParams }: PageProps) {
                       ) : null}
 
                       {(dataPane === "all" || dataPane === "indexes") ? (
-                        <div className="grid gap-4 xl:grid-cols-2">
+                        <div className="grid gap-6 xl:grid-cols-2">
                           <Card title="Secondary Index">
                             <MutationForm action="createIndex" returnTo={dataWorkspaceHref}>
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="indexName">
-                                Optional name
+                                Optional Index Name
                               </label>
                               <input id="indexName" name="name" className={fieldClassName()} />
                               <label className={labelClassName()} htmlFor="fields">
@@ -1439,48 +1627,56 @@ export default async function Home({ searchParams }: PageProps) {
                               </label>
                               <textarea id="fields" name="fields" defaultValue={'[\n  { "field": "age", "direction": "desc" },\n  { "field": "email", "direction": "asc" }\n]'} className={`${editorClassName()} min-h-36`} />
                               <label className={labelClassName()} htmlFor="partialFilter">
-                                Partial filter JSON
+                                Partial Filter JSON
                               </label>
                               <textarea id="partialFilter" name="partialFilter" defaultValue="" className={`${editorClassName()} min-h-24`} />
-                              <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-                                <label className="flex items-center gap-2"><input type="checkbox" name="unique" /> Unique</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" name="sparse" /> Sparse</label>
+                              <div className="flex flex-wrap gap-4 text-sm text-[#3d3d3a]">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input type="checkbox" name="unique" className="h-4 w-4 rounded accent-[#cc785c]" />
+                                  Unique
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input type="checkbox" name="sparse" className="h-4 w-4 rounded accent-[#cc785c]" />
+                                  Sparse
+                                </label>
                               </div>
-                              <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                                Create index
+                              <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                                Create Index
                               </button>
                             </MutationForm>
                           </Card>
+
                           <Card title="Text Index">
                             <MutationForm action="createTextIndex" returnTo={dataWorkspaceHref}>
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="textField">
-                                Field
+                                Text Field
                               </label>
                               <input id="textField" name="field" defaultValue="bio" className={fieldClassName()} />
                               <label className={labelClassName()} htmlFor="stopwords">
-                                Stopwords CSV
+                                Stopwords (CSV)
                               </label>
                               <input id="stopwords" name="stopwords" defaultValue="the,and,or" className={fieldClassName()} />
-                              <label className="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" name="normalize" defaultChecked />
-                                Normalize text
+                              <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                                <input type="checkbox" name="normalize" defaultChecked className="h-4 w-4 rounded accent-[#cc785c]" />
+                                Normalize Text
                               </label>
-                              <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                                Create text index
+                              <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                                Create Text Index
                               </button>
                             </MutationForm>
                           </Card>
-                          <Card title="Indexes" className="xl:col-span-2">
+
+                          <Card title="Existing Indexes" className="xl:col-span-2">
                             <div className="space-y-3">
                               {studioData.indexes.map((index) => (
-                                <div key={index.name} className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
+                                <div key={index.name} className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
                                     <div>
-                                      <div className="font-semibold text-slate-100">{index.name}</div>
-                                      <div className="mt-1 text-sm text-slate-400">
-                                        {index.isText ? "text index" : "secondary index"} · {index.buildState} · {index.fields.map((field) => `${field.field}:${field.direction}`).join(", ")}
+                                      <div className="font-serif-display text-lg font-normal text-[#141413]">{index.name}</div>
+                                      <div className="mt-1 text-xs text-[#6c6a64]">
+                                        {index.isText ? "text index" : "secondary index"} · state: {index.buildState} · fields: {index.fields.map((field) => `${field.field}:${field.direction}`).join(", ")}
                                       </div>
                                     </div>
                                     {!index.implicit ? (
@@ -1488,8 +1684,8 @@ export default async function Home({ searchParams }: PageProps) {
                                         <input type="hidden" name="databaseName" value={database} />
                                         <input type="hidden" name="collectionName" value={collection} />
                                         <input type="hidden" name="indexName" value={index.name} />
-                                        <button className="rounded-lg border border-rose-500/30 px-3 py-2 text-sm font-semibold text-rose-200">
-                                          Drop
+                                        <button className="rounded-lg border border-[#c64545]/40 bg-[#faf9f5] px-3 py-1.5 text-xs font-semibold text-[#c64545] transition hover:bg-[#c64545] hover:text-white">
+                                          Drop Index
                                         </button>
                                       </MutationForm>
                                     ) : null}
@@ -1505,8 +1701,8 @@ export default async function Home({ searchParams }: PageProps) {
                       ) : null}
 
                       {(dataPane === "all" || dataPane === "aggregate") ? (
-                        <div className="grid gap-4 xl:grid-cols-2">
-                          <form className="space-y-3" action={dataWorkspaceHref}>
+                        <div className="grid gap-6 xl:grid-cols-2">
+                          <form className="space-y-4 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5" action={dataWorkspaceHref}>
                             <input type="hidden" name="section" value="databases" />
                             <input type="hidden" name="database" value={database} />
                             <input type="hidden" name="collection" value={collection} />
@@ -1518,19 +1714,20 @@ export default async function Home({ searchParams }: PageProps) {
                             <input type="hidden" name="skip" value={String(queryState.skip)} />
                             <input type="hidden" name="ids" value={idsInput} />
                             <label className={labelClassName()} htmlFor="aggregate">
-                              Pipeline JSON
+                              Pipeline JSON Array
                             </label>
                             <textarea id="aggregate" name="aggregate" defaultValue={aggregateInput} className={`${editorClassName()} min-h-56`} />
-                            <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                              Execute aggregation
+                            <button className="rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                              Execute Aggregation
                             </button>
                           </form>
+
                           <div className="space-y-4">
                             <TerminalBlock
-                              title="Aggregation output"
+                              title="Aggregation Output"
                               lines={[
                                 `$ aggregate ${database}.${collection}`,
-                                `pipeline stages: ${aggregateInput.trim() ? "loaded" : "empty"}`,
+                                `pipeline stages: ${aggregateInput.trim() ? "configured" : "empty"}`,
                                 `rows returned: ${studioData.aggregateResults.length}`,
                               ]}
                             />
@@ -1540,29 +1737,30 @@ export default async function Home({ searchParams }: PageProps) {
                       ) : null}
 
                       {(dataPane === "all" || dataPane === "danger") ? (
-                        <div className="grid gap-4 xl:grid-cols-2">
+                        <div className="grid gap-6 xl:grid-cols-2">
                           <Card title="Drop Collection">
                             <MutationForm action="dropCollection" returnTo={hrefFor("databases", { database, pane: "browse" })}>
                               <input type="hidden" name="databaseName" value={database} />
                               <input type="hidden" name="collectionName" value={collection} />
                               <label className={labelClassName()} htmlFor="dropCollectionConfirm">
-                                Type {collection} to confirm
+                                Type {collection} to Confirm
                               </label>
                               <input id="dropCollectionConfirm" name="confirmation" className={fieldClassName()} />
-                              <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">
-                                Drop collection
+                              <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                                Drop Collection
                               </button>
                             </MutationForm>
                           </Card>
+
                           <Card title="Drop Database">
                             <MutationForm action="dropDatabase" returnTo={hrefFor("databases")}>
                               <input type="hidden" name="databaseName" value={database} />
                               <label className={labelClassName()} htmlFor="dropDatabaseConfirm">
-                                Type {database} to confirm
+                                Type {database} to Confirm
                               </label>
                               <input id="dropDatabaseConfirm" name="confirmation" className={fieldClassName()} />
-                              <button className="rounded-xl bg-rose-700 px-4 py-3 text-sm font-semibold text-white">
-                                Drop database
+                              <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                                Drop Database
                               </button>
                             </MutationForm>
                           </Card>
@@ -1576,11 +1774,12 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "account" ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               <Card title="Authenticated Principal">
                 <SectionAlert error={studioData.errors.account} />
                 <JsonBlock value={studioData.principal} />
               </Card>
+
               <Card title="Current Studio Session">
                 <JsonBlock
                   value={{
@@ -1592,21 +1791,22 @@ export default async function Home({ searchParams }: PageProps) {
                   }}
                 />
               </Card>
+
               <Card title="Active LioranDB Sessions" className="xl:col-span-2">
                 <div className="space-y-3">
                   {studioData.sessions.map((item) => (
-                    <div key={item.session_id} className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
+                    <div key={item.session_id} className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-4 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <div className="font-semibold text-slate-100">{item.session_id}</div>
-                          <div className="text-sm text-slate-400">
-                            {item.status} · expires {formatTimestamp(item.expires_at_ms)} UTC
+                          <div className="font-mono text-sm font-semibold text-[#141413]">{item.session_id}</div>
+                          <div className="text-xs text-[#6c6a64]">
+                            status: {item.status} · expires {formatTimestamp(item.expires_at_ms)} UTC
                           </div>
                         </div>
                         <MutationForm action="revokeSession" returnTo={currentHref} className="flex items-center gap-3">
                           <input type="hidden" name="sessionId" value={item.session_id} />
-                          <button className="rounded-xl border border-[#313244] px-4 py-2 text-sm font-semibold text-slate-100">
-                            Revoke session
+                          <button className="rounded-lg border border-[#c64545]/40 bg-[#faf9f5] px-3.5 py-1.5 text-xs font-semibold text-[#c64545] transition hover:bg-[#c64545] hover:text-white">
+                            Revoke Session
                           </button>
                         </MutationForm>
                       </div>
@@ -1614,28 +1814,30 @@ export default async function Home({ searchParams }: PageProps) {
                   ))}
                 </div>
               </Card>
+
               <Card title="Change Password">
                 <MutationForm action="changePassword" returnTo={currentHref}>
                   <label className={labelClassName()} htmlFor="newPassword">
-                    New password
+                    New Password
                   </label>
                   <input id="newPassword" name="newPassword" type="password" className={fieldClassName()} required />
-                  <label className="flex items-center gap-2 text-sm text-slate-300">
-                    <input type="checkbox" name="clearMustChange" />
+                  <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                    <input type="checkbox" name="clearMustChange" className="h-4 w-4 rounded accent-[#cc785c]" />
                     Clear must-change-password flag
                   </label>
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                    Change password
+                  <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                    Change Password
                   </button>
                 </MutationForm>
               </Card>
+
               <Card title="Global Session Logout">
                 <MutationForm action="logoutAll" returnTo={currentHref}>
-                  <p className="text-sm leading-6 text-slate-400">
-                    This revokes every LioranDB session for the current principal.
+                  <p className="text-sm leading-6 text-[#6c6a64]">
+                    This revokes every active LioranDB session for the current principal across all connected nodes.
                   </p>
-                  <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">
-                    Log out all sessions
+                  <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                    Log Out All Sessions
                   </button>
                 </MutationForm>
               </Card>
@@ -1643,7 +1845,7 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "users" ? (
-            <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
               <Card title="Create User">
                 <SectionAlert error={studioData.errors.users} />
                 <MutationForm action="createUser" returnTo={currentHref}>
@@ -1651,72 +1853,88 @@ export default async function Home({ searchParams }: PageProps) {
                   <input id="username" name="username" className={fieldClassName()} required />
                   <label className={labelClassName()} htmlFor="password">Password</label>
                   <input id="password" name="password" type="password" className={fieldClassName()} required />
-                  <label className={labelClassName()} htmlFor="roles">Roles CSV</label>
-                  <input id="roles" name="roles" className={fieldClassName()} />
-                  <label className="flex items-center gap-2 text-sm text-slate-300">
-                    <input type="checkbox" name="mustChangePassword" />
+                  <label className={labelClassName()} htmlFor="roles">Roles (CSV)</label>
+                  <input id="roles" name="roles" className={fieldClassName()} placeholder="admin, developer" />
+                  <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                    <input type="checkbox" name="mustChangePassword" className="h-4 w-4 rounded accent-[#cc785c]" />
                     Require password change on next login
                   </label>
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Create user</button>
+                  <button className="w-full rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                    Create User
+                  </button>
                 </MutationForm>
               </Card>
-              <div className="space-y-4">
-                <Card title="Users">
-                  <div className="grid gap-3">
+
+              <div className="space-y-6">
+                <Card title="User Accounts">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {studioData.users.map((user) => (
                       <Link
                         key={user.id}
                         href={hrefFor("users", { userId: user.id })}
-                        className={`rounded-xl border px-4 py-3 ${
+                        className={`rounded-xl border p-4 transition ${
                           userId === user.id
-                            ? "border-cyan-500/40 bg-cyan-500/10"
-                            : "border-[#313244] bg-[#11111b]"
+                            ? "border-[#cc785c]/50 bg-[#cc785c]/10 text-[#141413]"
+                            : "border-[#e6dfd8] bg-[#faf9f5] hover:border-[#cc785c]/30 hover:bg-[#efe9de]"
                         }`}
                       >
-                        <div className="font-semibold text-slate-100">{user.username}</div>
-                        <div className="text-sm text-slate-400">
-                          {user.enabled ? "Enabled" : "Disabled"} · must change password: {user.must_change_password ? "yes" : "no"}
+                        <div className="font-serif-display text-lg font-normal text-[#141413]">{user.username}</div>
+                        <div className="mt-1 text-xs text-[#6c6a64]">
+                          status: {user.enabled ? "Enabled" : "Disabled"} · password reset required: {user.must_change_password ? "yes" : "no"}
                         </div>
                       </Link>
                     ))}
                   </div>
                 </Card>
+
                 {studioData.selectedUser ? (
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    <Card title={`Edit ${studioData.selectedUser.username}`}>
+                  <div className="grid gap-6 xl:grid-cols-2">
+                    <Card title={`Edit User: ${studioData.selectedUser.username}`}>
                       <MutationForm action="updateUser" returnTo={currentHref}>
                         <input type="hidden" name="userId" value={studioData.selectedUser.id} />
-                        <label className="flex items-center gap-2 text-sm text-slate-300">
-                          <input type="checkbox" name="enabled" defaultChecked={studioData.selectedUser.enabled} />
-                          Enabled
+                        <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                          <input type="checkbox" name="enabled" defaultChecked={studioData.selectedUser.enabled} className="h-4 w-4 rounded accent-[#cc785c]" />
+                          User Enabled
                         </label>
-                        <label className={labelClassName()} htmlFor="editUserRoles">Roles CSV</label>
+                        <label className={labelClassName()} htmlFor="editUserRoles">Roles (CSV)</label>
                         <input id="editUserRoles" name="roles" defaultValue="" className={fieldClassName()} />
                         <label className={labelClassName()} htmlFor="metadata">Metadata JSON</label>
                         <textarea id="metadata" name="metadata" defaultValue={prettyJson(studioData.selectedUser.metadata)} className={`${editorClassName()} min-h-40`} />
-                        <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Update user</button>
+                        <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                          Update User
+                        </button>
                       </MutationForm>
                     </Card>
+
                     <Card title="Sensitive Operations">
                       <MutationForm action="resetUserPassword" returnTo={currentHref}>
                         <input type="hidden" name="userId" value={studioData.selectedUser.id} />
-                        <label className={labelClassName()} htmlFor="resetPassword">New password</label>
+                        <label className={labelClassName()} htmlFor="resetPassword">New Password</label>
                         <input id="resetPassword" name="password" type="password" className={fieldClassName()} />
-                        <label className="flex items-center gap-2 text-sm text-slate-300">
-                          <input type="checkbox" name="clearMustChange" />
+                        <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                          <input type="checkbox" name="clearMustChange" className="h-4 w-4 rounded accent-[#cc785c]" />
                           Clear must-change-password flag
                         </label>
-                        <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">Reset password</button>
+                        <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2 text-sm font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                          Reset Password
+                        </button>
                       </MutationForm>
+
                       <MutationForm action="revokeUserSessions" returnTo={currentHref} className="mt-6 space-y-3">
                         <input type="hidden" name="userId" value={studioData.selectedUser.id} />
-                        <button className="rounded-xl border border-[#313244] px-4 py-3 text-sm font-semibold text-slate-100">Revoke all sessions</button>
+                        <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-2 text-sm font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                          Revoke All Sessions
+                        </button>
                       </MutationForm>
+
                       <MutationForm action="deleteUser" returnTo={hrefFor("users")} className="mt-6 space-y-3">
                         <input type="hidden" name="userId" value={studioData.selectedUser.id} />
-                        <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">Delete user</button>
+                        <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                          Delete User
+                        </button>
                       </MutationForm>
                     </Card>
+
                     <Card title="User Record" className="xl:col-span-2">
                       <JsonBlock value={studioData.selectedUser} />
                     </Card>
@@ -1727,63 +1945,74 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "roles" ? (
-            <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
               <Card title="Create Role">
                 <SectionAlert error={studioData.errors.roles} />
                 <MutationForm action="createRole" returnTo={currentHref}>
-                  <label className={labelClassName()} htmlFor="roleName">Role name</label>
+                  <label className={labelClassName()} htmlFor="roleName">Role Name</label>
                   <input id="roleName" name="name" className={fieldClassName()} required />
-                  <label className={labelClassName()} htmlFor="grants">Grants JSON</label>
+                  <label className={labelClassName()} htmlFor="grants">Grants JSON Array</label>
                   <textarea id="grants" name="grants" defaultValue={'[\n  {\n    "permission": "DatabaseList",\n    "scope": { "kind": "cluster" }\n  }\n]'} className={`${editorClassName()} min-h-56`} />
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Create role</button>
+                  <button className="w-full rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                    Create Role
+                  </button>
                 </MutationForm>
               </Card>
-              <div className="space-y-4">
+
+              <div className="space-y-6">
                 <Card title="Advertised Permissions">
                   <div className="flex flex-wrap gap-2">
                     {studioData.permissions.map((permission) => (
-                      <span key={permission} className="rounded-full bg-[#11111b] px-3 py-1 text-xs font-semibold text-slate-300">
+                      <span key={permission} className="rounded-full border border-[#e6dfd8] bg-[#faf9f5] px-3 py-1 text-xs font-medium text-[#3d3d3a]">
                         {permission}
                       </span>
                     ))}
                   </div>
                 </Card>
+
                 <Card title="Roles">
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {studioData.roles.map((role) => (
                       <Link
                         key={role.id}
                         href={hrefFor("roles", { roleId: role.id })}
-                        className={`rounded-xl border px-4 py-3 ${
+                        className={`rounded-xl border p-4 transition ${
                           roleId === role.id
-                            ? "border-cyan-500/40 bg-cyan-500/10"
-                            : "border-[#313244] bg-[#11111b]"
+                            ? "border-[#cc785c]/50 bg-[#cc785c]/10 text-[#141413]"
+                            : "border-[#e6dfd8] bg-[#faf9f5] hover:border-[#cc785c]/30 hover:bg-[#efe9de]"
                         }`}
                       >
-                        <div className="font-semibold text-slate-100">{role.name}</div>
-                        <div className="text-sm text-slate-400">
-                          {role.grants.length} grants · {role.built_in ? "built-in" : "custom"}
+                        <div className="font-serif-display text-lg font-normal text-[#141413]">{role.name}</div>
+                        <div className="mt-1 text-xs text-[#6c6a64]">
+                          {role.grants.length} grants · {role.built_in ? "built-in system role" : "custom role"}
                         </div>
                       </Link>
                     ))}
                   </div>
                 </Card>
+
                 {studioData.selectedRole ? (
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    <Card title={`Edit ${studioData.selectedRole.name}`}>
+                  <div className="grid gap-6 xl:grid-cols-2">
+                    <Card title={`Edit Role: ${studioData.selectedRole.name}`}>
                       <MutationForm action="updateRole" returnTo={currentHref}>
                         <input type="hidden" name="roleId" value={studioData.selectedRole.id} />
                         <label className={labelClassName()} htmlFor="editGrants">Grants JSON</label>
                         <textarea id="editGrants" name="grants" defaultValue={prettyJson(studioData.selectedRole.grants)} className={`${editorClassName()} min-h-72`} />
-                        <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Update role</button>
+                        <button className="rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                          Update Role Grants
+                        </button>
                       </MutationForm>
                     </Card>
+
                     <Card title="Delete Role">
                       <MutationForm action="deleteRole" returnTo={hrefFor("roles")}>
                         <input type="hidden" name="roleId" value={studioData.selectedRole.id} />
-                        <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">Delete role</button>
+                        <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                          Delete Role
+                        </button>
                       </MutationForm>
                     </Card>
+
                     <Card title="Role Record" className="xl:col-span-2">
                       <JsonBlock value={studioData.selectedRole} />
                     </Card>
@@ -1794,28 +2023,42 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "cluster" ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               <Card title="Cluster Summary">
                 <SectionAlert error={studioData.errors.cluster} />
                 <JsonBlock value={studioData.clusterSummary} />
               </Card>
+
               <Card title="Administrative Actions">
-                <MutationForm action="clusterCheckpoint" returnTo={currentHref} className="space-y-3">
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Trigger checkpoint</button>
-                </MutationForm>
-                <MutationForm action="clusterCompact" returnTo={currentHref} className="mt-4 space-y-3">
-                  <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">Trigger compaction</button>
-                </MutationForm>
+                <div className="space-y-4">
+                  <p className="text-xs leading-5 text-[#6c6a64]">
+                    Trigger administrative checkpoints and compactions across the storage engine to reclaim disk space.
+                  </p>
+                  <MutationForm action="clusterCheckpoint" returnTo={currentHref}>
+                    <button className="w-full rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                      Trigger Checkpoint
+                    </button>
+                  </MutationForm>
+                  <MutationForm action="clusterCompact" returnTo={currentHref}>
+                    <button className="w-full rounded-lg border border-[#c64545]/40 bg-[#faf9f5] px-4 py-2.5 text-sm font-semibold text-[#c64545] transition hover:bg-[#c64545] hover:text-white">
+                      Trigger Compaction
+                    </button>
+                  </MutationForm>
+                </div>
               </Card>
+
               <Card title="Nodes">
                 <JsonBlock value={studioData.clusterNodes} />
               </Card>
+
               <Card title="Partitions">
                 <JsonBlock value={studioData.clusterPartitions} />
               </Card>
+
               <Card title="Health" className="xl:col-span-2">
                 <JsonBlock value={studioData.clusterHealth} />
               </Card>
+
               <Card title="Readiness" className="xl:col-span-2">
                 <JsonBlock value={studioData.clusterReadiness} />
               </Card>
@@ -1823,65 +2066,79 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "backups" ? (
-            <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
               <Card title="Create Backup">
                 <SectionAlert error={studioData.errors.backups} />
                 <MutationForm action="createBackup" returnTo={currentHref}>
-                  <label className={labelClassName()} htmlFor="label">Label</label>
-                  <input id="label" name="label" className={fieldClassName()} />
-                  <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3 text-sm text-slate-300">
-                    Scope: <span className="font-semibold text-cyan-200">local_node</span>
+                  <label className={labelClassName()} htmlFor="label">Backup Label</label>
+                  <input id="label" name="label" className={fieldClassName()} placeholder="manual-snapshot" />
+                  <div className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-4 py-3 text-xs text-[#6c6a64]">
+                    Scope: <span className="font-semibold text-[#cc785c]">local_node</span>
                   </div>
-                  <button className="rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Create backup</button>
+                  <button className="w-full rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                    Create Backup
+                  </button>
                 </MutationForm>
               </Card>
-              <div className="space-y-4">
+
+              <div className="space-y-6">
                 <Card title="Backup History">
                   <div className="space-y-3">
                     {studioData.backups.map((backup) => (
-                      <div key={backup.backup_id} className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
+                      <div key={backup.backup_id} className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <Link href={hrefFor("backups", { backupId: backup.backup_id })} className="font-semibold text-slate-100">
+                          <Link href={hrefFor("backups", { backupId: backup.backup_id })} className="font-mono text-sm font-semibold text-[#cc785c] hover:underline">
                             {backup.backup_id}
                           </Link>
-                          <div className="text-sm text-slate-400">{backup.status}</div>
+                          <span className="rounded-full border border-[#e6dfd8] bg-[#efe9de] px-2.5 py-0.5 text-xs font-medium text-[#3d3d3a]">
+                            {backup.status}
+                          </span>
                         </div>
-                        <div className="mt-2 text-sm text-slate-400">
-                          {backup.scope} · {backup.label ?? "no label"}
+                        <div className="mt-2 text-xs text-[#6c6a64]">
+                          scope: {backup.scope} · label: {backup.label ?? "no label"}
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2">
                           <MutationForm action="verifyBackup" returnTo={currentHref} className="inline-flex">
                             <input type="hidden" name="backupId" value={backup.backup_id} />
-                            <button className="rounded-xl border border-[#313244] px-4 py-2 text-sm font-semibold text-slate-100">Verify</button>
+                            <button className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] px-3.5 py-1.5 text-xs font-medium text-[#141413] transition hover:bg-[#efe9de]">
+                              Verify
+                            </button>
                           </MutationForm>
                           <MutationForm action="deleteBackup" returnTo={currentHref} className="inline-flex">
                             <input type="hidden" name="backupId" value={backup.backup_id} />
-                            <button className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
+                            <button className="rounded-lg border border-[#c64545]/40 bg-[#faf9f5] px-3.5 py-1.5 text-xs font-semibold text-[#c64545] transition hover:bg-[#c64545] hover:text-white">
+                              Delete
+                            </button>
                           </MutationForm>
                         </div>
                       </div>
                     ))}
                   </div>
                 </Card>
+
                 {studioData.selectedBackup ? (
-                  <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="grid gap-6 xl:grid-cols-2">
                     <Card title="Backup Details">
                       <JsonBlock value={studioData.selectedBackup} />
                     </Card>
+
                     <Card title="Restore Backup">
                       <MutationForm action="restoreBackup" returnTo={currentHref}>
                         <input type="hidden" name="backupId" value={studioData.selectedBackup.backup_id} />
-                        <label className={labelClassName()} htmlFor="restoreConfirm">Restore confirmation</label>
+                        <label className={labelClassName()} htmlFor="restoreConfirm">Restore Confirmation</label>
                         <input id="restoreConfirm" name="confirmation" defaultValue={studioData.selectedBackup.backup_id} className={fieldClassName()} />
-                        <label className="flex items-center gap-2 text-sm text-slate-300">
-                          <input type="checkbox" name="disableSafetyBackup" />
+                        <label className="flex items-center gap-2 text-sm text-[#3d3d3a] cursor-pointer">
+                          <input type="checkbox" name="disableSafetyBackup" className="h-4 w-4 rounded accent-[#cc785c]" />
                           Disable safety backup
                         </label>
-                        <button className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white">Restore backup</button>
+                        <button className="rounded-lg bg-[#c64545] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a83232]">
+                          Restore Backup
+                        </button>
                       </MutationForm>
                     </Card>
                   </div>
                 ) : null}
+
                 {studioData.restoreJob ? (
                   <Card title="Restore Job">
                     <JsonBlock value={studioData.restoreJob} />
@@ -1892,10 +2149,10 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
 
           {section === "settings" ? (
-            <div className="grid gap-4 xl:grid-cols-[240px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[240px_1fr]">
               <Card title="Settings">
                 <SectionAlert error={studioData.errors.settings} />
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {[
                     { key: "general", label: "General" },
                     { key: "cors", label: "CORS" },
@@ -1907,10 +2164,10 @@ export default async function Home({ searchParams }: PageProps) {
                       key={item.key}
                       href={hrefFor("settings", { settingsPane: item.key })}
                       scroll={false}
-                      className={`block rounded-xl px-4 py-3 text-sm font-medium ${
+                      className={`block rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
                         settingsPane === item.key
-                          ? "bg-[#1e1e2e] text-cyan-200 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                          : "border border-transparent text-slate-400 hover:border-[#313244] hover:bg-[#181825]"
+                          ? "border border-[#e6dfd8] bg-[#faf9f5] text-[#141413] shadow-sm"
+                          : "border border-transparent text-[#6c6a64] hover:bg-[#faf9f5]/50 hover:text-[#141413]"
                       }`}
                     >
                       {item.label}
@@ -1920,23 +2177,19 @@ export default async function Home({ searchParams }: PageProps) {
               </Card>
 
               {settingsPane === "general" ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <Card title="General Settings">
                     <div className="space-y-5">
-                      <div className="rounded-2xl border border-[#313244] bg-[#11111b] p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
-                              Overview
-                            </div>
-                            <h3 className="mt-2 text-xl font-semibold text-slate-100">
-                              Runtime and metadata
-                            </h3>
-                            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                              Backup schedules are managed from the dedicated Backups pane below. This section focuses on runtime metadata and any extra custom settings keys stored on the server.
-                            </p>
-                          </div>
+                      <div className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
+                          Runtime & Metadata
                         </div>
+                        <h3 className="font-serif-display mt-1 text-xl font-normal text-[#141413]">
+                          Server operational footprint
+                        </h3>
+                        <p className="mt-1.5 text-xs leading-5 text-[#6c6a64]">
+                          Backup schedules and retention are managed from the dedicated Backups pane. This section exposes runtime metadata and editable custom setting keys.
+                        </p>
                       </div>
 
                       {(() => {
@@ -1956,17 +2209,17 @@ export default async function Home({ searchParams }: PageProps) {
 
                         return (
                           <>
-                            <div className="grid gap-4 xl:grid-cols-2">
-                              <section className="rounded-2xl border border-[#313244] bg-[#181825] p-5">
+                            <div className="grid gap-6 xl:grid-cols-2">
+                              <section className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5">
                                 <div className="mb-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
                                     Backup Jobs
                                   </div>
-                                  <h3 className="mt-2 text-lg font-semibold text-slate-100">
+                                  <h3 className="font-serif-display mt-1 text-lg font-normal text-[#141413]">
                                     Recent scheduler state
                                   </h3>
                                 </div>
-                                <div className="grid gap-3 md:grid-cols-2">
+                                <div className="grid gap-3 sm:grid-cols-2">
                                   <SettingsSummaryTile
                                     label="Tracked Jobs"
                                     value={Array.isArray(backupJobs?.jobs) ? backupJobs.jobs.length : 0}
@@ -1975,29 +2228,24 @@ export default async function Home({ searchParams }: PageProps) {
                                   <SettingsSummaryTile
                                     label="Managed From"
                                     value="Backups Pane"
-                                    hint="Schedules and retention live in the dedicated backups settings form."
+                                    hint="Schedules live in the dedicated backups form."
                                   />
                                 </div>
-                                <div className="mt-4 rounded-xl border border-[#313244] bg-[#11111b] p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                    Raw Job Snapshot
-                                  </div>
-                                  <div className="mt-3">
-                                    <JsonBlock value={backupJobs ?? { jobs: [] }} />
-                                  </div>
+                                <div className="mt-4">
+                                  <JsonBlock value={backupJobs ?? { jobs: [] }} />
                                 </div>
                               </section>
 
-                              <section className="rounded-2xl border border-[#313244] bg-[#181825] p-5">
+                              <section className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5">
                                 <div className="mb-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
                                     Performance Usage
                                   </div>
-                                  <h3 className="mt-2 text-lg font-semibold text-slate-100">
+                                  <h3 className="font-serif-display mt-1 text-lg font-normal text-[#141413]">
                                     Current footprint
                                   </h3>
                                 </div>
-                                <div className="grid gap-3 md:grid-cols-2">
+                                <div className="grid gap-3 sm:grid-cols-2">
                                   <SettingsSummaryTile
                                     label="Documents Total"
                                     value={performanceUsage?.documents_total ?? 0}
@@ -2007,20 +2255,20 @@ export default async function Home({ searchParams }: PageProps) {
                                     value={performanceUsage?.storage_bytes ?? 0}
                                   />
                                 </div>
-                                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                                  <div className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                      Documents Per Collection
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                  <div className="rounded-lg border border-[#e6dfd8] bg-[#efe9de] p-3">
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6c6a64]">
+                                      Docs per Collection
                                     </div>
-                                    <div className="mt-3">
+                                    <div className="mt-2">
                                       <JsonBlock value={performanceUsage?.documents_per_collection ?? {}} />
                                     </div>
                                   </div>
-                                  <div className="rounded-xl border border-[#313244] bg-[#11111b] p-4">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                      Storage Per Collection
+                                  <div className="rounded-lg border border-[#e6dfd8] bg-[#efe9de] p-3">
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6c6a64]">
+                                      Storage per Collection
                                     </div>
-                                    <div className="mt-3">
+                                    <div className="mt-2">
                                       <JsonBlock value={performanceUsage?.storage_bytes_per_collection ?? {}} />
                                     </div>
                                   </div>
@@ -2032,7 +2280,7 @@ export default async function Home({ searchParams }: PageProps) {
                               <MutationForm action="updateSettingsGui" returnTo={currentHref}>
                                 <div className="space-y-4">
                                   {customEntries.length === 0 ? (
-                                    <div className="rounded-xl border border-dashed border-[#313244] bg-[#11111b] px-4 py-6 text-sm text-slate-400">
+                                    <div className="rounded-xl border border-dashed border-[#e6dfd8] bg-[#faf9f5] px-4 py-8 text-center text-sm text-[#6c6a64]">
                                       No extra editable general settings are currently stored outside the dedicated CORS, Performance, Limits, and Backups panes.
                                     </div>
                                   ) : (
@@ -2042,7 +2290,7 @@ export default async function Home({ searchParams }: PageProps) {
                                         <SettingsField
                                           key={key}
                                           label={key}
-                                          hint="Structured values can still be edited here when the server exposes custom keys that do not have a dedicated form yet."
+                                          hint="Structured values can still be edited here when the server exposes custom keys."
                                           htmlFor={`setting-${key}`}
                                         >
                                           <SettingsTextarea
@@ -2057,8 +2305,8 @@ export default async function Home({ searchParams }: PageProps) {
                                   )}
                                 </div>
                                 {customEntries.length > 0 ? (
-                                  <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">
-                                    Save custom settings
+                                  <button className="mt-4 rounded-lg bg-[#cc785c] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                                    Save Custom Settings
                                   </button>
                                 ) : null}
                               </MutationForm>
@@ -2072,13 +2320,13 @@ export default async function Home({ searchParams }: PageProps) {
               ) : null}
 
               {settingsPane === "cors" ? (
-                <Card title="CORS">
+                <Card title="CORS Configuration">
                   <MutationForm action="updateCorsGui" returnTo={currentHref}>
                     <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
-                        <div className="text-sm font-semibold text-slate-100">CORS enabled</div>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          CORS is permanently enabled. Remove an allowed origin to revoke its browser access.
+                      <div className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] px-4 py-3.5">
+                        <div className="text-sm font-semibold text-[#141413]">CORS Protocol Policy</div>
+                        <p className="mt-1 text-xs leading-5 text-[#6c6a64]">
+                          CORS is permanently active. Remove an allowed origin to revoke its browser access.
                         </p>
                       </div>
                       <SettingsCheckbox
@@ -2086,7 +2334,7 @@ export default async function Home({ searchParams }: PageProps) {
                         name="allow_credentials"
                         label="Allow Credentials"
                         defaultChecked={studioData.settingsCors?.allow_credentials}
-                        hint="Allow cookies and authenticated browser requests."
+                        hint="Allow browser cookies and authenticated headers."
                       />
                       <SettingsField label="Allowed Origins" hint="One origin per line." htmlFor="allowed_origins">
                         <SettingsTextarea id="allowed_origins" name="allowed_origins" defaultValue={(studioData.settingsCors?.allowed_origins ?? []).join("\n")} />
@@ -2100,20 +2348,16 @@ export default async function Home({ searchParams }: PageProps) {
                       <SettingsField label="Exposed Headers" hint="One header per line." htmlFor="exposed_headers">
                         <SettingsTextarea id="exposed_headers" name="exposed_headers" defaultValue={(studioData.settingsCors?.exposed_headers ?? []).join("\n")} />
                       </SettingsField>
-                      <div className="rounded-xl border border-[#313244] bg-[#11111b] px-4 py-3">
-                        <div className="text-sm font-semibold text-slate-100">Preflight cache lifetime</div>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          Permanent server policy. Browsers may apply a shorter cap.
-                        </p>
-                      </div>
                     </div>
-                    <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Save CORS</button>
+                    <button className="mt-5 rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                      Save CORS Settings
+                    </button>
                   </MutationForm>
                 </Card>
               ) : null}
 
               {settingsPane === "performance" ? (
-                <Card title="Performance">
+                <Card title="Performance Settings">
                   <MutationForm action="updatePerformanceGui" returnTo={currentHref}>
                     <div className="grid gap-4 md:grid-cols-2">
                       {[
@@ -2150,17 +2394,24 @@ export default async function Home({ searchParams }: PageProps) {
                         defaultChecked={studioData.settingsPerformance?.background_work_enabled}
                       />
                     </div>
-                    <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Save performance settings</button>
+                    <button className="mt-5 rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                      Save Performance Settings
+                    </button>
                   </MutationForm>
                 </Card>
               ) : null}
 
               {settingsPane === "limits" ? (
-                <Card title="Limits">
+                <Card title="Limits Configuration">
                   <MutationForm action="updateLimitsGui" returnTo={currentHref}>
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Server Limits</h3>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#cc785c]">
+                          Server Bounds
+                        </div>
+                        <h3 className="font-serif-display mt-1 text-xl font-normal text-[#141413]">
+                          Global Throttling & Resource Caps
+                        </h3>
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
                           {[
                             ["max_reads_per_second", "Max Reads / Second"],
@@ -2204,20 +2455,22 @@ export default async function Home({ searchParams }: PageProps) {
                         </SettingsField>
                       </div>
                     </div>
-                    <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Save limit settings</button>
+                    <button className="mt-5 rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                      Save Limit Settings
+                    </button>
                   </MutationForm>
                 </Card>
               ) : null}
 
               {settingsPane === "backups" ? (
-                <Card title="Backup Settings">
+                <Card title="Backup Schedules & Retention">
                   <MutationForm action="updateBackupSettingsGui" returnTo={currentHref}>
                     <div className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2">
                         <SettingsField label="Compression Level" htmlFor="compression_level">
                           <SettingsTextInput id="compression_level" name="compression_level" type="number" defaultValue={studioData.settingsBackups?.compression_level} />
                         </SettingsField>
-                        <div className="grid gap-4">
+                        <div className="grid gap-3">
                           <SettingsCheckbox id="verify_after_create" name="verify_after_create" label="Verify After Create" defaultChecked={studioData.settingsBackups?.verify_after_create} />
                           <SettingsCheckbox id="require_cluster_complete" name="require_cluster_complete" label="Require Cluster Complete" defaultChecked={studioData.settingsBackups?.require_cluster_complete} />
                         </div>
@@ -2231,9 +2484,9 @@ export default async function Home({ searchParams }: PageProps) {
                       ] as const).map(([prefix, label]) => {
                         const schedule = studioData.settingsBackups?.[prefix];
                         return (
-                          <div key={prefix} className="rounded-2xl border border-[#313244] bg-[#11111b] p-4">
+                          <div key={prefix} className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
                             <div className="mb-4 flex items-center justify-between gap-3">
-                              <h3 className="text-lg font-semibold text-slate-100">{label} Schedule</h3>
+                              <h3 className="font-serif-display text-lg font-normal text-[#141413]">{label} Schedule</h3>
                               <SettingsCheckbox
                                 id={`${prefix}_enabled`}
                                 name={`${prefix}_enabled`}
@@ -2262,8 +2515,8 @@ export default async function Home({ searchParams }: PageProps) {
                         );
                       })}
 
-                      <div className="rounded-2xl border border-[#313244] bg-[#11111b] p-4">
-                        <h3 className="mb-4 text-lg font-semibold text-slate-100">Retention</h3>
+                      <div className="rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-5 shadow-[0_1px_4px_rgba(20,20,19,0.02)]">
+                        <h3 className="font-serif-display mb-4 text-lg font-normal text-[#141413]">Retention Policy</h3>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                           <SettingsField label="Keep Hourly" htmlFor="keep_hourly">
                             <SettingsTextInput id="keep_hourly" name="keep_hourly" type="number" defaultValue={studioData.settingsBackups?.retention.keep_hourly} />
@@ -2286,7 +2539,9 @@ export default async function Home({ searchParams }: PageProps) {
                         </div>
                       </div>
                     </div>
-                    <button className="mt-4 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white">Save backup settings</button>
+                    <button className="mt-5 rounded-lg bg-[#cc785c] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#a9583e]">
+                      Save Backup Settings
+                    </button>
                   </MutationForm>
                 </Card>
               ) : null}
