@@ -632,7 +632,7 @@ function QueryEditor({
       <label className={labelClassName()} htmlFor={id}>
         {label}
       </label>
-      <textarea id={id} name={name} defaultValue={defaultValue} className={`${editorClassName()} ${minHeight}`} />
+      <textarea id={id} name={name} defaultValue={defaultValue} className={`${editorClassName()} ${minHeight}`} suppressHydrationWarning />
     </div>
   );
 }
@@ -676,6 +676,7 @@ function SettingsTextInput(props: {
       defaultValue={props.defaultValue === null || props.defaultValue === undefined ? "" : String(props.defaultValue)}
       placeholder={props.placeholder}
       className={fieldClassName()}
+      suppressHydrationWarning
     />
   );
 }
@@ -695,6 +696,7 @@ function SettingsTextarea(props: {
       placeholder={props.placeholder}
       rows={props.rows ?? 5}
       className={`${editorClassName()} min-h-28`}
+      suppressHydrationWarning
     />
   );
 }
@@ -708,7 +710,7 @@ function SettingsCheckbox(props: {
 }) {
   return (
     <label htmlFor={props.id} className="flex items-start gap-3 rounded-xl border border-[#e6dfd8] bg-[#faf9f5] px-4 py-3.5 cursor-pointer">
-      <input id={props.id} name={props.name} type="checkbox" defaultChecked={props.defaultChecked} className="mt-1 h-4 w-4 rounded accent-[#cc785c]" />
+      <input id={props.id} name={props.name} type="checkbox" defaultChecked={props.defaultChecked} className="mt-1 h-4 w-4 rounded accent-[#cc785c]" suppressHydrationWarning />
       <span className="space-y-1">
         <span className="block text-sm font-semibold text-[#141413]">{props.label}</span>
         {props.hint ? <span className="block text-xs leading-5 text-[#6c6a64]">{props.hint}</span> : null}
@@ -772,7 +774,7 @@ function MutationForm({
   readonly className?: string;
 }) {
   return (
-    <form action={studioMutationAction} className={className}>
+    <form action={studioMutationAction} className={className} suppressHydrationWarning>
       <input type="hidden" name="action" value={action} />
       <input type="hidden" name="returnTo" value={returnTo} />
       {children}
@@ -965,7 +967,7 @@ export default async function Home({ searchParams }: PageProps) {
                   </p>
                 </div>
 
-                <form action={connectAction} className="space-y-4">
+                <form action={connectAction} className="space-y-4" suppressHydrationWarning>
                   {errorMessage ? (
                     <div className="rounded-lg border border-[#c64545]/30 bg-[#c64545]/10 px-4 py-3 text-xs leading-5 text-[#c64545]">
                       {errorMessage}
@@ -983,12 +985,14 @@ export default async function Home({ searchParams }: PageProps) {
                       placeholder="liorandb://admin:secret@127.0.0.1:8080/main"
                       className={fieldClassName()}
                       required
+                      suppressHydrationWarning
                     />
                   </div>
 
                   <button
                     type="submit"
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#cc785c] px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#a9583e] active:scale-[0.99]"
+                    suppressHydrationWarning
                   >
                     <span>Connect to Studio</span>
                     <ArrowRightIcon size={16} />
