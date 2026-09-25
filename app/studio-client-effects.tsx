@@ -5,13 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const SCROLL_STATE_KEY = "liorandb-studio-scroll-y";
 
-type ToastTone = "notice" | "error";
-
-interface ToastState {
-  readonly tone: ToastTone;
-  readonly message: string;
-}
-
 function buildUrlWithoutTransientParams(
   pathname: string,
   searchParams: URLSearchParams,
@@ -28,7 +21,7 @@ export function StudioClientEffects() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [dismissedToastKey, setDismissedToastKey] = useState<string | null>(null);
 
   const toastFromUrl = useMemo(() => {
     const error = searchParams.get("error");
@@ -42,15 +35,16 @@ export function StudioClientEffects() {
     return null;
   }, [searchParams]);
 
+  const toastKey = toastFromUrl ? `${toastFromUrl.tone}:${toastFromUrl.message}` : null;
+  const activeToast = toastKey && toastKey !== dismissedToastKey ? toastFromUrl : null;
+
   useEffect(() => {
-    if (!toastFromUrl) {
+    if (!activeToast || !toastKey) {
       return;
     }
 
-    setToast(toastFromUrl);
-
     const clearTimer = window.setTimeout(() => {
-      setToast(null);
+      setDismissedToastKey(toastKey);
       const nextUrl = buildUrlWithoutTransientParams(
         pathname,
         new URLSearchParams(searchParams.toString()),
@@ -60,7 +54,7 @@ export function StudioClientEffects() {
     }, 5000);
 
     return () => window.clearTimeout(clearTimer);
-  }, [pathname, router, searchParams, toastFromUrl]);
+  }, [activeToast, pathname, router, searchParams, toastKey]);
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem(SCROLL_STATE_KEY);
@@ -126,11 +120,11 @@ export function StudioClientEffects() {
     };
   }, []);
 
-  if (!toast) {
+  if (!activeToast) {
     return null;
   }
 
-  const isError = toast.tone === "error";
+  const isError = activeToast.tone === "error";
 
   return (
     <div className="pointer-events-none fixed bottom-6 right-6 z-[100] max-w-md">
@@ -142,7 +136,7 @@ export function StudioClientEffects() {
             isError ? "bg-[#c64545]" : "bg-[#5db872]"
           }`}
         />
-        <div className="font-medium leading-5">{toast.message}</div>
+        <div className="font-medium leading-5">{activeToast.message}</div>
       </div>
     </div>
   );

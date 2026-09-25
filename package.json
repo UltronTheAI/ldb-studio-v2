@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/connection.test.ts"
+    "test": "node scripts/run-tests.mjs"
   },
   "dependencies": {
     "@liorandb/driver": "^2.0.5",

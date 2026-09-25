@@ -10,14 +10,14 @@ import {
   validateConnectionTarget,
   sanitizeConnectionString,
   parseAndClassifyConnection,
-} from "../lib/liorandb/connection.ts";
+} from "../lib/liorandb/connection";
 
 import {
   LocalTargetNotReachableError,
   ProhibitedTargetError,
   mapStudioError,
   redactMessage,
-} from "../lib/liorandb/errors.ts";
+} from "../lib/liorandb/errors";
 
 describe("LioranDB Studio Connection Architecture & Target Classification", () => {
   describe("Target Classification", () => {
@@ -135,7 +135,7 @@ describe("LioranDB Studio Connection Architecture & Target Classification", () =
         () => {
           validateConnectionTarget(uri, { allowLocal: false });
         },
-        (err) => {
+        (err: unknown) => {
           assert.ok(err instanceof LocalTargetNotReachableError);
           assert.equal(err.targetHost, "127.0.0.1");
           assert.equal(err.targetPort, 27018);
@@ -153,7 +153,7 @@ describe("LioranDB Studio Connection Architecture & Target Classification", () =
         () => {
           validateConnectionTarget(uri);
         },
-        (err) => {
+        (err: unknown) => {
           assert.ok(err instanceof ProhibitedTargetError);
           assert.match(err.message, /restricted/);
           return true;

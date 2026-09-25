@@ -32,7 +32,6 @@ import { withLioranClient } from "@/lib/liorandb/client";
 import { mapStudioError } from "@/lib/liorandb/errors";
 import {
   prettyJson,
-  prettySettingsJson,
   syntaxHighlightJson,
 } from "@/lib/liorandb/json";
 import {
@@ -43,7 +42,6 @@ import {
   ClaudeSpikeIcon,
   DatabaseIcon,
   HardDriveDownloadIcon,
-  InfoIcon,
   KeyRoundIcon,
   NetworkIcon,
   PanelLeftIcon,
@@ -471,33 +469,6 @@ function JsonBlock({ value }: { readonly value: unknown }) {
   );
 }
 
-function JsonPreview({
-  value,
-  title = "Formatted Preview",
-}: {
-  readonly value: unknown;
-  readonly title?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8e8b82]">
-        {title}
-      </div>
-      <pre
-        className="editor-scroll overflow-x-auto rounded-lg border border-[#2e2b27] bg-[#181715] p-4 font-mono text-xs leading-6 text-[#faf9f5]"
-        dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(value) }}
-      />
-    </div>
-  );
-}
-
-function safeParsePreview(input: string): unknown {
-  try {
-    return JSON.parse(input) as unknown;
-  } catch {
-    return input;
-  }
-}
 
 function StatTile({
   label,
@@ -863,7 +834,6 @@ export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
   const section = (firstParam(params.section, "overview") as Section) || "overview";
   const dataPane = (firstParam(params.pane, "all") as DataPane) || "all";
-  const notice = firstParam(params.notice);
   const errorMessage = firstParam(params.error);
   const database = firstParam(params.database);
   const collection = firstParam(params.collection);

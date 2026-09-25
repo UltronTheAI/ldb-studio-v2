@@ -210,7 +210,8 @@ export async function refreshStudioSession(sessionId: string): Promise<void> {
   });
 }
 
-export async function destroyStudioSession(_sessionId?: string): Promise<void> {
+export async function destroyStudioSession(sessionId?: string): Promise<void> {
+  void sessionId;
   try {
     const cookieStore = await cookies();
     cookieStore.delete(COOKIE_NAME);

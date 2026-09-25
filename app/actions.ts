@@ -18,10 +18,7 @@ import type {
   UpdateUserInput,
 } from "@liorandb/driver";
 
-import {
-  getSanitizedConnectionMetadata,
-  validateConnectionTarget,
-} from "@/lib/liorandb/connection";
+import { validateConnectionTarget } from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { createDatabaseWithDriverFallback } from "@/lib/liorandb/database";
 import { mapStudioError } from "@/lib/liorandb/errors";
