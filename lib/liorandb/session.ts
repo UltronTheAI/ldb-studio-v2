@@ -1,16 +1,11 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import { cookies } from "next/headers";
 
 import type { Principal } from "@liorandb/driver";
-
 import type { SanitizedConnectionMetadata } from "./connection";
 
 const COOKIE_NAME = "liorandb_studio_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-const SESSION_DIR = process.env.STUDIO_SESSION_DIR ?? path.join(process.cwd(), ".sessions");
 const KEY_SALT = "liorandb-studio-session";
 const MAX_COOKIE_VALUE_BYTES = 3_800;
 
@@ -20,9 +15,9 @@ interface EncryptedValue {
   readonly ciphertext: string;
 }
 
-interface SessionRecord {
+interface CookieSessionRecord {
   readonly id: string;
-  readonly encryptedConnectionUri: EncryptedValue;
+  readonly connectionUri: string;
   readonly createdAt: number;
   readonly updatedAt: number;
   readonly expiresAt: number;
@@ -35,23 +30,13 @@ interface SessionRecord {
   readonly metadata: SanitizedConnectionMetadata;
 }
 
-interface CookieSessionRecord {
-  readonly id: string;
-  readonly connectionUri: string;
-  readonly createdAt: number;
-  readonly updatedAt: number;
-  readonly expiresAt: number;
-  readonly principal: SessionRecord["principal"];
-  readonly metadata: SanitizedConnectionMetadata;
-}
-
 export interface StudioSession {
   readonly id: string;
   readonly connectionUri: string;
   readonly createdAt: number;
   readonly updatedAt: number;
   readonly expiresAt: number;
-  readonly principal: SessionRecord["principal"];
+  readonly principal: CookieSessionRecord["principal"];
   readonly metadata: SanitizedConnectionMetadata;
 }
 
@@ -101,21 +86,6 @@ function decrypt(value: EncryptedValue): string {
   return plaintext.toString("utf8");
 }
 
-function usesCookieSessionStore(): boolean {
-  if (process.env.STUDIO_SESSION_STORE === "cookie") {
-    return true;
-  }
-
-  if (process.env.STUDIO_SESSION_STORE === "filesystem") {
-    return false;
-  }
-
-  // Vercel Functions have a read-only deployment filesystem, so session files
-  // cannot be created there. The encrypted, HttpOnly cookie is stateless and
-  // works across function invocations.
-  return process.env.VERCEL === "1";
-}
-
 function cookieOptions(expiresAt: number) {
   return {
     httpOnly: true,
@@ -132,7 +102,7 @@ function encodeCookieSession(record: CookieSessionRecord): string {
 
   if (Buffer.byteLength(value, "utf8") > MAX_COOKIE_VALUE_BYTES) {
     throw new Error(
-      "Studio session is too large for cookie-based storage. Use a shorter connection URI or configure a shared session store.",
+      "Studio session is too large for cookie-based storage. Use a shorter connection URI.",
     );
   }
 
@@ -178,28 +148,6 @@ async function writeCookieSession(record: CookieSessionRecord): Promise<void> {
   cookieStore.set(COOKIE_NAME, encodeCookieSession(record), cookieOptions(record.expiresAt));
 }
 
-function sessionFile(sessionId: string): string {
-  return path.join(SESSION_DIR, `${sessionId}.json`);
-}
-
-async function ensureSessionDir(): Promise<void> {
-  await mkdir(SESSION_DIR, { recursive: true });
-}
-
-async function writeSessionRecord(record: SessionRecord): Promise<void> {
-  await ensureSessionDir();
-  await writeFile(sessionFile(record.id), JSON.stringify(record, null, 2), "utf8");
-}
-
-async function readSessionRecord(sessionId: string): Promise<SessionRecord | null> {
-  try {
-    const raw = await readFile(sessionFile(sessionId), "utf8");
-    return JSON.parse(raw) as SessionRecord;
-  } catch {
-    return null;
-  }
-}
-
 export async function createStudioSession(input: {
   readonly connectionUri: string;
   readonly principal: Principal;
@@ -207,8 +155,9 @@ export async function createStudioSession(input: {
 }): Promise<void> {
   const id = randomBytes(32).toString("hex");
   const now = Date.now();
-  const baseRecord = {
+  const record: CookieSessionRecord = {
     id,
+    connectionUri: input.connectionUri,
     createdAt: now,
     updatedAt: now,
     expiresAt: now + SESSION_TTL_MS,
@@ -221,131 +170,51 @@ export async function createStudioSession(input: {
     metadata: input.metadata,
   };
 
-  if (usesCookieSessionStore()) {
-    await writeCookieSession({
-      ...baseRecord,
-      connectionUri: input.connectionUri,
-    });
-    return;
-  }
-
-  const record: SessionRecord = {
-    ...baseRecord,
-    encryptedConnectionUri: encrypt(input.connectionUri),
-  };
-
-  await writeSessionRecord(record);
-
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, id, cookieOptions(record.expiresAt));
+  await writeCookieSession(record);
 }
 
 export async function getStudioSession(): Promise<StudioSession | null> {
   const cookieStore = await cookies();
   const sessionValue = cookieStore.get(COOKIE_NAME)?.value;
 
-  if (usesCookieSessionStore()) {
-    if (!sessionValue) {
-      return null;
-    }
-
-    const record = decodeCookieSession(sessionValue);
-    if (!record || record.expiresAt <= Date.now()) {
-      return null;
-    }
-
-    return studioSessionFromCookieRecord(record);
-  }
-
-  const sessionId = sessionValue;
-
-  if (!sessionId) {
+  if (!sessionValue) {
     return null;
   }
 
-  const record = await readSessionRecord(sessionId);
-  if (!record) {
+  const record = decodeCookieSession(sessionValue);
+  if (!record || record.expiresAt <= Date.now()) {
     return null;
   }
 
-  if (record.expiresAt <= Date.now()) {
-    try {
-      await rm(sessionFile(sessionId), { force: true });
-    } catch {
-      // Ignore cleanup error in read path
-    }
-    return null;
-  }
-
-  return {
-    id: record.id,
-    connectionUri: decrypt(record.encryptedConnectionUri),
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-    expiresAt: record.expiresAt,
-    principal: record.principal,
-    metadata: record.metadata,
-  };
+  return studioSessionFromCookieRecord(record);
 }
 
 export async function refreshStudioSession(sessionId: string): Promise<void> {
-  if (usesCookieSessionStore()) {
-    const cookieStore = await cookies();
-    const value = cookieStore.get(COOKIE_NAME)?.value;
-    const record = value ? decodeCookieSession(value) : null;
+  const cookieStore = await cookies();
+  const value = cookieStore.get(COOKIE_NAME)?.value;
+  const record = value ? decodeCookieSession(value) : null;
 
-    if (!record || record.id !== sessionId || record.expiresAt <= Date.now()) {
-      try {
-        cookieStore.delete(COOKIE_NAME);
-      } catch {
-        // Ignore cookie mutation errors outside action context
-      }
-      return;
+  if (!record || record.id !== sessionId || record.expiresAt <= Date.now()) {
+    try {
+      cookieStore.delete(COOKIE_NAME);
+    } catch {
+      // Ignore cookie mutation errors outside action context
     }
-
-    await writeCookieSession({
-      ...record,
-      updatedAt: Date.now(),
-      expiresAt: Date.now() + SESSION_TTL_MS,
-    });
     return;
   }
 
-  const record = await readSessionRecord(sessionId);
-  if (!record || record.expiresAt <= Date.now()) {
-    await destroyStudioSession(sessionId);
-    return;
-  }
-
-  const refreshedRecord: SessionRecord = {
+  await writeCookieSession({
     ...record,
     updatedAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL_MS,
-  };
-
-  await writeSessionRecord(refreshedRecord);
-
-  const cookieStore = await cookies();
-  try {
-    cookieStore.set(COOKIE_NAME, refreshedRecord.id, cookieOptions(refreshedRecord.expiresAt));
-  } catch {
-    // Ignore cookie mutation errors outside action context
-  }
+  });
 }
 
-export async function destroyStudioSession(sessionId?: string): Promise<void> {
-  const cookieStore = await cookies();
-  const resolvedId = sessionId ?? cookieStore.get(COOKIE_NAME)?.value;
-
+export async function destroyStudioSession(_sessionId?: string): Promise<void> {
   try {
+    const cookieStore = await cookies();
     cookieStore.delete(COOKIE_NAME);
   } catch {
     // In Server Components (GET requests), cookies cannot be mutated.
   }
-
-  if (usesCookieSessionStore() || !resolvedId) {
-    return;
-  }
-
-  await rm(sessionFile(resolvedId), { force: true });
 }

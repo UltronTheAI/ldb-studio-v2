@@ -28,12 +28,10 @@ Then set the generated value as `STUDIO_SESSION_SECRET` in the host dashboard
 and redeploy. Studio validates this at production build time, preventing a
 deployment that would otherwise fail only when a user connects.
 
-Studio automatically uses an encrypted, HTTP-only cookie session store on
-Vercel, where deployment files are read-only. For other hosted multi-instance
-deployments, set `STUDIO_SESSION_DIR` to a mounted, persistent shared directory
-or set `STUDIO_SESSION_STORE=cookie`. Cookie sessions are limited to roughly
-3.8 KB; use a shared database/Redis session-store implementation if connection
-URIs or session data exceed that limit.
+Studio uses an encrypted, HTTP-only cookie session store. Sessions are stored
+securely on the client (browser) using AES-256-GCM encryption with `HttpOnly`,
+`SameSite=Lax`, and `Secure` attributes, making it fully stateless and ready
+for Vercel and serverless hosting without creating local `.sessions` directories.
 
 ## Login modes
 
