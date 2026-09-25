@@ -251,7 +251,6 @@ export async function getStudioSession(): Promise<StudioSession | null> {
 
     const record = decodeCookieSession(sessionValue);
     if (!record || record.expiresAt <= Date.now()) {
-      cookieStore.delete(COOKIE_NAME);
       return null;
     }
 
@@ -266,12 +265,15 @@ export async function getStudioSession(): Promise<StudioSession | null> {
 
   const record = await readSessionRecord(sessionId);
   if (!record) {
-    cookieStore.delete(COOKIE_NAME);
     return null;
   }
 
   if (record.expiresAt <= Date.now()) {
-    await destroyStudioSession(sessionId);
+    try {
+      await rm(sessionFile(sessionId), { force: true });
+    } catch {
+      // Ignore cleanup error in read path
+    }
     return null;
   }
 
@@ -293,7 +295,11 @@ export async function refreshStudioSession(sessionId: string): Promise<void> {
     const record = value ? decodeCookieSession(value) : null;
 
     if (!record || record.id !== sessionId || record.expiresAt <= Date.now()) {
-      cookieStore.delete(COOKIE_NAME);
+      try {
+        cookieStore.delete(COOKIE_NAME);
+      } catch {
+        // Ignore cookie mutation errors outside action context
+      }
       return;
     }
 
@@ -320,14 +326,22 @@ export async function refreshStudioSession(sessionId: string): Promise<void> {
   await writeSessionRecord(refreshedRecord);
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, refreshedRecord.id, cookieOptions(refreshedRecord.expiresAt));
+  try {
+    cookieStore.set(COOKIE_NAME, refreshedRecord.id, cookieOptions(refreshedRecord.expiresAt));
+  } catch {
+    // Ignore cookie mutation errors outside action context
+  }
 }
 
 export async function destroyStudioSession(sessionId?: string): Promise<void> {
   const cookieStore = await cookies();
   const resolvedId = sessionId ?? cookieStore.get(COOKIE_NAME)?.value;
 
-  cookieStore.delete(COOKIE_NAME);
+  try {
+    cookieStore.delete(COOKIE_NAME);
+  } catch {
+    // In Server Components (GET requests), cookies cannot be mutated.
+  }
 
   if (usesCookieSessionStore() || !resolvedId) {
     return;
