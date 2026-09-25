@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { isIP } from "node:net";
+import { parseConnectionString } from "@liorandb/driver";
 
 import {
   isLoopbackHost,
