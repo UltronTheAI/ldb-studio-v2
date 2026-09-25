@@ -43,6 +43,7 @@ import {
   ClaudeSpikeIcon,
   DatabaseIcon,
   HardDriveDownloadIcon,
+  InfoIcon,
   KeyRoundIcon,
   NetworkIcon,
   PanelLeftIcon,
@@ -50,6 +51,7 @@ import {
   SearchIcon,
   SettingsIcon,
   ShieldIcon,
+  TerminalIcon,
   Trash2Icon,
   UsersIcon,
 } from "@/lib/lucide";
@@ -969,8 +971,26 @@ export default async function Home({ searchParams }: PageProps) {
 
                 <form action={connectAction} className="space-y-4" suppressHydrationWarning>
                   {errorMessage ? (
-                    <div className="rounded-lg border border-[#c64545]/30 bg-[#c64545]/10 px-4 py-3 text-xs leading-5 text-[#c64545]">
-                      {errorMessage}
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-[#c64545]/30 bg-[#c64545]/10 px-4 py-3 text-xs leading-5 text-[#c64545]">
+                        {errorMessage}
+                      </div>
+
+                      {errorMessage.includes("Local database detected") ? (
+                        <div className="rounded-lg border border-[#e6dfd8] bg-[#faf9f5] p-3.5 text-xs text-[#3d3d3a] shadow-sm">
+                          <div className="flex items-center gap-1.5 font-semibold text-[#141413]">
+                            <TerminalIcon size={14} className="text-[#cc785c]" />
+                            <span>How to connect a local database</span>
+                          </div>
+                          <p className="mt-1.5 text-[11px] leading-relaxed text-[#6c6a64]">
+                            Hosted Studio runs on the cloud and cannot connect directly to <code className="font-mono text-[#cc785c]">127.0.0.1</code> on your computer. Run Studio locally on your workstation to access local instances:
+                          </p>
+                          <div className="mt-2 flex items-center justify-between rounded bg-[#efe9de] px-3 py-1.5 font-mono text-[11px] text-[#141413]">
+                            <code>liorandb studio</code>
+                            <span className="text-[10px] text-[#6c6a64]">or npm run dev</span>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -982,7 +1002,7 @@ export default async function Home({ searchParams }: PageProps) {
                       id="connectionUri"
                       name="connectionUri"
                       type="password"
-                      placeholder="liorandb://admin:secret@127.0.0.1:8080/main"
+                      placeholder="liorandb://admin:password@swaraj.db.liorandb.com:443/default"
                       className={fieldClassName()}
                       required
                       suppressHydrationWarning
@@ -1002,6 +1022,9 @@ export default async function Home({ searchParams }: PageProps) {
                 <div className="mt-6 rounded-lg border border-[#e6dfd8] bg-[#faf9f5] p-3 text-[11px] text-[#6c6a64]">
                   <span className="font-semibold text-[#141413]">Default format:</span>{" "}
                   <code className="font-mono text-[#cc785c]">liorandb://username:password@host:port/database</code>
+                  <div className="mt-1 text-[10px] text-[#8c8a82]">
+                    (Database name is optional: <code className="font-mono text-[#cc785c]">liorandb://username:password@host:port</code>)
+                  </div>
                 </div>
               </div>
             </div>

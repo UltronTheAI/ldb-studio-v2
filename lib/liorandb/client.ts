@@ -1,4 +1,5 @@
 import { LioranDBClient, type TransportResponseDiagnostics } from "@liorandb/driver";
+import { validateConnectionTarget } from "./connection";
 
 export interface DiagnosticEvent {
   readonly durationMs: number;
@@ -12,7 +13,11 @@ export interface DiagnosticEvent {
 export async function createLioranClient(
   connectionUri: string,
   diagnostics?: DiagnosticEvent[],
+  options?: { readonly allowLocal?: boolean },
 ): Promise<LioranDBClient> {
+  // Validate the target address before attempting any network connection
+  validateConnectionTarget(connectionUri, options);
+
   const client = new LioranDBClient(connectionUri, {
     logoutOnClose: false,
   });
@@ -35,9 +40,10 @@ export async function createLioranClient(
 export async function withLioranClient<T>(
   connectionUri: string,
   callback: (client: LioranDBClient, diagnostics: DiagnosticEvent[]) => Promise<T>,
+  options?: { readonly allowLocal?: boolean },
 ): Promise<T> {
   const diagnostics: DiagnosticEvent[] = [];
-  const client = await createLioranClient(connectionUri, diagnostics);
+  const client = await createLioranClient(connectionUri, diagnostics, options);
 
   try {
     return await callback(client, diagnostics);

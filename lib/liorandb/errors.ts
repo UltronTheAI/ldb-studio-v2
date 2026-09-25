@@ -21,6 +21,34 @@ import {
   ValidationError,
 } from "@liorandb/driver";
 
+export class LocalTargetNotReachableError extends Error {
+  readonly code = "LDB_LOCAL_TARGET_HOSTED_STUDIO";
+  readonly targetHost: string;
+  readonly targetPort: number;
+
+  constructor(host: string, port: number) {
+    super(
+      `Local database detected. LioranDB Studio is hosted remotely and cannot access ${host}:${port} on your computer directly. To connect to a local database, run Studio locally via the LioranDB CLI (liorandb studio) or use a secure local bridge tunnel.`,
+    );
+    this.name = "LocalTargetNotReachableError";
+    this.targetHost = host;
+    this.targetPort = port;
+  }
+}
+
+export class ProhibitedTargetError extends Error {
+  readonly code = "LDB_PROHIBITED_TARGET";
+  readonly targetHost: string;
+
+  constructor(host: string) {
+    super(
+      `Connections to restricted internal or cloud metadata addresses (${host}) are prohibited for security.`,
+    );
+    this.name = "ProhibitedTargetError";
+    this.targetHost = host;
+  }
+}
+
 export interface StudioErrorDescriptor {
   readonly title: string;
   readonly message: string;
@@ -29,11 +57,29 @@ export interface StudioErrorDescriptor {
   readonly isAuthorizationError?: boolean;
 }
 
-function redactMessage(message: string): string {
-  return message.replace(/:\/\/([^:@]+):([^@]+)@/g, "://$1:***@");
+export function redactMessage(message: string): string {
+  return message
+    .replace(/:\/\/([^:@\s]+):([^@\s]+)@/g, "://$1:***@")
+    .replace(/(?:password|token|secret|auth)=([^&\s]+)/gi, "$1=***");
 }
 
 export function mapStudioError(error: unknown): StudioErrorDescriptor {
+  if (error instanceof LocalTargetNotReachableError) {
+    return {
+      title: "Local database detected",
+      message: error.message,
+      code: error.code,
+    };
+  }
+
+  if (error instanceof ProhibitedTargetError) {
+    return {
+      title: "Restricted network target",
+      message: error.message,
+      code: error.code,
+    };
+  }
+
   if (
     error instanceof ApiError &&
     error.serverCode?.toUpperCase() === "STORAGE" &&

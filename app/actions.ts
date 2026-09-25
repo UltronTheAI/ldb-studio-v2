@@ -18,7 +18,10 @@ import type {
   UpdateUserInput,
 } from "@liorandb/driver";
 
-import { getSanitizedConnectionMetadata } from "@/lib/liorandb/connection";
+import {
+  getSanitizedConnectionMetadata,
+  validateConnectionTarget,
+} from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { createDatabaseWithDriverFallback } from "@/lib/liorandb/database";
 import { mapStudioError } from "@/lib/liorandb/errors";
@@ -181,7 +184,7 @@ export async function connectAction(formData: FormData): Promise<void> {
   const connectionUri = formString(formData, "connectionUri");
 
   try {
-    const metadata = getSanitizedConnectionMetadata(connectionUri);
+    const metadata = validateConnectionTarget(connectionUri);
     const principal = await withLioranClient(connectionUri, async (client) => client.me());
     await createStudioSession({ connectionUri, principal, metadata });
   } catch (error) {
