@@ -92,6 +92,16 @@ function parseHostAndDb(uri: string): { host: string; port: string; db: string }
   }
 }
 
+function formatTimestamp(timestamp: number): string {
+  const d = new Date(timestamp);
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const hours = String(d.getUTCHours()).padStart(2, "0");
+  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes} UTC`;
+}
+
 interface ConnectionPortalProps {
   connectAction: (formData: FormData) => Promise<void>;
   errorMessage?: string;
@@ -560,9 +570,11 @@ export function ConnectionPortal({
                           )}
                         </div>
                         {conn.lastUsedAt && (
-                          <div className="mt-1 font-mono text-[10px] text-[#888888]">
-                            Last connected: {new Date(conn.lastUsedAt).toLocaleDateString()} at{" "}
-                            {new Date(conn.lastUsedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          <div
+                            className="mt-1 font-mono text-[10px] text-[#888888]"
+                            suppressHydrationWarning
+                          >
+                            Last connected: {formatTimestamp(conn.lastUsedAt)}
                           </div>
                         )}
                       </div>
