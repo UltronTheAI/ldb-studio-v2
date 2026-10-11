@@ -53,11 +53,9 @@ import {
 } from "@/lib/lucide";
 import { destroyStudioSession, getStudioSession } from "@/lib/liorandb/session";
 import {
-  SthashtaLogo,
-  RahulStickman,
-  RaviStickman,
-  HeroMatchIllustration,
-  InteractiveFounderMatchStage,
+  LioranDBLogo,
+  LioranDBClusterIllustration,
+  InteractiveQueryStage,
   SketchUnderline,
 } from "@/lib/sketch-components";
 
@@ -758,7 +756,7 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
         <aside className="sidebar-scroll flex flex-col border-r-2 border-[#111111] bg-white p-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div className="mb-8">
-            <SthashtaLogo size={24} />
+            <LioranDBLogo size={26} />
             <h1 className="mt-4 font-sans text-2xl font-bold tracking-tight text-[#000000]">Workspace</h1>
             <p className="mt-1 text-xs leading-5 text-[#666666]">
               Session for {session.metadata.host}:{session.metadata.port}
@@ -851,24 +849,24 @@ export default async function Home({ searchParams }: PageProps) {
         <header className="sticky top-0 z-50 border-b-2 border-[#111111] bg-white">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
             <div className="flex items-center gap-3">
-              <SthashtaLogo size={26} />
+              <LioranDBLogo size={26} />
               <span className="hidden sm:inline-block sketch-badge">
-                LIVE FOUNDERS
+                CONTROL PLANE
               </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#111111]">
-              <a href="#how-it-works" className="hover:underline underline-offset-4 decoration-2">
-                How It Works
+              <a href="#connect" className="hover:underline underline-offset-4 decoration-2">
+                Connect
               </a>
-              <a href="#stage" className="hover:underline underline-offset-4 decoration-2">
-                Live Stage
+              <a href="#sandbox" className="hover:underline underline-offset-4 decoration-2">
+                Query Sandbox
               </a>
-              <a href="#safety" className="hover:underline underline-offset-4 decoration-2">
-                Safety
+              <a href="#features" className="hover:underline underline-offset-4 decoration-2">
+                Features
               </a>
-              <a href="#why-sthashta" className="hover:underline underline-offset-4 decoration-2">
-                Why Sthashta
+              <a href="#architecture" className="hover:underline underline-offset-4 decoration-2">
+                Architecture
               </a>
             </nav>
 
@@ -877,25 +875,20 @@ export default async function Home({ searchParams }: PageProps) {
                 href="#connect"
                 className="sketch-btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider"
               >
-                Meet a Founder →
+                Quick Connect →
               </a>
             </div>
           </div>
         </header>
 
-        {/* Hero Section: Editorial Display & Founder Match Illustration */}
+        {/* Hero Section: Editorial Display & Cluster Topology Illustration */}
         <section className="mx-auto max-w-6xl px-6 py-12 lg:py-20">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             {/* Left Column: Editorial Display */}
             <div className="space-y-6 lg:col-span-6">
-              <div className="inline-flex items-center gap-2 rounded-[5px] border border-[#111111] bg-white px-3 py-1 font-mono text-xs font-bold tracking-wider uppercase text-[#111111]">
-                <span className="h-2 w-2 rounded-full bg-[#111111]" />
-                FOUNDER-TO-FOUNDER NETWORK
-              </div>
-
               <div>
                 <h1 className="font-sans text-4xl font-bold leading-[1.05] tracking-tight text-[#000000] sm:text-5xl lg:text-6xl">
-                  Meet founders you wouldn&apos;t meet otherwise.
+                  Meet your database thinking partner.
                 </h1>
                 <div className="mt-2 w-48">
                   <SketchUnderline />
@@ -903,25 +896,25 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
 
               <p className="max-w-xl text-base sm:text-lg leading-relaxed text-[#333333]">
-                Random live 1:1 conversations for people who are actually building. Talk, connect, exchange contacts, move on. No vanity feeds, no pitch decks, no corporate algorithms.
+                A full-screen management console and control plane for LioranDB deployments. Browse collections, evaluate live queries, configure granular RBAC security, and inspect Raft cluster topologies with editorial paper &amp; ink clarity.
               </p>
 
               <div className="grid gap-3 pt-2 sm:grid-cols-2 font-mono text-xs text-[#111111]">
                 <div className="flex items-center gap-2.5 rounded-[5px] border border-[#111111] bg-white p-2.5 shadow-[2px_2px_0px_#111111]">
                   <span className="font-bold">✓</span>
-                  <span>Pure 1:1 Live Video Match</span>
+                  <span>Raft Distributed Cluster</span>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-[5px] border border-[#111111] bg-white p-2.5 shadow-[2px_2px_0px_#111111]">
                   <span className="font-bold">✓</span>
-                  <span>Mutual Opt-in Paper Slips</span>
+                  <span>Multistage Aggregations</span>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-[5px] border border-[#111111] bg-white p-2.5 shadow-[2px_2px_0px_#111111]">
                   <span className="font-bold">✓</span>
-                  <span>Zero Social Feeds or Likes</span>
+                  <span>Granular RBAC Governance</span>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-[5px] border border-[#111111] bg-white p-2.5 shadow-[2px_2px_0px_#111111]">
                   <span className="font-bold">✓</span>
-                  <span>Light Mode Sketchbook UI</span>
+                  <span>AES-256 Session Isolation</span>
                 </div>
               </div>
 
@@ -930,20 +923,20 @@ export default async function Home({ searchParams }: PageProps) {
                   href="#connect"
                   className="sketch-btn-primary px-6 py-3 text-sm font-bold uppercase tracking-wider"
                 >
-                  Meet a Founder
+                  Connect to Studio
                 </a>
                 <a
-                  href="#how-it-works"
+                  href="#sandbox"
                   className="sketch-btn-secondary px-6 py-3 text-sm font-bold uppercase tracking-wider"
                 >
-                  How It Works
+                  Try Query Sandbox
                 </a>
               </div>
             </div>
 
-            {/* Right Column: Signature Hero Match Illustration (Rahul + Ravi) */}
+            {/* Right Column: Sketched Technical Architecture Illustration */}
             <div className="lg:col-span-6">
-              <HeroMatchIllustration />
+              <LioranDBClusterIllustration />
             </div>
           </div>
         </section>
@@ -958,10 +951,10 @@ export default async function Home({ searchParams }: PageProps) {
                     ACCESS PORTAL
                   </span>
                   <h2 className="mt-2 font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
-                    Connect to Studio & Cluster
+                    Connect to LioranDB Instance
                   </h2>
                   <p className="mt-1 text-sm text-[#666666]">
-                    Provide a connection URI to enter the interactive database & founder workspace.
+                    Provide a connection URI to enter the full management console and query workspace.
                   </p>
                 </div>
                 <div className="font-mono text-xs text-[#111111] border border-[#111111] px-2.5 py-1 rounded bg-white">
@@ -1031,236 +1024,147 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* Signature Interactive Founder Match Stage */}
-        <section id="stage" className="border-t-2 border-[#111111] bg-white py-20">
+        {/* Interactive Query Sandbox Section */}
+        <section id="sandbox" className="border-t-2 border-[#111111] bg-white py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-10">
               <span className="sketch-badge">
-                INTERACTIVE WIREFRAME
+                INTERACTIVE SANDBOX
               </span>
               <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
-                The Founder Match Stage
+                Interactive Query Stage
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
-                The signature interaction of Sthashta: a hand-drawn video-call interface that becomes live.
+                Test the LioranDB query evaluation engine directly in your browser. Inspect stage pipelines, index match execution times, and document projections in paper-and-ink clarity.
               </p>
             </div>
 
-            <InteractiveFounderMatchStage />
+            <InteractiveQueryStage />
           </div>
         </section>
 
-        {/* How It Works Section: 3 Large Sketch Panels */}
-        <section id="how-it-works" className="border-t-2 border-[#111111] bg-[#FAFAFA] py-20">
+        {/* How It Works / Engine Capabilities: 3 Large Sketch Panels */}
+        <section id="features" className="border-t-2 border-[#111111] bg-[#FAFAFA] py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
               <span className="sketch-badge">
-                THE LOOP
+                ENGINE CAPABILITIES
               </span>
               <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
-                How Sthashta Works
+                Built for High-Throughput Workloads
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
-                No endless scrolling. Talk face-to-face with someone who understands startup struggle.
+                Explore the complete control plane: from low-level Raft consensus logs to schema-agnostic document queries.
               </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3 relative">
-              {/* Panel 1: Enter */}
+              {/* Panel 1: Data Engine */}
               <div className="sketch-card p-6 flex flex-col justify-between min-h-[260px]">
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">01</span>
-                    <span className="sketch-badge">ENTER</span>
+                    <span className="sketch-badge">DATA ENGINE</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
-                    Tell Sthashta what you build
+                    Collections &amp; Aggregations
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[#666666]">
-                    Set your venture name, stage, and focus. No pitch deck or traction metrics needed.
+                    Full document lifecycle management. Inspect nested structures, execute multistage pipelines ($match, $group, $sort), and optimize index coverage.
                   </p>
                 </div>
-                <div className="mt-6 border-t border-[#111111] pt-3 font-sketch-note text-sm text-[#111111]">
-                  &ldquo;Building an AI compiler...&rdquo;
+                <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
+                  <code>db.collection(&apos;metrics&apos;).aggregate([...])</code>
                 </div>
               </div>
 
-              {/* Panel 2: Match */}
+              {/* Panel 2: RBAC Security */}
               <div className="sketch-card p-6 flex flex-col justify-between min-h-[260px]">
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">02</span>
-                    <span className="sketch-badge">MATCH</span>
+                    <span className="sketch-badge">SECURITY</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
-                    Pair with another founder live
+                    Granular RBAC Governance
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[#666666]">
-                    The engine finds someone else online right now. You drop straight into a 1:1 video conversation.
+                    Define custom roles with strict permission matrices across namespaces. Manage operator credentials, rotate passwords, and inspect active sessions.
                   </p>
                 </div>
-                <div className="mt-6 border-t border-[#111111] pt-3 font-sketch-note text-sm text-[#111111]">
-                  &ldquo;Hey, what are you working on?&rdquo;
+                <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
+                  <code>GRANT readWrite ON telemetry TO svc_analytics</code>
                 </div>
               </div>
 
-              {/* Panel 3: Connect */}
+              {/* Panel 3: Cluster Engine */}
               <div className="sketch-card p-6 flex flex-col justify-between min-h-[260px]">
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">03</span>
-                    <span className="sketch-badge">CONNECT</span>
+                    <span className="sketch-badge">CONSENSUS</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
-                    Exchange contacts or move on
+                    Raft Consensus &amp; Partitions
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[#666666]">
-                    If both founders click &ldquo;Exchange Card&rdquo;, your details are shared. Otherwise, skip cleanly.
+                    Monitor real-time node health, heartbeat latency, log replication lag, partition placements, and snapshot compaction across distributed topologies.
                   </p>
                 </div>
-                <div className="mt-6 border-t border-[#111111] pt-3 font-sketch-note text-sm text-[#111111]">
-                  &ldquo;Let&apos;s keep in touch!&rdquo;
+                <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
+                  <code>Leader Term: 42 • Quorum: 3/3 Healthy</code>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Why Sthashta Section: The Founder Sketch Story */}
-        <section id="why-sthashta" className="border-t-2 border-[#111111] bg-white py-20">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
-              <div className="space-y-6 lg:col-span-6">
-                <span className="sketch-badge">
-                  WHY STHASHTA
-                </span>
-                <h2 className="font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
-                  Founding is lonely. Social feeds don&apos;t fix that.
-                </h2>
-                <p className="text-base leading-relaxed text-[#333333]">
-                  Most social products encourage performative updates, vanity milestones, and endless doomscrolling. Sthashta removes the audience entirely.
-                </p>
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="p-3 border-2 border-[#111111] rounded-[7px] bg-white shadow-[2px_2px_0px_#111111]">
-                    <strong>NO AUDIENCE:</strong> Just you and another founder in a private room.
-                  </div>
-                  <div className="p-3 border-2 border-[#111111] rounded-[7px] bg-white shadow-[2px_2px_0px_#111111]">
-                    <strong>NO PITCHING:</strong> No investors, no sponsors, no demo day pressure.
-                  </div>
-                  <div className="p-3 border-2 border-[#111111] rounded-[7px] bg-white shadow-[2px_2px_0px_#111111]">
-                    <strong>HIGH BANDWIDTH:</strong> Real voice and video beats text DMs every time.
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-6 flex justify-center">
-                <div className="sketch-card p-8 text-center max-w-md w-full">
-                  <div className="flex justify-center items-center gap-6 py-4">
-                    <RahulStickman size={130} />
-                    <div className="font-sketch-note text-sm text-[#111111]">
-                      <svg width="32" height="16" viewBox="0 0 32 16" fill="none">
-                        <path d="M2 8 C10 2, 22 14, 30 8" stroke="#111111" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                      <span>high bandwidth</span>
-                    </div>
-                    <RaviStickman size={130} />
-                  </div>
-                  <div className="border-t-2 border-[#111111] pt-4 font-mono text-xs text-[#111111]">
-                    &ldquo;Sthashta — where founders meet.&rdquo;
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Safety Section */}
-        <section id="safety" className="border-t-2 border-[#111111] bg-[#FAFAFA] py-20">
+        {/* Architecture & Infrastructure Section */}
+        <section id="architecture" className="border-t-2 border-[#111111] bg-white py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
               <span className="sketch-badge">
-                SAFETY &amp; MODERATION
+                INFRASTRUCTURE &amp; SECURITY
               </span>
               <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
-                Built with Safety First
+                Engineered with Zero-Compromise Security
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
-                Because meetings are live, your comfort and boundaries are strictly protected.
+                LioranDB Studio is built for deterministic reliability, strict session boundaries, and operational safety.
               </p>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <div className="sketch-card p-5">
-                <div className="mb-3 font-mono text-lg font-bold">[ REPORT ]</div>
-                <h3 className="font-sans text-base font-bold text-[#000000]">One-Tap Report</h3>
+                <div className="mb-3 font-mono text-lg font-bold">[ PROTOCOL ]</div>
+                <h3 className="font-sans text-base font-bold text-[#000000]">Direct Binary Framing</h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
-                  Instant flag for inappropriate behavior or sales pitches. Zero tolerance for spam.
+                  Low-latency TCP and TLS 1.3 framing powered by @liorandb/driver. No unnecessary HTTP proxy layers.
                 </p>
               </div>
 
               <div className="sketch-card p-5">
-                <div className="mb-3 font-mono text-lg font-bold">[ BLOCK ]</div>
-                <h3 className="font-sans text-base font-bold text-[#000000]">Permanent Block</h3>
+                <div className="mb-3 font-mono text-lg font-bold">[ ENCRYPTION ]</div>
+                <h3 className="font-sans text-base font-bold text-[#000000]">AES-256-GCM Sessions</h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
-                  Never get matched with that individual again. Block takes effect across all clusters.
+                  Connection credentials remain sealed in encrypted httpOnly cookies. Never persisted into browser storage.
                 </p>
               </div>
 
               <div className="sketch-card p-5">
-                <div className="mb-3 font-mono text-lg font-bold">[ LEAVE ]</div>
-                <h3 className="font-sans text-base font-bold text-[#000000]">Leave Anytime</h3>
+                <div className="mb-3 font-mono text-lg font-bold">[ BACKUPS ]</div>
+                <h3 className="font-sans text-base font-bold text-[#000000]">Automated Snapshots</h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
-                  Not clicking? Press skip anytime. No explanation needed and no penalty applied.
+                  Trigger point-in-time backup jobs, verify checksum integrity, and initiate coordinated cluster restore pipelines.
                 </p>
               </div>
 
               <div className="sketch-card p-5">
-                <div className="mb-3 font-mono text-lg font-bold">[ PRIVACY ]</div>
-                <h3 className="font-sans text-base font-bold text-[#000000]">Mutual Contact Share</h3>
+                <div className="mb-3 font-mono text-lg font-bold">[ AUDIT ]</div>
+                <h3 className="font-sans text-base font-bold text-[#000000]">Live Node Diagnostics</h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
-                  Personal details remain hidden until both founders explicitly opt-in to swap cards.
+                  Real-time diagnostic event streams, memory footprint graphs, and connection pool saturation metrics.
                 </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Launch / Waitlist CTA Band */}
-        <section id="waitlist" className="border-t-2 border-[#111111] bg-white py-20">
-          <div className="mx-auto max-w-4xl px-6 text-center">
-            <span className="sketch-badge">
-              LAUNCH 11 NOVEMBER 2026
-            </span>
-            <h2 className="mt-4 font-sans text-4xl sm:text-5xl font-bold tracking-tight text-[#000000]">
-              Sthashta is going live.
-            </h2>
-            <p className="mt-3 text-base text-[#666666] max-w-xl mx-auto">
-              Get invited to the founding cohorts. Connect with founders building across India and globally.
-            </p>
-
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="founder@yourcompany.com"
-                className={fieldClassName()}
-              />
-              <button
-                type="button"
-                className="sketch-btn-primary w-full sm:w-auto shrink-0 px-6 py-3 text-xs font-bold uppercase tracking-wider"
-              >
-                Join Waitlist
-              </button>
-            </div>
-
-            <div className="mt-10 flex items-center justify-center gap-12">
-              <div className="text-center">
-                <RahulStickman size={90} />
-                <div className="font-sketch-note text-xs mt-1 text-[#666666]">Rahul</div>
-              </div>
-              <div className="w-24 border-b-2 border-dashed border-[#111111]" />
-              <div className="text-center">
-                <RaviStickman size={90} />
-                <div className="font-sketch-note text-xs mt-1 text-[#666666]">Ravi</div>
               </div>
             </div>
           </div>
@@ -1270,13 +1174,13 @@ export default async function Home({ searchParams }: PageProps) {
         <footer className="border-t-2 border-[#111111] bg-white py-12 text-xs text-[#666666]">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 sm:flex-row">
             <div className="flex items-center gap-3">
-              <SthashtaLogo size={22} />
+              <LioranDBLogo size={22} />
               <span className="font-mono text-xs font-bold text-[#111111]">
-                STHASHTA STUDIO
+                LIORANDB STUDIO
               </span>
             </div>
             <div className="font-mono text-center sm:text-right">
-              Sthashta — where founders meet. • Pure light mode paper and ink.
+              LioranDB Studio • Management Console &amp; Control Plane • Pure light mode sketchbook.
             </div>
           </div>
         </footer>
@@ -1360,7 +1264,7 @@ export default async function Home({ searchParams }: PageProps) {
         {/* Sidebar */}
         <aside className="sidebar-scroll flex flex-col border-r-2 border-[#111111] bg-white p-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div className="mb-6">
-            <SthashtaLogo size={24} />
+            <LioranDBLogo size={24} />
             <h1 className="mt-3 font-sans text-2xl font-bold tracking-tight text-[#000000]">
               Workspace
             </h1>
@@ -1426,7 +1330,7 @@ export default async function Home({ searchParams }: PageProps) {
           <div className="sketch-card p-5 flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="font-mono text-xs font-bold uppercase tracking-wider text-[#666666]">
-                STHASHTA STUDIO / {section}
+                LIORANDB STUDIO / {section}
               </div>
               <h2 className="mt-1 font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
                 {section === "databases"

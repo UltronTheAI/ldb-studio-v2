@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sthashta — Where Founders Meet",
-  description: "Sthashta is a live founder-meetup platform with a hand-made paper-and-ink visual language.",
+  title: "LioranDB Studio",
+  description: "Secure web management console and control plane for LioranDB deployments.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
