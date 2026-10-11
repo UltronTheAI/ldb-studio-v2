@@ -28,6 +28,7 @@ import type {
 import { connectAction, logoutAction, studioMutationAction } from "./actions";
 import { ConnectionPortal } from "./connection-portal";
 import { StudioClientEffects } from "./studio-client-effects";
+import { ThemeToggle } from "./theme-toggle";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { mapStudioError } from "@/lib/liorandb/errors";
@@ -518,14 +519,22 @@ function TerminalBlock({
         <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#111111]">
           {title}
         </span>
-        <span className="font-mono text-[10px] text-[#666666]">[LOG]</span>
+        <span className="font-mono text-[10px] text-[#059669] font-bold">[LOG]</span>
       </div>
       <div className="editor-scroll space-y-2 overflow-x-auto p-4 font-mono text-xs leading-6 text-[#111111]">
-        {lines.map((line, index) => (
-          <div key={`${title}-${index}`} className="break-all">
-            {line}
-          </div>
-        ))}
+        {lines.map((line, index) => {
+          const trimmed = line.trim();
+          const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+          return (
+            <div key={`${title}-${index}`} className="break-all">
+              {isJson ? (
+                <span dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(line) }} />
+              ) : (
+                <span>{line}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -546,7 +555,7 @@ function DocumentCard({
           <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#666666]">
             Document #{index + 1}
           </div>
-          <div className="font-mono text-sm font-bold text-[#000000]">
+          <div className="font-mono text-sm font-bold text-[#2563EB]">
             {String(value._id ?? `row-${index + 1}`)}
           </div>
         </div>
@@ -557,16 +566,27 @@ function DocumentCard({
       <div className="grid gap-3 md:grid-cols-2">
         {entries.map(([key, fieldValue]) => (
           <div key={key} className="rounded-[5px] border border-[#111111] bg-[#FAFAFA] p-3">
-            <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#111111]">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#7C3AED]">
               {key}
             </div>
             <div className="mt-1 text-sm text-[#111111]">
               {typeof fieldValue === "object" && fieldValue !== null ? (
-                <pre className="editor-scroll overflow-x-auto rounded border border-[#111111] bg-white p-2 font-mono text-xs leading-5 text-[#111111]">
-                  {prettyJson(fieldValue)}
-                </pre>
+                <pre
+                  className="editor-scroll overflow-x-auto rounded border border-[#111111] bg-white p-2 font-mono text-xs leading-5 text-[#111111]"
+                  dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(fieldValue) }}
+                />
               ) : (
-                <span className="font-mono text-xs font-semibold">{String(fieldValue)}</span>
+                <span className={`font-mono text-xs font-semibold ${
+                  typeof fieldValue === "number"
+                    ? "text-[#D97706]"
+                    : typeof fieldValue === "boolean"
+                    ? "text-[#DC2626]"
+                    : fieldValue === null
+                    ? "text-[#6B7280] italic"
+                    : "text-[#059669]"
+                }`}>
+                  {typeof fieldValue === "string" ? `"${fieldValue}"` : String(fieldValue)}
+                </span>
               )}
             </div>
           </div>
@@ -870,6 +890,7 @@ export default async function Home({ searchParams }: PageProps) {
             </nav>
 
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               <a
                 href="#connect"
                 className="sketch-btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider"
@@ -1000,7 +1021,14 @@ export default async function Home({ searchParams }: PageProps) {
                   </p>
                 </div>
                 <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
-                  <code>db.collection(&apos;metrics&apos;).aggregate([...])</code>
+                  <code className="text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] px-2 py-1 rounded inline-block">
+                    <span className="text-[#2563EB] font-bold">db.collection</span>
+                    <span className="text-[#111111]">(</span>
+                    <span className="text-[#059669]">&apos;metrics&apos;</span>
+                    <span className="text-[#111111]">).</span>
+                    <span className="text-[#7C3AED] font-bold">aggregate</span>
+                    <span className="text-[#111111]">([...])</span>
+                  </code>
                 </div>
               </div>
 
@@ -1019,7 +1047,14 @@ export default async function Home({ searchParams }: PageProps) {
                   </p>
                 </div>
                 <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
-                  <code>GRANT readWrite ON telemetry TO svc_analytics</code>
+                  <code className="text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] px-2 py-1 rounded inline-block">
+                    <span className="text-[#7C3AED] font-bold">GRANT </span>
+                    <span className="text-[#059669] font-bold">readWrite </span>
+                    <span className="text-[#7C3AED] font-bold">ON </span>
+                    <span className="text-[#2563EB] font-bold">telemetry </span>
+                    <span className="text-[#7C3AED] font-bold">TO </span>
+                    <span className="text-[#D97706] font-bold">svc_analytics</span>
+                  </code>
                 </div>
               </div>
 
@@ -1038,7 +1073,12 @@ export default async function Home({ searchParams }: PageProps) {
                   </p>
                 </div>
                 <div className="mt-6 border-t border-[#111111] pt-3 font-mono text-xs text-[#111111]">
-                  <code>Leader Term: 42 • Quorum: 3/3 Healthy</code>
+                  <code className="text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-1 rounded inline-block">
+                    <span className="text-[#2563EB] font-bold">Leader Term: </span>
+                    <span className="text-[#D97706] font-bold">42</span>
+                    <span className="text-[#64748B]"> • </span>
+                    <span className="text-[#059669] font-bold">Quorum: 3/3 Healthy</span>
+                  </code>
                 </div>
               </div>
             </div>
@@ -1236,7 +1276,8 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </details>
 
-          <div className="sticky bottom-0 mt-auto pt-6">
+          <div className="sticky bottom-0 mt-auto pt-6 space-y-2">
+            <ThemeToggle showLabel={true} className="w-full py-2" />
             <form action={logoutAction}>
               <button
                 type="submit"
@@ -1265,6 +1306,7 @@ export default async function Home({ searchParams }: PageProps) {
               </h2>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle showLabel={false} />
               <span className="sketch-badge flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#111111]" />
                 LIVE • NODE {studioData.live?.node_id ?? "1"}

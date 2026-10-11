@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { syntaxHighlightJson } from "@/lib/liorandb/json";
 
 // LioranDB Studio Logo mark: Database cluster node glyph
 export function LioranDBLogo({
@@ -126,14 +127,33 @@ export function LioranDBClusterIllustration({ className = "" }: { className?: st
         {/* Live Query Console Snippet */}
         <div className="mt-4 rounded-[7px] border-2 border-[#111111] bg-[#FAFAFA] p-3 font-mono text-xs text-[#111111]">
           <div className="flex items-center justify-between text-[11px] text-[#666666] border-b border-[#D0D0D0] pb-1.5 mb-2">
-            <span>$ lioran-cli --eval</span>
-            <span className="text-[#111111] font-bold">0.42ms execution</span>
+            <span className="text-[#059669] font-bold">$ lioran-cli --eval</span>
+            <span className="text-[#D97706] font-bold">0.42ms execution</span>
           </div>
-          <div className="text-[#111111] font-bold">
-            db.users.find(&#123; status: &quot;active&quot; &#125;).sort(&#123; created_at: -1 &#125;)
+          <div className="text-sm font-semibold">
+            <span className="text-[#2563EB] font-bold">db</span>
+            <span className="text-[#111111]">.</span>
+            <span className="text-[#7C3AED] font-bold">users</span>
+            <span className="text-[#111111]">.</span>
+            <span className="text-[#2563EB] font-bold">find</span>
+            <span className="text-[#111111]">(&#123; </span>
+            <span className="text-[#7C3AED] font-semibold">status</span>
+            <span className="text-[#111111]">: </span>
+            <span className="text-[#059669] font-semibold">&quot;active&quot;</span>
+            <span className="text-[#111111]"> &#125;).</span>
+            <span className="text-[#2563EB] font-bold">sort</span>
+            <span className="text-[#111111]">(&#123; </span>
+            <span className="text-[#7C3AED] font-semibold">created_at</span>
+            <span className="text-[#111111]">: </span>
+            <span className="text-[#D97706] font-bold">-1</span>
+            <span className="text-[#111111]"> &#125;)</span>
           </div>
-          <div className="text-[#666666] text-[11px] mt-1">
-            =&gt; 250 documents matched • compound index `idx_status_created` hit
+          <div className="text-[11px] mt-1.5">
+            <span className="text-[#64748B] font-bold">=&gt; </span>
+            <span className="text-[#059669] font-bold">250 documents matched</span>
+            <span className="text-[#64748B]"> • compound index </span>
+            <code className="text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] px-1 py-0.5 rounded text-[10px]">idx_status_created</code>
+            <span className="text-[#059669] font-bold"> hit</span>
           </div>
         </div>
 
@@ -259,12 +279,15 @@ export function InteractiveQueryStage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between font-mono text-xs text-[#666666]">
             <span>OUTPUT RESULTS</span>
-            <span className="font-bold text-[#111111]">2 matched • 0.38ms</span>
+            <span className="font-bold text-[#059669]">2 matched • <span className="text-[#D97706]">0.38ms</span></span>
           </div>
-          <pre className="h-[175px] overflow-auto rounded-[7px] border-2 border-[#111111] bg-[#FAFAFA] p-3 font-mono text-xs leading-5 text-[#111111] shadow-[2px_2px_0px_#111111]">
-            {JSON.stringify(sampleResults[activeTab], null, 2)}
-          </pre>
-          <div className="font-mono text-[11px] text-[#666666] text-right">
+          <pre
+            className="editor-scroll h-[175px] overflow-auto rounded-[7px] border-2 border-[#111111] bg-white p-3 font-mono text-xs leading-5 text-[#111111] shadow-[2px_2px_0px_#111111]"
+            dangerouslySetInnerHTML={{
+              __html: syntaxHighlightJson(sampleResults[activeTab]),
+            }}
+          />
+          <div className="font-mono text-[11px] text-[#059669] text-right font-medium">
             ✓ Result streamed directly from @liorandb/driver
           </div>
         </div>

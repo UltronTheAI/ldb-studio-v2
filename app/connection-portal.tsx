@@ -102,6 +102,39 @@ function formatTimestamp(timestamp: number): string {
   return `${year}-${month}-${day} ${hours}:${minutes} UTC`;
 }
 
+function renderColoredUri(uri: string, isRevealed: boolean) {
+  const display = isRevealed ? uri : maskConnectionString(uri);
+  const match = display.match(/^([a-zA-Z0-9+.-]+:\/\/)(?:([^@]+)@)?([^/:?#]+)(?::(\d+))?(?:\/(.*))?$/);
+  if (!match) {
+    return <span className="text-[#2563EB] font-semibold">{display}</span>;
+  }
+  const [, scheme, userPass, host, port, db] = match;
+  return (
+    <span>
+      <span className="text-[#2563EB] font-bold">{scheme}</span>
+      {userPass && (
+        <>
+          <span className="text-[#7C3AED] font-semibold">{userPass}</span>
+          <span className="text-[#64748B]">@</span>
+        </>
+      )}
+      <span className="text-[#059669] font-bold">{host}</span>
+      {port && (
+        <>
+          <span className="text-[#64748B]">:</span>
+          <span className="text-[#D97706] font-bold">{port}</span>
+        </>
+      )}
+      {db !== undefined && (
+        <>
+          <span className="text-[#64748B]">/</span>
+          <span className="text-[#DC2626] font-semibold">{db}</span>
+        </>
+      )}
+    </span>
+  );
+}
+
 interface ConnectionPortalProps {
   connectAction: (formData: FormData) => Promise<void>;
   errorMessage?: string;
@@ -611,8 +644,8 @@ export function ConnectionPortal({
 
                     {/* URI Bar with Reveal & Copy Controls */}
                     <div className="flex items-center justify-between gap-2 rounded border border-[#111111] bg-[#FAFAFA] px-3 py-2 font-mono text-xs">
-                      <div className="truncate text-[#111111] select-all">
-                        {isRevealed ? conn.uri : maskConnectionString(conn.uri)}
+                      <div className="truncate select-all">
+                        {renderColoredUri(conn.uri, isRevealed)}
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0 text-[#666666]">

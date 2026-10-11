@@ -88,14 +88,18 @@
 }
 
 html {
-  background-color: #FFFFFF;
-  color: #111111;
+  background-color: var(--canvas);
+  color: var(--ink);
   color-scheme: light;
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
 body {
-  background-color: #FFFFFF;
-  color: #333333;
+  background-color: var(--canvas);
+  color: var(--body);
   font-family: var(--font-sans);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -251,29 +255,299 @@ textarea {
   background: #333333;
 }
 
-/* Sthashta Monochrome JSON syntax highlighting */
+/* Colorful JSON & Code Syntax Highlighting */
 .json-key {
-  color: #000000;
+  color: #7C3AED; /* Vibrant Violet / Purple */
   font-weight: 600;
 }
 
-.json-string {
-  color: #333333;
+.json-operator {
+  color: #2563EB; /* Deep Blue for $ operators like $match, $group, $set */
+  font-weight: 700;
 }
 
-.json-number {
-  color: #000000;
+.json-string {
+  color: #059669; /* Emerald Green */
   font-weight: 500;
 }
 
+.json-number {
+  color: #D97706; /* Warm Amber / Orange */
+  font-weight: 600;
+}
+
 .json-boolean {
-  color: #000000;
+  color: #DC2626; /* Crimson Red */
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .json-null {
-  color: #888888;
+  color: #6B7280; /* Muted Slate Italic */
   font-style: italic;
+  font-weight: 600;
+}
+
+/* Inline Code & Terminal Highlighting */
+code:not(pre code) {
+  color: #2563EB; /* Royal Blue */
+  background-color: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  padding: 0.15rem 0.4rem;
+  border-radius: 5px;
+  font-size: 0.88em;
+  font-weight: 600;
+}
+
+.code-keyword {
+  color: #7C3AED;
+  font-weight: 700;
+}
+
+.code-method {
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.code-string {
+  color: #059669;
+  font-weight: 500;
+}
+
+.code-number {
+  color: #D97706;
+  font-weight: 600;
+}
+
+.code-comment {
+  color: #64748B;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   DARK MODE SYSTEM (MONOCHROME SKETCH & VIBRANT CODE)
+   ========================================================================== */
+
+:root.dark,
+html.dark {
+  --canvas: #09090B;
+  --canvas-soft: #121214;
+  --surface-card: #141417;
+  --surface-strong: #27272A;
+  --surface-dark: #121214;
+  --surface-dark-elevated: #18181B;
+  --surface-dark-soft: #27272A;
+
+  --primary: #FAFAFA;
+  --primary-active: #E4E4E7;
+  --primary-disabled: #52525B;
+
+  --ink: #FAFAFA;
+  --body: #D4D4D8;
+  --body-strong: #FFFFFF;
+  --muted: #A1A1AA;
+  --muted-soft: #71717A;
+  --sketch-faint: #3F3F46;
+
+  --hairline: #3F3F46;
+  --hairline-soft: #27272A;
+  --hairline-strong: #FAFAFA;
+  --dark-border: #FAFAFA;
+  --dark-hairline: #3F3F46;
+
+  --on-primary: #09090B;
+  --on-dark: #FAFAFA;
+  --on-dark-soft: #A1A1AA;
+}
+
+html.dark body {
+  background-color: #09090B;
+  color: #D4D4D8;
+}
+
+/* Dark Mode Sketch Cards & Components */
+html.dark .sketch-card {
+  background-color: #121215;
+  border-color: #FAFAFA;
+  box-shadow: 3px 3px 0px #27272A;
+  color: #FAFAFA;
+}
+
+html.dark .sketch-card-sm {
+  background-color: #121215;
+  border-color: #FAFAFA;
+  box-shadow: 2px 2px 0px #27272A;
+  color: #FAFAFA;
+}
+
+html.dark .sketch-btn-primary {
+  background-color: #FAFAFA;
+  color: #09090B;
+  border-color: #FAFAFA;
+  box-shadow: 2px 2px 0px #27272A;
+}
+
+html.dark .sketch-btn-primary:hover {
+  background-color: #E4E4E7;
+  box-shadow: 1px 1px 0px #27272A;
+}
+
+html.dark .sketch-btn-secondary {
+  background-color: #18181B;
+  color: #FAFAFA;
+  border-color: #FAFAFA;
+  box-shadow: 2px 2px 0px #27272A;
+}
+
+html.dark .sketch-btn-secondary:hover {
+  background-color: #27272A;
+  box-shadow: 1px 1px 0px #27272A;
+}
+
+html.dark .sketch-badge {
+  background-color: #18181B;
+  color: #FAFAFA;
+  border-color: #FAFAFA;
+}
+
+html.dark .paper-slip {
+  background-color: #18181B;
+  border-color: #FAFAFA;
+  box-shadow: 2px 2px 0px #27272A;
+  color: #FAFAFA;
+}
+
+/* Dark Mode Background Overrides */
+html.dark .bg-white {
+  background-color: #121215 !important;
+}
+
+html.dark .bg-\[\#FAFAFA\] {
+  background-color: #09090B !important;
+}
+
+html.dark .bg-\[\#F4F4F4\] {
+  background-color: #18181B !important;
+}
+
+/* Dark Mode Text Colors */
+html.dark .text-\[\#111111\],
+html.dark .text-\[\#000000\] {
+  color: #FAFAFA !important;
+}
+
+html.dark .text-\[\#333333\] {
+  color: #D4D4D8 !important;
+}
+
+html.dark .text-\[\#666666\] {
+  color: #A1A1AA !important;
+}
+
+html.dark .text-\[\#888888\],
+html.dark .text-\[\#999999\] {
+  color: #71717A !important;
+}
+
+/* Dark Mode Border & Shadow Overrides */
+html.dark .border-\[\#111111\] {
+  border-color: #FAFAFA !important;
+}
+
+html.dark .border-\[\#E0E0E0\],
+html.dark .border-\[\#D0D0D0\],
+html.dark .border-\[\#E2E8F0\] {
+  border-color: #27272A !important;
+}
+
+html.dark .shadow-\[2px_2px_0px_\#111111\] {
+  box-shadow: 2px 2px 0px #27272A !important;
+}
+
+html.dark .shadow-\[3px_3px_0px_\#111111\] {
+  box-shadow: 3px 3px 0px #27272A !important;
+}
+
+html.dark .shadow-\[4px_4px_0px_\#111111\] {
+  box-shadow: 4px 4px 0px #27272A !important;
+}
+
+/* Dark Mode Form Inputs */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #18181B !important;
+  color: #FAFAFA !important;
+  border-color: #FAFAFA !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #71717A !important;
+}
+
+/* Dark Mode SVG Strokes & Fills */
+html.dark svg path[stroke="#111111"],
+html.dark svg line[stroke="#111111"],
+html.dark svg ellipse[stroke="#111111"],
+html.dark svg circle[stroke="#111111"],
+html.dark svg rect[stroke="#111111"] {
+  stroke: #FAFAFA;
+}
+
+html.dark svg path[fill="#111111"],
+html.dark svg circle[fill="#111111"],
+html.dark svg rect[fill="#111111"] {
+  fill: #FAFAFA;
+}
+
+html.dark svg ellipse[fill="#FFFFFF"] {
+  fill: #18181B;
+}
+
+html.dark svg path[stroke="currentColor"],
+html.dark svg ellipse[stroke="currentColor"] {
+  color: #FAFAFA;
+}
+
+/* Dark Mode Colorful Code & JSON */
+html.dark .json-key {
+  color: #C084FC !important; /* Luminous Purple */
+}
+
+html.dark .json-operator {
+  color: #60A5FA !important; /* Electric Blue */
+}
+
+html.dark .json-string {
+  color: #34D399 !important; /* Mint Emerald */
+}
+
+html.dark .json-number {
+  color: #FBBF24 !important; /* Bright Amber */
+}
+
+html.dark .json-boolean {
+  color: #F87171 !important; /* Coral Red */
+}
+
+html.dark .json-null {
+  color: #9CA3AF !important; /* Slate */
+}
+
+html.dark code:not(pre code) {
+  color: #60A5FA !important;
+  background-color: #1E1B4B !important;
+  border-color: #3730A3 !important;
+}
+
+html.dark .editor-scroll::-webkit-scrollbar-track {
+  background: #18181B;
+}
+
+html.dark .editor-scroll::-webkit-scrollbar-thumb {
+  background: #3F3F46;
+}
+
+html.dark .editor-scroll::-webkit-scrollbar-thumb:hover {
+  background: #52525B;
 }

@@ -74,6 +74,9 @@ export function syntaxHighlightJson(value: unknown): string {
     (match, stringToken: string | undefined, keySuffix: string | undefined, literalToken: string | undefined) => {
       if (stringToken) {
         if (keySuffix) {
+          if (stringToken.startsWith('"\\$') || stringToken.startsWith('"$')) {
+            return `<span class="json-operator">${stringToken}</span>${keySuffix}`;
+          }
           return `<span class="json-key">${stringToken}</span>${keySuffix}`;
         }
         return `<span class="json-string">${stringToken}</span>`;
