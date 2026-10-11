@@ -188,16 +188,12 @@ textarea {
 }
 
 .sketch-badge {
-  background-color: #FFFFFF;
-  color: #111111;
+  color: #666666;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  border: 1px solid #111111;
-  border-radius: 5px;
-  padding: 3px 8px;
 }
 
 /* Paper slip style */
@@ -404,9 +400,7 @@ html.dark .sketch-btn-secondary:hover {
 }
 
 html.dark .sketch-badge {
-  background-color: #18181B;
-  color: #FAFAFA;
-  border-color: #FAFAFA;
+  color: #A1A1AA;
 }
 
 html.dark .paper-slip {

@@ -370,8 +370,7 @@ export function ConnectionPortal({
       {/* Card Header & Controls */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#111111] pb-5">
         <div>
-          <span className="sketch-badge">ACCESS PORTAL</span>
-          <h2 className="mt-2 font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
+          <h2 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
             Connect to LioranDB Instance
           </h2>
           <p className="mt-1 text-sm text-[#666666]">

@@ -36,7 +36,7 @@ export function LioranDBLogo({
           <span className="font-sans text-xl font-bold tracking-tight text-[#000000]">
             LioranDB
           </span>
-          <span className="rounded-[4px] border border-[#111111] bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#111111]">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#666666]">
             STUDIO
           </span>
         </div>
@@ -52,16 +52,10 @@ export function LioranDBClusterIllustration({ className = "" }: { className?: st
       <div className="sketch-card p-5 sm:p-6 bg-white shadow-[4px_4px_0px_#111111]">
         {/* Top Terminal Chrome */}
         <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full border-2 border-[#111111] bg-white" />
-            <span className="h-3 w-3 rounded-full border-2 border-[#111111] bg-white" />
-            <span className="h-3 w-3 rounded-full border-2 border-[#111111] bg-[#111111]" />
-          </div>
           <div className="font-mono text-xs font-bold tracking-wider text-[#111111] uppercase">
             LIORANDB CLUSTER TOPOLOGY • RAFT v2.0
           </div>
-          <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-[#111111]">
-            <span className="h-2 w-2 rounded-full bg-[#111111] animate-pulse" />
+          <div className="font-mono text-[11px] font-bold text-[#111111]">
             READY
           </div>
         </div>
@@ -71,7 +65,7 @@ export function LioranDBClusterIllustration({ className = "" }: { className?: st
           {/* Node 1: Leader */}
           <div className="relative rounded-[7px] border-2 border-[#111111] bg-white p-3.5 flex flex-col justify-between min-h-[160px] shadow-[2px_2px_0px_#111111]">
             <div className="flex items-center justify-between font-mono text-[11px]">
-              <span className="border border-[#111111] px-1.5 py-0.5 rounded bg-[#111111] text-white font-bold">
+              <span className="font-bold text-[#111111]">
                 NODE 1
               </span>
               <span className="font-bold text-[#111111]">RAFT LEADER</span>
@@ -92,7 +86,7 @@ export function LioranDBClusterIllustration({ className = "" }: { className?: st
           {/* Node 2: Follower */}
           <div className="relative rounded-[7px] border-2 border-[#111111] bg-white p-3.5 flex flex-col justify-between min-h-[160px] shadow-[2px_2px_0px_#111111]">
             <div className="flex items-center justify-between font-mono text-[11px]">
-              <span className="border border-[#111111] px-1.5 py-0.5 rounded bg-white text-[#111111] font-bold">
+              <span className="font-bold text-[#111111]">
                 NODE 2
               </span>
               <span className="text-[#666666]">REPLICA</span>
@@ -160,7 +154,7 @@ export function LioranDBClusterIllustration({ className = "" }: { className?: st
         {/* Bottom Control Metrics */}
         <div className="mt-4 flex items-center justify-between border-t-2 border-[#111111] pt-3 text-xs font-mono">
           <div className="flex items-center gap-2">
-            <span className="border border-[#111111] px-2 py-0.5 rounded bg-white font-bold text-[#111111]">
+            <span className="font-bold text-[#111111]">
               TLS 1.3
             </span>
             <span className="text-[#666666] hidden sm:inline">AES-256-GCM Session</span>

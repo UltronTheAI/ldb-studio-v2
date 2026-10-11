@@ -450,7 +450,6 @@ function Card({
     <section className={`sketch-card p-6 ${className}`}>
       <div className="mb-4 flex items-center justify-between border-b-2 border-[#111111] pb-3">
         <h2 className="font-sans text-xl font-bold tracking-tight text-[#000000]">{title}</h2>
-        <span className="h-2 w-2 rounded-full border border-[#111111] bg-[#111111]" />
       </div>
       {children}
     </section>
@@ -511,11 +510,6 @@ function TerminalBlock({
   return (
     <div className="rounded-[7px] border-2 border-[#111111] bg-white text-[#111111] shadow-[3px_3px_0px_#111111]">
       <div className="flex items-center justify-between border-b-2 border-[#111111] bg-[#FAFAFA] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full border border-[#111111] bg-white" />
-          <span className="h-2.5 w-2.5 rounded-full border border-[#111111] bg-white" />
-          <span className="h-2.5 w-2.5 rounded-full border border-[#111111] bg-[#111111]" />
-        </div>
         <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#111111]">
           {title}
         </span>
@@ -559,7 +553,7 @@ function DocumentCard({
             {String(value._id ?? `row-${index + 1}`)}
           </div>
         </div>
-        <span className="sketch-badge">
+        <span className="font-mono text-xs text-[#666666]">
           {entries.length} fields
         </span>
       </div>
@@ -869,9 +863,6 @@ export default async function Home({ searchParams }: PageProps) {
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
             <div className="flex items-center gap-3">
               <LioranDBLogo size={26} />
-              <span className="hidden sm:inline-block sketch-badge">
-                CONTROL PLANE
-              </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#111111]">
@@ -975,10 +966,7 @@ export default async function Home({ searchParams }: PageProps) {
         <section id="sandbox" className="border-t-2 border-[#111111] bg-white py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-10">
-              <span className="sketch-badge">
-                INTERACTIVE SANDBOX
-              </span>
-              <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
+              <h2 className="font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
                 Interactive Query Stage
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
@@ -994,10 +982,7 @@ export default async function Home({ searchParams }: PageProps) {
         <section id="features" className="border-t-2 border-[#111111] bg-[#FAFAFA] py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
-              <span className="sketch-badge">
-                ENGINE CAPABILITIES
-              </span>
-              <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
+              <h2 className="font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
                 Built for High-Throughput Workloads
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
@@ -1011,7 +996,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">01</span>
-                    <span className="sketch-badge">DATA ENGINE</span>
+                    <span className="font-mono text-xs font-bold text-[#666666] tracking-wider uppercase">DATA ENGINE</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
                     Collections &amp; Aggregations
@@ -1037,7 +1022,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">02</span>
-                    <span className="sketch-badge">SECURITY</span>
+                    <span className="font-mono text-xs font-bold text-[#666666] tracking-wider uppercase">SECURITY</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
                     Granular RBAC Governance
@@ -1063,7 +1048,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div>
                   <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
                     <span className="font-mono text-2xl font-bold text-[#000000]">03</span>
-                    <span className="sketch-badge">CONSENSUS</span>
+                    <span className="font-mono text-xs font-bold text-[#666666] tracking-wider uppercase">CONSENSUS</span>
                   </div>
                   <h3 className="font-sans text-xl font-bold text-[#000000]">
                     Raft Consensus &amp; Partitions
@@ -1089,10 +1074,7 @@ export default async function Home({ searchParams }: PageProps) {
         <section id="architecture" className="border-t-2 border-[#111111] bg-white py-20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
-              <span className="sketch-badge">
-                INFRASTRUCTURE &amp; SECURITY
-              </span>
-              <h2 className="mt-3 font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
+              <h2 className="font-sans text-3xl sm:text-4xl font-bold tracking-tight text-[#000000]">
                 Engineered with Zero-Compromise Security
               </h2>
               <p className="mt-2 text-sm text-[#666666]">
@@ -1307,13 +1289,6 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle showLabel={false} />
-              <span className="sketch-badge flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#111111]" />
-                LIVE • NODE {studioData.live?.node_id ?? "1"}
-              </span>
-              <span className="sketch-badge">
-                READY
-              </span>
             </div>
           </div>
 
@@ -2052,7 +2027,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <Card title="Advertised Permissions">
                   <div className="flex flex-wrap gap-2">
                     {studioData.permissions.map((permission) => (
-                      <span key={permission} className="sketch-badge">
+                      <span key={permission} className="font-mono text-xs font-semibold text-[#2563EB]">
                         {permission}
                       </span>
                     ))}
@@ -2179,7 +2154,7 @@ export default async function Home({ searchParams }: PageProps) {
                           <Link href={hrefFor("backups", { backupId: backup.backup_id })} className="font-mono text-sm font-bold text-[#000000] hover:underline">
                             {backup.backup_id}
                           </Link>
-                          <span className="sketch-badge">
+                          <span className="font-mono text-xs font-bold uppercase text-[#059669]">
                             {backup.status}
                           </span>
                         </div>
