@@ -1,57 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Brand & Accents */
-  --primary: #cc785c;
-  --primary-active: #a9583e;
-  --primary-disabled: #e6dfd8;
-  --ink: #141413;
-  --body: #3d3d3a;
-  --body-strong: #252523;
-  --muted: #6c6a64;
-  --muted-soft: #8e8b82;
+  /* Sthashta Design System Tokens (Monochrome Paper & Ink) */
+  --canvas: #FFFFFF;
+  --canvas-soft: #FAFAFA;
+  --surface-card: #FFFFFF;
+  --surface-strong: #F4F4F4;
+  --surface-dark: #FFFFFF;
+  --surface-dark-elevated: #FAFAFA;
+  --surface-dark-soft: #F4F4F4;
 
-  /* Borders / Hairlines */
-  --hairline: #e6dfd8;
-  --hairline-soft: #ebe6df;
+  --primary: #000000;
+  --primary-active: #222222;
+  --primary-disabled: #999999;
 
-  /* Cream Canvas & Surfaces */
-  --canvas: #faf9f5;
-  --surface-soft: #f5f0e8;
-  --surface-card: #efe9de;
-  --surface-cream-strong: #e8e0d2;
+  --ink: #111111;
+  --body: #333333;
+  --body-strong: #000000;
+  --muted: #666666;
+  --muted-soft: #999999;
+  --sketch-faint: #D9D9D9;
 
-  /* Dark Navy / Obsidian Product Surfaces */
-  --surface-dark: #181715;
-  --surface-dark-elevated: #252320;
-  --surface-dark-soft: #1f1e1b;
-  --dark-border: #2e2b27;
-  --dark-hairline: #38342f;
+  --hairline: #D0D0D0;
+  --hairline-soft: #E8E8E8;
+  --hairline-strong: #111111;
+  --dark-border: #111111;
+  --dark-hairline: #D0D0D0;
 
-  /* Contrast Text */
-  --on-primary: #ffffff;
-  --on-dark: #faf9f5;
-  --on-dark-soft: #a09d96;
+  --on-primary: #FFFFFF;
+  --on-dark: #111111;
+  --on-dark-soft: #666666;
 
-  /* Semantics */
-  --accent-teal: #5db8a6;
-  --accent-amber: #e8a55a;
-  --success: #5db872;
-  --warning: #d4a017;
-  --error: #c64545;
+  /* Semantic monochrome mapping */
+  --accent-teal: #111111;
+  --accent-amber: #111111;
+  --success: #111111;
+  --warning: #111111;
+  --error: #111111;
 
-  /* Fonts */
-  --font-serif-display: "Copernicus", "Tiempos Headline", "Cormorant Garamond", "EB Garamond", Garamond, Georgia, serif;
-  --font-sans-humanist: "StyreneB", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Strict Light Mode Enforcement */
+  color-scheme: light;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-hand: 'Comic Neue', 'Comic Sans MS', cursive;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
-  --color-surface-soft: var(--surface-soft);
+  --color-canvas-soft: var(--canvas-soft);
   --color-surface-card: var(--surface-card);
-  --color-surface-cream-strong: var(--surface-cream-strong);
+  --color-surface-strong: var(--surface-strong);
   --color-surface-dark: var(--surface-dark);
   --color-surface-dark-elevated: var(--surface-dark-elevated);
   --color-surface-dark-soft: var(--surface-dark-soft);
@@ -65,9 +66,11 @@
   --color-body-strong: var(--body-strong);
   --color-muted: var(--muted);
   --color-muted-soft: var(--muted-soft);
+  --color-sketch-faint: var(--sketch-faint);
 
   --color-hairline: var(--hairline);
   --color-hairline-soft: var(--hairline-soft);
+  --color-hairline-strong: var(--hairline-strong);
   --color-dark-border: var(--dark-border);
   --color-dark-hairline: var(--dark-hairline);
 
@@ -75,15 +78,9 @@
   --color-on-dark: var(--on-dark);
   --color-on-dark-soft: var(--on-dark-soft);
 
-  --color-accent-teal: var(--accent-teal);
-  --color-accent-amber: var(--accent-amber);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-
-  --font-serif: var(--font-serif-display);
-  --font-sans: var(--font-sans-humanist);
-  --font-mono: var(--font-mono-code);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-hand: var(--font-hand);
 }
 
 * {
@@ -91,29 +88,29 @@
 }
 
 html {
-  background: var(--canvas);
-  color: var(--ink);
+  background-color: #FFFFFF;
+  color: #111111;
+  color-scheme: light;
 }
 
 body {
-  background: var(--canvas);
-  color: var(--body);
-  font-family: var(--font-sans-humanist);
+  background-color: #FFFFFF;
+  color: #333333;
+  font-family: var(--font-sans);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-.font-serif-display {
-  font-family: var(--font-serif-display);
-  letter-spacing: -0.025em;
-}
-
 .font-sans-humanist {
-  font-family: var(--font-sans-humanist);
+  font-family: var(--font-sans);
 }
 
 .font-mono-code {
-  font-family: var(--font-mono-code);
+  font-family: var(--font-mono);
+}
+
+.font-sketch-note {
+  font-family: var(--font-hand);
 }
 
 a {
@@ -132,14 +129,89 @@ textarea {
   resize: vertical;
 }
 
-/* Sidebar warm scrollbar */
+/* Hard Sketch Shadows & Hand-drawn borders */
+.sketch-card {
+  background-color: #FFFFFF;
+  border: 2px solid #111111;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0px #111111;
+}
+
+.sketch-card-sm {
+  background-color: #FFFFFF;
+  border: 1.5px solid #111111;
+  border-radius: 7px;
+  box-shadow: 2px 2px 0px #111111;
+}
+
+.sketch-btn-primary {
+  background-color: #000000;
+  color: #FFFFFF;
+  border: 2px solid #000000;
+  border-radius: 7px;
+  box-shadow: 2px 2px 0px #111111;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.sketch-btn-primary:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #111111;
+}
+
+.sketch-btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #111111;
+}
+
+.sketch-btn-secondary {
+  background-color: #FFFFFF;
+  color: #111111;
+  border: 2px solid #111111;
+  border-radius: 7px;
+  box-shadow: 2px 2px 0px #111111;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.sketch-btn-secondary:hover {
+  background-color: #FAFAFA;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #111111;
+}
+
+.sketch-btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #111111;
+}
+
+.sketch-badge {
+  background-color: #FFFFFF;
+  color: #111111;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid #111111;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+
+/* Paper slip style */
+.paper-slip {
+  background-color: #FFFFFF;
+  border: 1.5px solid #111111;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0px #111111;
+}
+
+/* Sidebar scrollbar */
 .sidebar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #d6cebf transparent;
+  scrollbar-color: #D0D0D0 transparent;
 }
 
 .sidebar-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-track {
@@ -147,63 +219,61 @@ textarea {
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #d6cebf;
+  background: #D0D0D0;
   border-radius: 999px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #beb5a3;
+  background: #111111;
 }
 
-/* Dark code editor scrollbar */
+/* Editor scrollbar */
 .editor-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #38342f #181715;
+  scrollbar-color: #111111 #FAFAFA;
 }
 
 .editor-scroll::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .editor-scroll::-webkit-scrollbar-track {
-  background: #181715;
+  background: #FAFAFA;
 }
 
 .editor-scroll::-webkit-scrollbar-thumb {
-  background: #38342f;
-  border: 2px solid #181715;
-  border-radius: 999px;
+  background: #111111;
+  border-radius: 4px;
 }
 
 .editor-scroll::-webkit-scrollbar-thumb:hover {
-  background: #4e4942;
+  background: #333333;
 }
 
-.editor-scroll::-webkit-scrollbar-corner {
-  background: #181715;
-}
-
-/* Claude warm syntax highlighting */
+/* Sthashta Monochrome JSON syntax highlighting */
 .json-key {
-  color: #cc785c;
-  font-weight: 500;
-}
-
-.json-string {
-  color: #5db8a6;
-}
-
-.json-number {
-  color: #e8a55a;
-}
-
-.json-boolean {
-  color: #cc785c;
+  color: #000000;
   font-weight: 600;
 }
 
+.json-string {
+  color: #333333;
+}
+
+.json-number {
+  color: #000000;
+  font-weight: 500;
+}
+
+.json-boolean {
+  color: #000000;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .json-null {
-  color: #8e8b82;
+  color: #888888;
   font-style: italic;
 }

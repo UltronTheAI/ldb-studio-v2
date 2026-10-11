@@ -28,7 +28,7 @@ function IconBase({
   );
 }
 
-export function ClaudeSpikeIcon({
+export function SthashtaMarkIcon({
   size = 18,
   className = "",
   ...props
@@ -36,17 +36,26 @@ export function ClaudeSpikeIcon({
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="currentColor"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       width={size}
       height={size}
       className={className}
       aria-hidden="true"
       {...props}
     >
-      {/* Signature 4-pointed radial spark / spike glyph */}
-      <path d="M12 1.5C12 7.29899 7.29899 12 1.5 12C7.29899 12 12 16.701 12 22.5C12 16.701 16.701 12 22.5 12C16.701 12 12 7.29899 12 1.5Z" />
+      <circle cx="6" cy="12" r="3.5" fill="currentColor" />
+      <circle cx="18" cy="12" r="3.5" fill="currentColor" />
+      <path d="M9.5 12h5" strokeWidth={2.5} />
     </svg>
   );
+}
+
+export function ClaudeSpikeIcon(props: IconProps) {
+  return <SthashtaMarkIcon {...props} />;
 }
 
 export function DatabaseIcon(props: IconProps) {
