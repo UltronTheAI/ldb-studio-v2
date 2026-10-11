@@ -26,6 +26,7 @@ import type {
 } from "@liorandb/driver";
 
 import { connectAction, logoutAction, studioMutationAction } from "./actions";
+import { ConnectionPortal } from "./connection-portal";
 import { StudioClientEffects } from "./studio-client-effects";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
@@ -36,7 +37,6 @@ import {
 } from "@/lib/liorandb/json";
 import {
   ArchiveIcon,
-  ArrowRightIcon,
   BoxesIcon,
   DatabaseIcon,
   HardDriveDownloadIcon,
@@ -47,7 +47,6 @@ import {
   SearchIcon,
   SettingsIcon,
   ShieldIcon,
-  TerminalIcon,
   Trash2Icon,
   UsersIcon,
 } from "@/lib/lucide";
@@ -944,83 +943,10 @@ export default async function Home({ searchParams }: PageProps) {
         {/* Quick Connect & Cluster Control Plane Section */}
         <section id="connect" className="border-t-2 border-[#111111] bg-[#FAFAFA] py-16">
           <div className="mx-auto max-w-4xl px-6">
-            <div className="sketch-card p-6 sm:p-10">
-              <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#111111] pb-5">
-                <div>
-                  <span className="sketch-badge">
-                    ACCESS PORTAL
-                  </span>
-                  <h2 className="mt-2 font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
-                    Connect to LioranDB Instance
-                  </h2>
-                  <p className="mt-1 text-sm text-[#666666]">
-                    Provide a connection URI to enter the full management console and query workspace.
-                  </p>
-                </div>
-                <div className="font-mono text-xs text-[#111111] border border-[#111111] px-2.5 py-1 rounded bg-white">
-                  v2.0 • MONOCHROME
-                </div>
-              </div>
-
-              <form action={connectAction} className="space-y-5" suppressHydrationWarning>
-                {errorMessage ? (
-                  <div className="space-y-3">
-                    <div className="rounded-[7px] border-2 border-[#111111] bg-white p-4 font-mono text-xs text-[#111111] shadow-[2px_2px_0px_#111111]">
-                      <span className="font-bold mr-2">[× ERROR]</span>
-                      {errorMessage}
-                    </div>
-
-                    {errorMessage.includes("Local database detected") ? (
-                      <div className="rounded-[7px] border-2 border-[#111111] bg-white p-4 text-xs text-[#111111] shadow-[2px_2px_0px_#111111]">
-                        <div className="flex items-center gap-1.5 font-bold uppercase font-mono">
-                          <TerminalIcon size={14} />
-                          <span>How to connect a local database</span>
-                        </div>
-                        <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
-                          Hosted Studio cannot connect directly to loopback on your workstation. Run Studio locally:
-                        </p>
-                        <div className="mt-2.5 flex items-center justify-between rounded border border-[#111111] bg-[#FAFAFA] px-3 py-2 font-mono text-xs">
-                          <code>liorandb studio</code>
-                          <span className="text-[11px] text-[#666666]">or npm run dev</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <div>
-                  <label className={labelClassName()} htmlFor="connectionUri">
-                    Connection URI
-                  </label>
-                  <input
-                    id="connectionUri"
-                    name="connectionUri"
-                    type="password"
-                    placeholder="liorandb://admin:password@swaraj.db.liorandb.com:443/default"
-                    className={fieldClassName()}
-                    required
-                    suppressHydrationWarning
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="sketch-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-sm font-bold uppercase tracking-wider"
-                  suppressHydrationWarning
-                >
-                  <span>Connect to Studio</span>
-                  <ArrowRightIcon size={16} />
-                </button>
-              </form>
-
-              <div className="mt-6 rounded-[7px] border border-[#111111] bg-[#FAFAFA] p-3.5 text-xs text-[#666666]">
-                <span className="font-bold text-[#111111]">Default format:</span>{" "}
-                <code className="font-mono text-[#000000]">liorandb://username:password@host:port/database</code>
-                <div className="mt-1 text-[11px]">
-                  (Database name optional: <code className="font-mono text-[#000000]">liorandb://username:password@host:port</code>)
-                </div>
-              </div>
-            </div>
+            <ConnectionPortal
+              connectAction={connectAction}
+              errorMessage={errorMessage}
+            />
           </div>
         </section>
 
