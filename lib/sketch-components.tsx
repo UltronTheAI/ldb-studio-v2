@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { syntaxHighlightJson } from "@/lib/liorandb/json";
 
-// LioranDB Studio Logo mark: Database cluster node glyph
+// Expo / LioranDB Modern Geometric Logo Mark
 export function LioranDBLogo({
   size = 28,
   showText = true,
@@ -14,30 +14,33 @@ export function LioranDBLogo({
   className?: string;
 }) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 text-[#000000]"
-        aria-hidden="true"
+    <div className={`flex items-center gap-3 ${className}`}>
+      <div
+        className="flex items-center justify-center rounded-[8px] bg-[#000000] text-white dark:bg-[#ffffff] dark:text-[#000000] shrink-0"
+        style={{ width: size, height: size }}
       >
-        {/* Sketched 3-layer database cylinder */}
-        <ellipse cx="16" cy="8" rx="12" ry="5" stroke="currentColor" strokeWidth="2.5" fill="#FFFFFF" />
-        <path d="M4 8v7c0 2.76 5.37 5 12 5s12-2.24 12-5V8" stroke="currentColor" strokeWidth="2.5" />
-        <path d="M4 15v7c0 2.76 5.37 5 12 5s12-2.24 12-5v-7" stroke="currentColor" strokeWidth="2.5" />
-        {/* Core spark in the middle */}
-        <circle cx="16" cy="15" r="2" fill="currentColor" />
-      </svg>
+        <svg
+          width={Math.round(size * 0.6)}
+          height={Math.round(size * 0.6)}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {/* Geometric Expo-inspired chevron & node cluster */}
+          <path d="M4 7l8-4 8 4M4 12l8 4 8-4M4 17l8 4 8-4" />
+        </svg>
+      </div>
       {showText && (
-        <div className="flex items-center gap-2">
-          <span className="font-sans text-xl font-bold tracking-tight text-[#000000]">
+        <div className="flex items-baseline gap-2">
+          <span className="font-sans text-[17px] font-semibold tracking-[-0.3px] text-[var(--ink)]">
             LioranDB
           </span>
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#666666]">
-            STUDIO
+          <span className="font-sans text-[12px] font-medium text-[var(--muted)] tracking-tight">
+            Studio
           </span>
         </div>
       )}
@@ -45,128 +48,242 @@ export function LioranDBLogo({
   );
 }
 
-// Sketched Technical Architecture Illustration: Distributed LioranDB Cluster & Storage Engine
-export function LioranDBClusterIllustration({ className = "" }: { className?: string }) {
+// Device Mockup Hero: Centered MacBook + iPhone composite showing real dev surfaces
+// (The brand's visual signature chrome over the sky-blue gradient wash)
+export function ExpoDeviceMockupHero({ className = "" }: { className?: string }) {
+  const [activeTab, setActiveTab] = useState<"query" | "cluster" | "schema">("query");
+
   return (
-    <div className={`relative w-full max-w-xl mx-auto ${className}`}>
-      <div className="sketch-card p-5 sm:p-6 bg-white shadow-[4px_4px_0px_#111111]">
-        {/* Top Terminal Chrome */}
-        <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
-          <div className="font-mono text-xs font-bold tracking-wider text-[#111111] uppercase">
-            LIORANDB CLUSTER TOPOLOGY • RAFT v2.0
-          </div>
-          <div className="font-mono text-[11px] font-bold text-[#111111]">
-            READY
-          </div>
-        </div>
-
-        {/* Distributed Nodes Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 relative">
-          {/* Node 1: Leader */}
-          <div className="relative rounded-[7px] border-2 border-[#111111] bg-white p-3.5 flex flex-col justify-between min-h-[160px] shadow-[2px_2px_0px_#111111]">
-            <div className="flex items-center justify-between font-mono text-[11px]">
-              <span className="font-bold text-[#111111]">
-                NODE 1
-              </span>
-              <span className="font-bold text-[#111111]">RAFT LEADER</span>
-            </div>
-
-            <div className="my-auto py-2 font-mono text-xs space-y-1">
-              <div className="text-[#111111] font-bold">status: active_leader</div>
-              <div className="text-[#666666]">term: 42 • commit: 104,281</div>
-              <div className="text-[#666666]">partitions: [p0, p1, p2]</div>
-            </div>
-
-            <div className="border-t border-[#111111] pt-2 flex items-center justify-between font-mono text-[10px] text-[#666666]">
-              <span>storage: 4.2 GB</span>
-              <span className="font-bold text-[#111111]">IOPS: 12.8k</span>
-            </div>
-          </div>
-
-          {/* Node 2: Follower */}
-          <div className="relative rounded-[7px] border-2 border-[#111111] bg-white p-3.5 flex flex-col justify-between min-h-[160px] shadow-[2px_2px_0px_#111111]">
-            <div className="flex items-center justify-between font-mono text-[11px]">
-              <span className="font-bold text-[#111111]">
-                NODE 2
-              </span>
-              <span className="text-[#666666]">REPLICA</span>
-            </div>
-
-            <div className="my-auto py-2 font-mono text-xs space-y-1">
-              <div className="text-[#111111] font-bold">status: synchronous</div>
-              <div className="text-[#666666]">lag: 0.12ms • read-ready</div>
-              <div className="text-[#666666]">partitions: [p0_r, p1_r]</div>
-            </div>
-
-            <div className="border-t border-[#111111] pt-2 flex items-center justify-between font-mono text-[10px] text-[#666666]">
-              <span>storage: 4.2 GB</span>
-              <span className="font-bold text-[#111111]">HEALTHY</span>
-            </div>
-          </div>
-
-          {/* Center Replication Path Arrow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
-              <path
-                d="M4 12 H36 M28 6 L36 12 L28 18"
-                stroke="#111111"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Live Query Console Snippet */}
-        <div className="mt-4 rounded-[7px] border-2 border-[#111111] bg-[#FAFAFA] p-3 font-mono text-xs text-[#111111]">
-          <div className="flex items-center justify-between text-[11px] text-[#666666] border-b border-[#D0D0D0] pb-1.5 mb-2">
-            <span className="text-[#059669] font-bold">$ lioran-cli --eval</span>
-            <span className="text-[#D97706] font-bold">0.42ms execution</span>
-          </div>
-          <div className="text-sm font-semibold">
-            <span className="text-[#2563EB] font-bold">db</span>
-            <span className="text-[#111111]">.</span>
-            <span className="text-[#7C3AED] font-bold">users</span>
-            <span className="text-[#111111]">.</span>
-            <span className="text-[#2563EB] font-bold">find</span>
-            <span className="text-[#111111]">(&#123; </span>
-            <span className="text-[#7C3AED] font-semibold">status</span>
-            <span className="text-[#111111]">: </span>
-            <span className="text-[#059669] font-semibold">&quot;active&quot;</span>
-            <span className="text-[#111111]"> &#125;).</span>
-            <span className="text-[#2563EB] font-bold">sort</span>
-            <span className="text-[#111111]">(&#123; </span>
-            <span className="text-[#7C3AED] font-semibold">created_at</span>
-            <span className="text-[#111111]">: </span>
-            <span className="text-[#D97706] font-bold">-1</span>
-            <span className="text-[#111111]"> &#125;)</span>
-          </div>
-          <div className="text-[11px] mt-1.5">
-            <span className="text-[#64748B] font-bold">=&gt; </span>
-            <span className="text-[#059669] font-bold">250 documents matched</span>
-            <span className="text-[#64748B]"> • compound index </span>
-            <code className="text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] px-1 py-0.5 rounded text-[10px]">idx_status_created</code>
-            <span className="text-[#059669] font-bold"> hit</span>
-          </div>
-        </div>
-
-        {/* Bottom Control Metrics */}
-        <div className="mt-4 flex items-center justify-between border-t-2 border-[#111111] pt-3 text-xs font-mono">
+    <div className={`relative w-full max-w-[1000px] mx-auto select-none ${className}`}>
+      {/* MacBook Pro Chassis Mockup */}
+      <div className="relative rounded-[16px] border border-[var(--hairline-strong)] bg-[#1e2025] dark:bg-[#12141a] p-2.5 pb-0 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.6)]">
+        {/* Screen Bezel Top Bar (Web / App Window Chrome) */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-[#2d3039] bg-[#17191e] rounded-t-[10px]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#111111]">
-              TLS 1.3
-            </span>
-            <span className="text-[#666666] hidden sm:inline">AES-256-GCM Session</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+            </div>
+            <div className="hidden sm:flex items-center gap-2 ml-4 px-2.5 py-0.5 rounded-[6px] bg-[#22252c] text-[11px] font-mono text-[#a0a4b0]">
+              <span className="text-[#3b82f6]">https://</span>
+              <span>studio.liorandb.internal/cluster/production</span>
+            </div>
           </div>
-          <div className="font-bold text-[#111111]">
-            ZERO DEPENDENCIES
+          <div className="flex items-center gap-2 text-[11px] font-mono text-[#9094a2]">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+            <span className="text-[#e2e4ea] font-medium">RAFT LEADER • TERM 42</span>
+          </div>
+        </div>
+
+        {/* MacBook Screen Content: Real Studio Dev Surface */}
+        <div className="bg-[#121418] text-[#f4f5f8] rounded-b-[6px] p-4 sm:p-6 overflow-hidden">
+          {/* Surface Header & Navigation */}
+          <div className="flex items-center justify-between border-b border-[#232630] pb-3 mb-4">
+            <div className="flex items-center gap-4">
+              <span className="text-[14px] font-semibold text-white">Production Cluster</span>
+              <div className="flex items-center gap-1 bg-[#1c1f26] p-0.5 rounded-[6px]">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("query")}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-[5px] transition ${
+                    activeTab === "query"
+                      ? "bg-[#282d38] text-white shadow-sm"
+                      : "text-[#8d92a0] hover:text-white"
+                  }`}
+                >
+                  Query Runner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("cluster")}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-[5px] transition ${
+                    activeTab === "cluster"
+                      ? "bg-[#282d38] text-white shadow-sm"
+                      : "text-[#8d92a0] hover:text-white"
+                  }`}
+                >
+                  Raft Topology
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("schema")}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-[5px] transition ${
+                    activeTab === "schema"
+                      ? "bg-[#282d38] text-white shadow-sm"
+                      : "text-[#8d92a0] hover:text-white"
+                  }`}
+                >
+                  Indexes (6)
+                </button>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-3 text-[12px] font-mono text-[#8d92a0]">
+              <span>commit: <strong className="text-white">104,281</strong></span>
+              <span>p99: <strong className="text-[#22c55e]">0.38ms</strong></span>
+            </div>
+          </div>
+
+          {/* Tab View Contents */}
+          {activeTab === "query" && (
+            <div className="grid md:grid-cols-12 gap-4">
+              {/* Query Editor Pane */}
+              <div className="md:col-span-7 bg-[#181a20] border border-[#262933] rounded-[8px] p-3.5 font-mono text-[12px]">
+                <div className="flex items-center justify-between text-[11px] text-[#717684] pb-2 border-b border-[#232630] mb-2.5">
+                  <span>db.collection(&apos;users&apos;).find(...)</span>
+                  <span className="text-[#3b82f6]">JSON Filter</span>
+                </div>
+                <div className="space-y-1 text-[#d8dbe2] leading-relaxed">
+                  <div>
+                    <span className="text-[#818cf8]">&#123;</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-[#c084fc]">&quot;status&quot;</span>
+                    <span className="text-[#717684]">: </span>
+                    <span className="text-[#4ade80]">&quot;active&quot;</span>
+                    <span className="text-[#717684]">,</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-[#c084fc]">&quot;tier&quot;</span>
+                    <span className="text-[#717684]">: </span>
+                    <span className="text-[#4ade80]">&quot;enterprise&quot;</span>
+                    <span className="text-[#717684]">,</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-[#c084fc]">&quot;latency_ms&quot;</span>
+                    <span className="text-[#717684]">: </span>
+                    <span className="text-[#818cf8]">&#123; </span>
+                    <span className="text-[#60a5fa]">&quot;$lte&quot;</span>
+                    <span className="text-[#717684]">: </span>
+                    <span className="text-[#fbbf24]">1.0</span>
+                    <span className="text-[#818cf8]"> &#125;</span>
+                  </div>
+                  <div>
+                    <span className="text-[#818cf8]">&#125;</span>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-[#232630] flex items-center justify-between text-[11px]">
+                  <span className="text-[#717684]">Index: idx_status_tier (Covered)</span>
+                  <span className="px-2 py-0.5 rounded bg-[#000000] text-white border border-[#3b82f6]/40 font-sans text-[11px]">
+                    Executed in 0.38ms
+                  </span>
+                </div>
+              </div>
+
+              {/* Live Output Pane */}
+              <div className="md:col-span-5 bg-[#181a20] border border-[#262933] rounded-[8px] p-3.5 font-mono text-[11px]">
+                <div className="flex items-center justify-between text-[11px] text-[#717684] pb-2 border-b border-[#232630] mb-2.5">
+                  <span>Streamed Documents (2)</span>
+                  <span className="text-[#22c55e]">✓ 200 OK</span>
+                </div>
+                <div className="space-y-2 text-[#c6c9d2]">
+                  <div className="p-2 rounded bg-[#13151a] border border-[#22252e]">
+                    <div className="text-[#60a5fa] font-bold">_id: &quot;usr_9918&quot;</div>
+                    <div className="text-[#9ea3b0]">username: &quot;alex.dev&quot;</div>
+                    <div className="text-[#4ade80]">status: &quot;active&quot;</div>
+                  </div>
+                  <div className="p-2 rounded bg-[#13151a] border border-[#22252e]">
+                    <div className="text-[#60a5fa] font-bold">_id: &quot;usr_9924&quot;</div>
+                    <div className="text-[#9ea3b0]">username: &quot;swaraj.db&quot;</div>
+                    <div className="text-[#4ade80]">status: &quot;active&quot;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "cluster" && (
+            <div className="grid grid-cols-3 gap-3 font-mono text-[11px]">
+              <div className="p-3 bg-[#181a20] border border-[#22c55e]/40 rounded-[8px]">
+                <div className="text-[#22c55e] font-bold">NODE 01 (LEADER)</div>
+                <div className="text-[#9ea3b0] mt-1">Host: 10.0.1.12:8765</div>
+                <div className="text-[#d8dbe2] mt-2">Partitions: [p0, p1, p2]</div>
+                <div className="text-[#717684] mt-1">Raft Term: 42 • Lag: 0ms</div>
+              </div>
+              <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
+                <div className="text-[#60a5fa] font-bold">NODE 02 (FOLLOWER)</div>
+                <div className="text-[#9ea3b0] mt-1">Host: 10.0.1.14:8765</div>
+                <div className="text-[#d8dbe2] mt-2">Partitions: [p0_r, p1_r]</div>
+                <div className="text-[#717684] mt-1">Replication: Sync (0.12ms)</div>
+              </div>
+              <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
+                <div className="text-[#60a5fa] font-bold">NODE 03 (FOLLOWER)</div>
+                <div className="text-[#9ea3b0] mt-1">Host: 10.0.1.16:8765</div>
+                <div className="text-[#d8dbe2] mt-2">Partitions: [p1_r, p2_r]</div>
+                <div className="text-[#717684] mt-1">Replication: Sync (0.18ms)</div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "schema" && (
+            <div className="grid grid-cols-2 gap-3 font-mono text-[11px]">
+              <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
+                <div className="text-white font-bold">idx_status_tier</div>
+                <div className="text-[#717684] mt-1">Fields: status: 1, tier: 1</div>
+                <div className="text-[#22c55e] mt-1">Index type: Compound B-Tree</div>
+              </div>
+              <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
+                <div className="text-white font-bold">_id_</div>
+                <div className="text-[#717684] mt-1">Fields: _id: 1 (Unique)</div>
+                <div className="text-[#22c55e] mt-1">Primary key hash</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* MacBook Bottom Base & Notch */}
+      <div className="relative mx-auto w-[104%] -left-[2%] h-3 rounded-b-[14px] bg-[#2d3038] dark:bg-[#1e2028] shadow-md flex items-center justify-center">
+        <div className="w-16 h-1 rounded-full bg-[#181a20]" />
+      </div>
+
+      {/* Layered iPhone Mockup (Expo Go / Client Simulator) */}
+      <div className="hidden sm:block absolute -right-4 -bottom-6 w-[220px] rounded-[32px] border-[4px] border-[#2d3038] bg-[#0c0d12] p-2 shadow-[0_25px_50px_rgba(0,0,0,0.35)] z-20">
+        {/* Dynamic Island */}
+        <div className="mx-auto w-16 h-3 rounded-full bg-black mb-2" />
+
+        {/* Screen Content */}
+        <div className="rounded-[22px] bg-[#14161f] p-3 text-white font-sans overflow-hidden">
+          {/* Mobile App Header */}
+          <div className="flex items-center justify-between pb-2 border-b border-[#232734]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+              <span className="text-[10px] font-mono text-[#a0a4b4]">Expo Go</span>
+            </div>
+            <span className="text-[9px] font-mono text-[#717688]">v2.0</span>
+          </div>
+
+          {/* Real-time sync badge */}
+          <div className="mt-2.5 p-2 rounded-[8px] bg-[#1c202d] border border-[#2c3144]">
+            <div className="text-[10px] font-semibold text-white">Live Client Sync</div>
+            <div className="text-[9px] text-[#9da3b4] mt-0.5 font-mono">
+              @liorandb/driver
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono">
+              <span className="text-[#38bdf8]">Connected</span>
+              <span className="text-[#22c55e]">0.4ms</span>
+            </div>
+          </div>
+
+          {/* Live Mobile Row items */}
+          <div className="mt-2 space-y-1.5">
+            <div className="p-1.5 rounded-[6px] bg-[#181a24] text-[9px]">
+              <div className="font-semibold text-[#f1f3f8]">alex.dev</div>
+              <div className="text-[#717688] font-mono">Session: active</div>
+            </div>
+            <div className="p-1.5 rounded-[6px] bg-[#181a24] text-[9px]">
+              <div className="font-semibold text-[#f1f3f8]">swaraj.db</div>
+              <div className="text-[#717688] font-mono">Session: active</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// Keep backward compatible alias for existing imports
+export const LioranDBClusterIllustration = ExpoDeviceMockupHero;
 
 // Interactive Live Query Playground for LioranDB Studio Landing Page
 export function InteractiveQueryStage() {
@@ -189,30 +306,32 @@ export function InteractiveQueryStage() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto rounded-[10px] border-2 border-[#111111] bg-white p-6 sm:p-8 shadow-[4px_4px_0px_#111111]">
+    <div className="w-full max-w-4xl mx-auto rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-6 sm:p-8 shadow-sm">
       {/* Console Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-[#111111] pb-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--hairline)] pb-4 mb-6">
         <div>
-          <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-[#666666]">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">
             <span>LIORANDB STUDIO</span>
             <span>/</span>
-            <span className="font-bold text-[#111111]">LIVE QUERY ENGINE</span>
+            <span className="font-semibold text-[var(--ink)]">QUERY STAGE</span>
           </div>
-          <h3 className="font-sans text-xl font-bold tracking-tight text-[#000000] mt-0.5">
+          <h3 className="font-sans text-[20px] font-semibold tracking-tight text-[var(--ink)] mt-1">
             Real-time Driver Sandbox
           </h3>
         </div>
 
         {/* Query Engine Tabs */}
-        <div className="flex rounded-[5px] border-2 border-[#111111] overflow-hidden">
+        <div className="flex p-0.5 rounded-[8px] bg-[var(--surface-strong)] border border-[var(--hairline)]">
           <button
             type="button"
             onClick={() => {
               setActiveTab("find");
               setQueryInput('{\n  "status": "active",\n  "tier": "enterprise"\n}');
             }}
-            className={`px-3 py-1 font-mono text-xs font-bold ${
-              activeTab === "find" ? "bg-[#000000] text-white" : "bg-white text-[#111111]"
+            className={`px-3 py-1.5 font-sans text-xs font-medium rounded-[6px] transition ${
+              activeTab === "find"
+                ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-sm font-semibold"
+                : "text-[var(--body)] hover:text-[var(--ink)]"
             }`}
           >
             Find
@@ -223,8 +342,10 @@ export function InteractiveQueryStage() {
               setActiveTab("aggregate");
               setQueryInput('[\n  { "$match": { "status": "active" } },\n  { "$group": { "_id": "$tier", "count": { "$sum": 1 } } }\n]');
             }}
-            className={`px-3 py-1 font-mono text-xs font-bold border-l-2 border-[#111111] ${
-              activeTab === "aggregate" ? "bg-[#000000] text-white" : "bg-white text-[#111111]"
+            className={`px-3 py-1.5 font-sans text-xs font-medium rounded-[6px] transition ${
+              activeTab === "aggregate"
+                ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-sm font-semibold"
+                : "text-[var(--body)] hover:text-[var(--ink)]"
             }`}
           >
             Aggregate
@@ -235,8 +356,10 @@ export function InteractiveQueryStage() {
               setActiveTab("indexes");
               setQueryInput('[\n  { "field": "status", "direction": "asc" },\n  { "field": "created_at", "direction": "desc" }\n]');
             }}
-            className={`px-3 py-1 font-mono text-xs font-bold border-l-2 border-[#111111] ${
-              activeTab === "indexes" ? "bg-[#000000] text-white" : "bg-white text-[#111111]"
+            className={`px-3 py-1.5 font-sans text-xs font-medium rounded-[6px] transition ${
+              activeTab === "indexes"
+                ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-sm font-semibold"
+                : "text-[var(--body)] hover:text-[var(--ink)]"
             }`}
           >
             Indexes
@@ -248,21 +371,21 @@ export function InteractiveQueryStage() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Editor Box */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between font-mono text-xs text-[#666666]">
+          <div className="flex items-center justify-between font-mono text-xs text-[var(--muted)]">
             <span>INPUT FILTER / PIPELINE</span>
-            <span className="font-bold text-[#111111]">JSON</span>
+            <span className="font-semibold text-[var(--ink)]">JSON</span>
           </div>
           <textarea
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
             rows={7}
-            className="w-full rounded-[7px] border-2 border-[#111111] bg-white p-3 font-mono text-xs text-[#111111] shadow-[2px_2px_0px_#111111] focus:outline-none"
+            className="expo-textarea font-mono text-xs"
           />
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-xs text-[#666666]">Target: default.users</span>
+          <div className="flex items-center justify-between pt-1">
+            <span className="font-mono text-xs text-[var(--body)]">Target: default.users</span>
             <button
               type="button"
-              className="sketch-btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider"
+              className="btn-primary"
             >
               Run Query →
             </button>
@@ -271,17 +394,17 @@ export function InteractiveQueryStage() {
 
         {/* Results Box */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between font-mono text-xs text-[#666666]">
-            <span>OUTPUT RESULTS</span>
-            <span className="font-bold text-[#059669]">2 matched • <span className="text-[#D97706]">0.38ms</span></span>
+          <div className="flex items-center justify-between font-mono text-xs text-[var(--muted)]">
+            <span>STREAMED OUTPUT</span>
+            <span className="font-semibold text-[#16a34a]">2 matched • <span className="text-[#d97706]">0.38ms</span></span>
           </div>
           <pre
-            className="editor-scroll h-[175px] overflow-auto rounded-[7px] border-2 border-[#111111] bg-white p-3 font-mono text-xs leading-5 text-[#111111] shadow-[2px_2px_0px_#111111]"
+            className="editor-scroll h-[175px] overflow-auto rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] dark:bg-[#12141a] p-3 font-mono text-xs leading-5 text-[var(--ink)]"
             dangerouslySetInnerHTML={{
               __html: syntaxHighlightJson(sampleResults[activeTab]),
             }}
           />
-          <div className="font-mono text-[11px] text-[#059669] text-right font-medium">
+          <div className="font-mono text-[11px] text-[#16a34a] text-right font-medium">
             ✓ Result streamed directly from @liorandb/driver
           </div>
         </div>
@@ -290,25 +413,41 @@ export function InteractiveQueryStage() {
   );
 }
 
-// Reusable Hand-drawn Wavy Underline
+// Subtle separator / decorative underline replacement
 export function SketchUnderline({ className = "" }: { className?: string }) {
   return (
-    <svg
-      width="100%"
-      height="12"
-      viewBox="0 0 200 12"
-      preserveAspectRatio="none"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M2 6 Q 25 10, 50 6 T 100 6 T 150 6 T 198 6"
-        stroke="#111111"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-    </svg>
+    <div className={`h-[2px] w-16 bg-[var(--primary)] rounded-full ${className}`} />
+  );
+}
+
+// 8-up Ecosystem Tiles Grid specified in DESIGN.md
+export function EcosystemTilesGrid() {
+  const tiles = [
+    { name: "TypeScript", role: "Typed Driver SDK", symbol: "TS" },
+    { name: "React Native", role: "Mobile Client", symbol: "RN" },
+    { name: "Sentry", role: "Error Tracing", symbol: "SN" },
+    { name: "Node.js", role: "Server Runtime", symbol: "JS" },
+    { name: "Next.js", role: "Fullstack App", symbol: "NX" },
+    { name: "Docker", role: "Containers", symbol: "DK" },
+    { name: "Kubernetes", role: "Cluster Orchestration", symbol: "K8" },
+    { name: "Tailwind CSS", role: "Design Tokens", symbol: "TW" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
+      {tiles.map((tile) => (
+        <div
+          key={tile.name}
+          className="flex flex-col items-center justify-center p-3 h-[84px] rounded-[8px] bg-[var(--surface-card)] border border-[var(--hairline)] hover:border-[var(--hairline-strong)] transition text-center group"
+        >
+          <div className="w-8 h-8 rounded-[6px] bg-[var(--surface-strong)] flex items-center justify-center font-mono text-xs font-bold text-[var(--ink)] group-hover:bg-[var(--primary)] group-hover:text-[var(--on-primary)] transition">
+            {tile.symbol}
+          </div>
+          <span className="mt-2 text-[11px] font-medium text-[var(--ink)] truncate max-w-full">
+            {tile.name}
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }

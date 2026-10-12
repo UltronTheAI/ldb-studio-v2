@@ -63,18 +63,18 @@ export function ThemeToggle({
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      className={`sketch-btn-secondary inline-flex items-center justify-center gap-1.5 p-2 text-xs font-bold uppercase transition ${className}`}
+      className={`inline-flex items-center justify-center gap-2 h-10 px-3 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-[var(--ink)] hover:bg-[var(--surface-strong)] transition cursor-pointer text-xs font-medium ${className}`}
       suppressHydrationWarning
     >
       {isDark ? (
         <>
-          <SunIcon size={15} />
-          {showLabel && <span>Light</span>}
+          <SunIcon size={15} className="text-[#f59e0b]" />
+          {showLabel && <span>Light theme</span>}
         </>
       ) : (
         <>
-          <MoonIcon size={15} />
-          {showLabel && <span>Dark</span>}
+          <MoonIcon size={15} className="text-[var(--body)]" />
+          {showLabel && <span>Dark theme</span>}
         </>
       )}
     </button>

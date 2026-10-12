@@ -128,11 +128,15 @@ export function StudioClientEffects() {
 
   return (
     <div className="pointer-events-none fixed bottom-6 right-6 z-[100] max-w-md">
-      <div className="flex items-center gap-3 rounded-[7px] border-2 border-[#111111] bg-white px-4 py-3 text-sm text-[#111111] shadow-[3px_3px_0px_#111111]">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[#111111] font-mono text-xs font-bold text-[#111111]">
-          {isError ? "×" : "✓"}
+      <div className="flex items-center gap-3 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] px-4 py-3 text-sm text-[var(--ink)] shadow-[0_8px_24px_rgba(0,0,0,0.1)]">
+        <span
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+            isError ? "bg-[var(--semantic-error)]" : "bg-[var(--semantic-success)]"
+          }`}
+        >
+          {isError ? "!" : "✓"}
         </span>
-        <div className="font-medium leading-5">{activeToast.message}</div>
+        <div className="font-medium text-xs leading-5 text-[var(--ink)]">{activeToast.message}</div>
       </div>
     </div>
   );

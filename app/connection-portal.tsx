@@ -106,29 +106,29 @@ function renderColoredUri(uri: string, isRevealed: boolean) {
   const display = isRevealed ? uri : maskConnectionString(uri);
   const match = display.match(/^([a-zA-Z0-9+.-]+:\/\/)(?:([^@]+)@)?([^/:?#]+)(?::(\d+))?(?:\/(.*))?$/);
   if (!match) {
-    return <span className="text-[#2563EB] font-semibold">{display}</span>;
+    return <span className="text-[#0d74ce] font-medium">{display}</span>;
   }
   const [, scheme, userPass, host, port, db] = match;
   return (
     <span>
-      <span className="text-[#2563EB] font-bold">{scheme}</span>
+      <span className="text-[#0d74ce] font-semibold">{scheme}</span>
       {userPass && (
         <>
-          <span className="text-[#7C3AED] font-semibold">{userPass}</span>
-          <span className="text-[#64748B]">@</span>
+          <span className="text-[#8145b5] font-medium">{userPass}</span>
+          <span className="text-[var(--muted)]">@</span>
         </>
       )}
-      <span className="text-[#059669] font-bold">{host}</span>
+      <span className="text-[#16a34a] font-semibold">{host}</span>
       {port && (
         <>
-          <span className="text-[#64748B]">:</span>
-          <span className="text-[#D97706] font-bold">{port}</span>
+          <span className="text-[var(--muted)]">:</span>
+          <span className="text-[#ab6400] font-semibold">{port}</span>
         </>
       )}
       {db !== undefined && (
         <>
-          <span className="text-[#64748B]">/</span>
-          <span className="text-[#DC2626] font-semibold">{db}</span>
+          <span className="text-[var(--muted)]">/</span>
+          <span className="text-[#dc2626] font-medium">{db}</span>
         </>
       )}
     </span>
@@ -351,7 +351,7 @@ export function ConnectionPortal({
   });
 
   return (
-    <div className="sketch-card p-6 sm:p-10">
+    <div className="rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-6 sm:p-10 shadow-sm">
       {/* Hidden form for instant programmatic connection */}
       <form
         ref={submitFormRef}
@@ -368,25 +368,25 @@ export function ConnectionPortal({
       </form>
 
       {/* Card Header & Controls */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#111111] pb-5">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--hairline)] pb-5">
         <div>
-          <h2 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-[#000000]">
+          <h2 className="font-sans text-[24px] sm:text-[28px] font-semibold tracking-[-0.84px] text-[var(--ink)]">
             Connect to LioranDB Instance
           </h2>
-          <p className="mt-1 text-sm text-[#666666]">
-            Select a saved connection profile, manage your cluster bookmarks, or enter a direct connection URI.
+          <p className="mt-1 text-sm text-[var(--body)]">
+            Select a saved connection profile, manage your cluster endpoints, or enter a direct connection URI.
           </p>
         </div>
 
         {/* View Switcher Tabs */}
-        <div className="flex items-center gap-1.5 rounded-[7px] border-2 border-[#111111] bg-[#FAFAFA] p-1 font-mono text-xs font-bold shadow-[2px_2px_0px_#111111]">
+        <div className="flex items-center gap-1 rounded-[8px] bg-[var(--surface-strong)] p-1 border border-[var(--hairline)]">
           <button
             type="button"
             onClick={() => setActiveTab("saved")}
-            className={`rounded px-3 py-1.5 transition ${
+            className={`rounded-[6px] px-3 py-1.5 text-xs font-medium transition ${
               activeTab === "saved"
-                ? "bg-[#000000] text-white"
-                : "text-[#111111] hover:bg-white"
+                ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-sm font-semibold"
+                : "text-[var(--body)] hover:text-[var(--ink)]"
             }`}
           >
             Saved Profiles ({connections.length})
@@ -394,10 +394,10 @@ export function ConnectionPortal({
           <button
             type="button"
             onClick={() => setActiveTab("direct")}
-            className={`rounded px-3 py-1.5 transition ${
+            className={`rounded-[6px] px-3 py-1.5 text-xs font-medium transition ${
               activeTab === "direct"
-                ? "bg-[#000000] text-white"
-                : "text-[#111111] hover:bg-white"
+                ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-sm font-semibold"
+                : "text-[var(--body)] hover:text-[var(--ink)]"
             }`}
           >
             Direct Connect
@@ -408,23 +408,23 @@ export function ConnectionPortal({
       {/* Global Error Notice if redirected with ?error= */}
       {errorMessage ? (
         <div className="mb-6 space-y-3">
-          <div className="rounded-[7px] border-2 border-[#111111] bg-white p-4 font-mono text-xs text-[#111111] shadow-[2px_2px_0px_#111111]">
-            <span className="font-bold mr-2">[× ERROR]</span>
+          <div className="rounded-[8px] border border-[var(--semantic-error)] bg-[var(--semantic-error)]/10 p-4 font-mono text-xs text-[var(--semantic-error)]">
+            <span className="font-bold mr-2">[ERROR]</span>
             {errorMessage}
           </div>
 
           {errorMessage.includes("Local database detected") ? (
-            <div className="rounded-[7px] border-2 border-[#111111] bg-white p-4 text-xs text-[#111111] shadow-[2px_2px_0px_#111111]">
-              <div className="flex items-center gap-1.5 font-bold uppercase font-mono">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] p-4 text-xs text-[var(--ink)]">
+              <div className="flex items-center gap-1.5 font-semibold text-[var(--ink)]">
                 <TerminalIcon size={14} />
                 <span>How to connect a local database</span>
               </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">
+              <p className="mt-1.5 text-xs leading-relaxed text-[var(--body)]">
                 Hosted Studio cannot connect directly to loopback on your workstation. Run Studio locally:
               </p>
-              <div className="mt-2.5 flex items-center justify-between rounded border border-[#111111] bg-[#FAFAFA] px-3 py-2 font-mono text-xs">
+              <div className="mt-2.5 flex items-center justify-between rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] px-3 py-2 font-mono text-xs">
                 <code>liorandb studio</code>
-                <span className="text-[11px] text-[#666666]">or npm run dev</span>
+                <span className="text-[11px] text-[var(--muted)]">or npm run dev</span>
               </div>
             </div>
           ) : null}
@@ -437,7 +437,7 @@ export function ConnectionPortal({
           {/* Top Action Bar: Search & New Profile Button */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1">
-              <span className="absolute inset-y-0 left-3 flex items-center text-[#666666]">
+              <span className="absolute inset-y-0 left-3 flex items-center text-[var(--muted)] pointer-events-none">
                 <SearchIcon size={14} />
               </span>
               <input
@@ -445,14 +445,14 @@ export function ConnectionPortal({
                 placeholder="Filter saved profiles by name or host..."
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="w-full rounded-[7px] border-2 border-[#111111] bg-white pl-9 pr-3 py-2 font-mono text-xs text-[#111111] shadow-[2px_2px_0px_#111111] placeholder:text-[#999999] focus:outline-none"
+                className="expo-input pl-9 text-xs"
               />
             </div>
 
             <button
               type="button"
               onClick={handleStartCreate}
-              className="sketch-btn-primary flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider shrink-0"
+              className="btn-primary shrink-0"
             >
               <PlusIcon size={14} />
               <span>Add New Profile</span>
@@ -461,32 +461,32 @@ export function ConnectionPortal({
 
           {/* Inline Create / Edit Modal / Form */}
           {(isCreatingNew || editingItem) && (
-            <div className="rounded-[7px] border-2 border-[#111111] bg-[#FAFAFA] p-5 shadow-[3px_3px_0px_#111111]">
-              <div className="flex items-center justify-between border-b-2 border-[#111111] pb-3 mb-4">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] p-5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <DatabaseIcon size={16} />
-                  <span className="font-sans text-sm font-bold text-[#000000]">
+                  <DatabaseIcon size={16} className="text-[var(--ink)]" />
+                  <span className="font-sans text-sm font-semibold text-[var(--ink)]">
                     {editingItem ? `Edit Profile: ${editingItem.name}` : "Save New Connection Profile"}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleCancelEditor}
-                  className="rounded border border-[#111111] p-1 text-[#666666] hover:bg-white hover:text-black"
+                  className="rounded-[6px] p-1 text-[var(--muted)] hover:text-[var(--ink)] transition"
                 >
                   <XIcon size={14} />
                 </button>
               </div>
 
               {editorError && (
-                <div className="mb-4 rounded border border-[#111111] bg-white p-2.5 font-mono text-xs font-bold text-[#000000]">
-                  [×] {editorError}
+                <div className="mb-4 rounded-[6px] border border-[var(--semantic-error)] bg-[var(--semantic-error)]/10 p-2.5 font-mono text-xs text-[var(--semantic-error)]">
+                  {editorError}
                 </div>
               )}
 
               <form onSubmit={handleSaveEditor} className="space-y-4">
                 <div>
-                  <label className="block mb-1 font-mono text-xs font-bold text-[#111111]">
+                  <label className="block mb-1 text-xs font-semibold text-[var(--ink)]">
                     Profile Name / Label
                   </label>
                   <input
@@ -494,13 +494,13 @@ export function ConnectionPortal({
                     placeholder="e.g. Production Cluster, Analytics Staging, Local Node"
                     value={editorName}
                     onChange={(e) => setEditorName(e.target.value)}
-                    className="w-full rounded-[7px] border-2 border-[#111111] bg-white px-3.5 py-2 font-mono text-xs text-[#111111] focus:outline-none"
+                    className="expo-input text-xs"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-mono text-xs font-bold text-[#111111]">
+                  <label className="block mb-1 text-xs font-semibold text-[var(--ink)]">
                     Connection URI
                   </label>
                   <input
@@ -508,10 +508,10 @@ export function ConnectionPortal({
                     placeholder="liorandb://username:password@host:port/database"
                     value={editorUri}
                     onChange={(e) => setEditorUri(e.target.value)}
-                    className="w-full rounded-[7px] border-2 border-[#111111] bg-white px-3.5 py-2 font-mono text-xs text-[#111111] focus:outline-none"
+                    className="expo-input font-mono text-xs"
                     required
                   />
-                  <div className="mt-1 font-mono text-[11px] text-[#666666]">
+                  <div className="mt-1 font-mono text-[11px] text-[var(--muted)]">
                     Format: <code>liorandb://user:pass@host:port/database</code>
                   </div>
                 </div>
@@ -520,13 +520,13 @@ export function ConnectionPortal({
                   <button
                     type="button"
                     onClick={handleCancelEditor}
-                    className="sketch-btn-secondary px-4 py-2 text-xs font-bold uppercase tracking-wider"
+                    className="btn-secondary"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="sketch-btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider"
+                    className="btn-primary"
                   >
                     {editingItem ? "Save Changes" : "Save Profile"}
                   </button>
@@ -536,14 +536,14 @@ export function ConnectionPortal({
           )}
 
           {/* List of Saved Connection Cards */}
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {filteredConnections.length === 0 ? (
-              <div className="rounded-[7px] border-2 border-dashed border-[#111111] bg-[#FAFAFA] p-8 text-center">
-                <DatabaseIcon size={24} className="mx-auto text-[#666666]" />
-                <h3 className="mt-2 font-sans text-base font-bold text-[#000000]">
+              <div className="rounded-[8px] border border-dashed border-[var(--hairline-strong)] bg-[var(--canvas-soft)] p-8 text-center">
+                <DatabaseIcon size={24} className="mx-auto text-[var(--muted)]" />
+                <h3 className="mt-2 font-sans text-sm font-semibold text-[var(--ink)]">
                   No connection profiles found
                 </h3>
-                <p className="mt-1 text-xs text-[#666666]">
+                <p className="mt-1 text-xs text-[var(--body)]">
                   {filterQuery
                     ? `No profiles matched "${filterQuery}". Clear the search or add a new profile.`
                     : "You haven't saved any connection profiles yet."}
@@ -553,7 +553,7 @@ export function ConnectionPortal({
                     <button
                       type="button"
                       onClick={() => setFilterQuery("")}
-                      className="sketch-btn-secondary px-3 py-1.5 text-xs font-bold uppercase"
+                      className="btn-secondary text-xs"
                     >
                       Clear Filter
                     </button>
@@ -561,7 +561,7 @@ export function ConnectionPortal({
                     <button
                       type="button"
                       onClick={() => persistConnections(INITIAL_DEFAULT_CONNECTIONS)}
-                      className="sketch-btn-secondary px-3 py-1.5 text-xs font-bold uppercase"
+                      className="btn-secondary text-xs"
                     >
                       Load Sample Profiles
                     </button>
@@ -569,7 +569,7 @@ export function ConnectionPortal({
                   <button
                     type="button"
                     onClick={handleStartCreate}
-                    className="sketch-btn-primary px-3 py-1.5 text-xs font-bold uppercase"
+                    className="btn-primary text-xs"
                   >
                     + Add Profile
                   </button>
@@ -584,26 +584,26 @@ export function ConnectionPortal({
                 return (
                   <div
                     key={conn.id}
-                    className="rounded-[7px] border-2 border-[#111111] bg-white p-4 shadow-[2px_2px_0px_#111111] transition hover:shadow-[3px_3px_0px_#111111]"
+                    className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-4 transition hover:border-[var(--ink)] hover:shadow-sm"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E0E0E0] pb-3 mb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--hairline)] pb-3 mb-3">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-sans text-base font-bold text-[#000000]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-sans text-sm font-semibold text-[var(--ink)]">
                             {conn.name}
                           </span>
-                          <span className="rounded border border-[#111111] bg-[#FAFAFA] px-1.5 py-0.5 font-mono text-[10px] text-[#111111]">
+                          <span className="badge-pill">
                             {parsed.host}:{parsed.port}
                           </span>
                           {parsed.db && (
-                            <span className="rounded border border-[#111111] bg-white px-1.5 py-0.5 font-mono text-[10px] text-[#666666]">
-                              db: {parsed.db}
+                            <span className="text-[11px] font-mono text-[var(--muted)]">
+                              /{parsed.db}
                             </span>
                           )}
                         </div>
                         {conn.lastUsedAt && (
                           <div
-                            className="mt-1 font-mono text-[10px] text-[#888888]"
+                            className="mt-1 font-mono text-[11px] text-[var(--muted)]"
                             suppressHydrationWarning
                           >
                             Last connected: {formatTimestamp(conn.lastUsedAt)}
@@ -616,7 +616,7 @@ export function ConnectionPortal({
                         <button
                           type="button"
                           onClick={() => handleConnectWithUri(conn.uri, conn.id)}
-                          className="sketch-btn-primary flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider"
+                          className="btn-primary text-xs h-[36px]"
                           title="Connect to this database now"
                         >
                           <span>Connect</span>
@@ -625,7 +625,7 @@ export function ConnectionPortal({
                         <button
                           type="button"
                           onClick={() => handleStartEdit(conn)}
-                          className="rounded-[5px] border-2 border-[#111111] bg-white p-1.5 text-[#111111] shadow-[1px_1px_0px_#111111] hover:bg-[#FAFAFA]"
+                          className="flex items-center justify-center h-[36px] w-[36px] rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
                           title="Edit connection profile"
                         >
                           <PencilIcon size={14} />
@@ -633,7 +633,7 @@ export function ConnectionPortal({
                         <button
                           type="button"
                           onClick={() => handleDelete(conn.id, conn.name)}
-                          className="rounded-[5px] border-2 border-[#111111] bg-white p-1.5 text-[#111111] shadow-[1px_1px_0px_#111111] hover:bg-[#FAFAFA]"
+                          className="flex items-center justify-center h-[36px] w-[36px] rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-[var(--ink)] hover:bg-[var(--surface-strong)] hover:text-[var(--semantic-error)] transition"
                           title="Delete saved connection profile"
                         >
                           <Trash2Icon size={14} />
@@ -642,12 +642,12 @@ export function ConnectionPortal({
                     </div>
 
                     {/* URI Bar with Reveal & Copy Controls */}
-                    <div className="flex items-center justify-between gap-2 rounded border border-[#111111] bg-[#FAFAFA] px-3 py-2 font-mono text-xs">
+                    <div className="flex items-center justify-between gap-2 rounded-[6px] border border-[var(--hairline)] bg-[var(--canvas-soft)] px-3 py-2 font-mono text-xs">
                       <div className="truncate select-all">
                         {renderColoredUri(conn.uri, isRevealed)}
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0 text-[#666666]">
+                      <div className="flex items-center gap-2 shrink-0 text-[var(--muted)]">
                         <button
                           type="button"
                           onClick={() =>
@@ -656,7 +656,7 @@ export function ConnectionPortal({
                               [conn.id]: !prev[conn.id],
                             }))
                           }
-                          className="p-1 hover:text-black"
+                          className="p-1 hover:text-[var(--ink)] transition"
                           title={isRevealed ? "Hide credentials" : "Show full URI credentials"}
                         >
                           {isRevealed ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
@@ -664,11 +664,11 @@ export function ConnectionPortal({
                         <button
                           type="button"
                           onClick={() => handleCopyUri(conn.id, conn.uri)}
-                          className="p-1 hover:text-black flex items-center gap-1"
+                          className="p-1 hover:text-[var(--ink)] transition flex items-center gap-1"
                           title="Copy connection string"
                         >
                           {isCopied ? (
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-black">
+                            <span className="flex items-center gap-1 text-[11px] font-medium text-[var(--semantic-success)]">
                               <CheckIcon size={12} />
                               <span>Copied</span>
                             </span>
@@ -683,9 +683,9 @@ export function ConnectionPortal({
                             setDirectProfileName(conn.name);
                             setActiveTab("direct");
                           }}
-                          className="ml-1 text-[11px] underline underline-offset-2 hover:text-black"
+                          className="btn-tertiary-text text-xs"
                         >
-                          Inspect URI
+                          Inspect
                         </button>
                       </div>
                     </div>
@@ -708,7 +708,7 @@ export function ConnectionPortal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label
-                className="font-mono text-xs font-bold uppercase tracking-wider text-[#111111]"
+                className="text-xs font-semibold uppercase tracking-wider text-[var(--ink)]"
                 htmlFor={directUriInputId}
               >
                 Connection URI
@@ -716,7 +716,7 @@ export function ConnectionPortal({
               <button
                 type="button"
                 onClick={() => setShowDirectPassword((prev) => !prev)}
-                className="flex items-center gap-1 font-mono text-[11px] text-[#666666] hover:text-black"
+                className="btn-tertiary-text text-xs"
               >
                 {showDirectPassword ? (
                   <>
@@ -738,22 +738,22 @@ export function ConnectionPortal({
               value={directUri}
               onChange={(e) => setDirectUri(e.target.value)}
               placeholder="liorandb://admin:password@swaraj.db.liorandb.com:443/default"
-              className="w-full rounded-[7px] border-2 border-[#111111] bg-white px-3.5 py-2.5 font-mono text-sm text-[#111111] shadow-[2px_2px_0px_#111111] placeholder:text-[#888888] focus:outline-none"
+              className="expo-input font-mono text-xs"
               required
               suppressHydrationWarning
             />
           </div>
 
           {/* Option to automatically save this connection */}
-          <div className="rounded-[7px] border border-[#111111] bg-[#FAFAFA] p-3.5 space-y-2.5">
+          <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] p-3.5 space-y-2.5">
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={saveDirectProfile}
                 onChange={(e) => setSaveDirectProfile(e.target.checked)}
-                className="h-4 w-4 accent-black rounded border-2 border-[#111111]"
+                className="h-4 w-4 accent-black dark:accent-white rounded"
               />
-              <span className="font-sans text-xs font-bold text-[#111111]">
+              <span className="font-sans text-xs font-medium text-[var(--ink)]">
                 Save this connection profile for future sessions
               </span>
             </label>
@@ -762,7 +762,7 @@ export function ConnectionPortal({
               <div>
                 <label
                   htmlFor={directProfileNameId}
-                  className="block font-mono text-[11px] text-[#666666] mb-1"
+                  className="block text-[11px] text-[var(--muted)] mb-1"
                 >
                   Profile Label (Optional):
                 </label>
@@ -772,7 +772,7 @@ export function ConnectionPortal({
                   placeholder="e.g. Primary Production Cluster, My Test Replica"
                   value={directProfileName}
                   onChange={(e) => setDirectProfileName(e.target.value)}
-                  className="w-full rounded border border-[#111111] bg-white px-3 py-1.5 font-mono text-xs text-[#111111] focus:outline-none"
+                  className="expo-input text-xs h-[36px]"
                 />
               </div>
             )}
@@ -780,7 +780,7 @@ export function ConnectionPortal({
 
           <button
             type="submit"
-            className="sketch-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-sm font-bold uppercase tracking-wider"
+            className="btn-primary w-full h-[44px]"
             suppressHydrationWarning
           >
             <span>Connect to Studio</span>
@@ -790,11 +790,11 @@ export function ConnectionPortal({
       )}
 
       {/* Default URI Format Help Guide */}
-      <div className="mt-6 rounded-[7px] border border-[#111111] bg-[#FAFAFA] p-3.5 text-xs text-[#666666]">
-        <span className="font-bold text-[#111111]">Default format:</span>{" "}
-        <code className="font-mono text-[#000000]">liorandb://username:password@host:port/database</code>
-        <div className="mt-1 text-[11px]">
-          (Database name optional: <code className="font-mono text-[#000000]">liorandb://username:password@host:port</code>)
+      <div className="mt-6 rounded-[8px] border border-[var(--hairline)] bg-[var(--canvas-soft)] p-3.5 text-xs text-[var(--body)]">
+        <span className="font-semibold text-[var(--ink)]">Default format:</span>{" "}
+        <code className="font-mono">liorandb://username:password@host:port/database</code>
+        <div className="mt-1 text-[11px] text-[var(--muted)]">
+          Database name is optional: <code className="font-mono">liorandb://username:password@host:port</code>
         </div>
       </div>
     </div>
