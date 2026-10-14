@@ -113,7 +113,7 @@ export function DocumentTable({ documents, onEdit, onDelete }: DocumentTableProp
                       className="p-1 rounded text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--hairline-strong)] transition"
                     >
                       {copiedId === `doc-${rawId}` ? (
-                        <CheckIcon size={12} className="text-[#16a34a]" />
+                        <CheckIcon size={12} className="text-[var(--text-link)]" />
                       ) : (
                         <CopyIcon size={12} />
                       )}
@@ -156,7 +156,7 @@ export function DocumentTable({ documents, onEdit, onDelete }: DocumentTableProp
                         <span
                           className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-bold ${
                             val
-                              ? "bg-[#16a34a]/15 text-[#16a34a]"
+                              ? "bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]"
                               : "bg-[#ef4444]/15 text-[#ef4444]"
                           }`}
                         >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Document } from "@liorandb/driver";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type {
@@ -82,6 +82,9 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const loadedKeyRef = useRef<string>("");
+  const prevRefreshTriggerRef = useRef(refreshTrigger);
+
   // Load documents
   const loadDocuments = useCallback(
     async (overrideParams?: {
@@ -113,6 +116,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         if (res.ok && res.data) {
           updateTabState(tab.id, {
             executionDurationMs: res.durationMs,
+            lastExecutedAt: Date.now(),
             collectionState: {
               ...state,
               filter: activeFilter,
@@ -166,20 +170,18 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     ],
   );
 
-  // Initial load if documents are empty or upon refreshTrigger
+  // Initial load once on mount/collection change, or upon explicit refreshTrigger
   useEffect(() => {
-    let ignore = false;
-    if (state.documents.length === 0) {
-      void Promise.resolve().then(() => {
-        if (!ignore) {
-          loadDocuments();
-        }
-      });
+    const currentKey = `${tab.id}:${database}:${collection}`;
+    const isNew = loadedKeyRef.current !== currentKey;
+    const isRefresh = refreshTrigger > 0 && refreshTrigger !== prevRefreshTriggerRef.current;
+
+    if (isNew || isRefresh) {
+      loadedKeyRef.current = currentKey;
+      prevRefreshTriggerRef.current = refreshTrigger;
+      void loadDocuments();
     }
-    return () => {
-      ignore = true;
-    };
-  }, [refreshTrigger, loadDocuments, state.documents.length]);
+  }, [tab.id, database, collection, refreshTrigger, loadDocuments]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();

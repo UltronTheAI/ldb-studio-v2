@@ -152,10 +152,10 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
             className={`mb-4 p-3 rounded-[6px] text-xs font-mono flex items-center gap-2 ${
               message.isError
                 ? "bg-[#ef4444]/15 border border-[#ef4444]/30 text-[#ef4444]"
-                : "bg-[#16a34a]/15 border border-[#16a34a]/30 text-[#16a34a]"
+                : "bg-[var(--surface-strong)] border border-[var(--hairline-strong)] text-[var(--ink)]"
             }`}
           >
-            {message.isError ? <AlertCircleIcon size={14} /> : <CheckCircle2Icon size={14} />}
+            {message.isError ? <AlertCircleIcon size={14} /> : <CheckCircle2Icon size={14} className="text-[var(--text-link)]" />}
             <span>{message.text}</span>
           </div>
         )}
@@ -208,7 +208,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
                             u.enabled !== false
-                              ? "bg-[#16a34a]/15 text-[#16a34a]"
+                              ? "bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]"
                               : "bg-[#ef4444]/15 text-[#ef4444]"
                           }`}
                         >
@@ -339,7 +339,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                           {new Date(b.created_at_utc_ms).toLocaleString()}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-[#16a34a]/15 text-[#16a34a]">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]">
                             {b.status || "Complete"}
                           </span>
                         </td>

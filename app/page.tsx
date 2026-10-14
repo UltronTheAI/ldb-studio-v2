@@ -473,7 +473,7 @@ function StatTile({
 }: {
   readonly label: string;
   readonly value: ReactNode;
-  readonly tone?: "slate" | "cyan" | "emerald" | "amber" | "coral";
+  readonly tone?: "slate" | "cyan" | "sky" | "amber" | "coral";
 }) {
   return (
     <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-4 transition hover:border-[var(--ink)]">
@@ -515,7 +515,7 @@ function TerminalBlock({
         <span className="font-mono text-xs font-semibold text-[#a0a4b0]">
           {title}
         </span>
-        <span className="font-mono text-[10px] text-[#22c55e] font-medium">[LOG STREAM]</span>
+        <span className="font-mono text-[10px] text-[var(--text-link)] font-medium">[LOG STREAM]</span>
       </div>
       <div className="editor-scroll space-y-1.5 overflow-x-auto p-4 font-mono text-xs leading-6 text-[#d0d3de]">
         {lines.map((line, index) => {
@@ -579,7 +579,7 @@ function DocumentCard({
                     ? "text-[#dc2626]"
                     : fieldValue === null
                     ? "text-[#64748b] italic"
-                    : "text-[#16a34a]"
+                    : "text-[var(--text-link)]"
                 }`}>
                   {typeof fieldValue === "string" ? `"${fieldValue}"` : String(fieldValue)}
                 </span>
@@ -901,7 +901,7 @@ export default async function Home({ searchParams }: PageProps) {
           <div className="relative z-10 mx-auto max-w-[1200px] px-6 text-center">
             {/* Headline in display-mega */}
             <div className="inline-flex items-center gap-2 mb-6 badge-pill">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-link)]" />
               <span>Studio 2.0 • Developer Control Plane</span>
             </div>
 
@@ -1005,7 +1005,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <div className="p-3 rounded-[8px] bg-[var(--surface-dark)] text-[#f4f5f8]">
                     <span className="text-[#60a5fa]">db.collection</span>
                     <span className="text-white">(</span>
-                    <span className="text-[#4ade80]">&apos;metrics&apos;</span>
+                    <span className="text-[#38bdf8]">&apos;metrics&apos;</span>
                     <span className="text-white">).</span>
                     <span className="text-[#c084fc]">aggregate</span>
                     <span className="text-white">([...])</span>
@@ -1032,7 +1032,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div className="mt-6 pt-4 border-t border-[var(--hairline)] font-mono text-xs">
                   <div className="p-3 rounded-[8px] bg-[var(--surface-dark)] text-[#f4f5f8]">
                     <span className="text-[#c084fc]">GRANT </span>
-                    <span className="text-[#4ade80]">readWrite </span>
+                    <span className="text-[#38bdf8]">readWrite </span>
                     <span className="text-[#c084fc]">ON </span>
                     <span className="text-[#60a5fa]">telemetry </span>
                     <span className="text-[#c084fc]">TO </span>
@@ -1062,7 +1062,7 @@ export default async function Home({ searchParams }: PageProps) {
                     <span className="text-[#60a5fa]">Leader Term: </span>
                     <span className="text-[#fbbf24]">42</span>
                     <span className="text-[#717684]"> • </span>
-                    <span className="text-[#22c55e]">Quorum: 3/3 Healthy</span>
+                    <span className="text-[#60a5fa]">Quorum: 3/3 Healthy</span>
                   </div>
                 </div>
               </div>

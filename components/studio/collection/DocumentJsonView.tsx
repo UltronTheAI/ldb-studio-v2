@@ -58,7 +58,7 @@ export function DocumentJsonView({ documents, onEdit, onDelete }: DocumentJsonVi
                   className="p-1 rounded text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--hairline-strong)] transition"
                 >
                   {copiedId === idStr ? (
-                    <CheckIcon size={13} className="text-[#16a34a]" />
+                    <CheckIcon size={13} className="text-[var(--text-link)]" />
                   ) : (
                     <CopyIcon size={13} />
                   )}

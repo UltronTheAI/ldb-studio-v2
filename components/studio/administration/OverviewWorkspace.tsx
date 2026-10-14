@@ -69,7 +69,7 @@ export function OverviewWorkspace() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#16a34a] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-link)] animate-pulse" />
             <h2 className="font-sans text-lg font-bold text-[var(--ink)]">
               Cluster Node #{nodeId} Connected
             </h2>
@@ -108,8 +108,8 @@ export function OverviewWorkspace() {
           <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
             Live Node State
           </div>
-          <div className="text-xl font-bold font-mono text-[#16a34a] flex items-center gap-2">
-            <CheckCircle2Icon size={18} />
+          <div className="text-xl font-bold font-mono text-[var(--ink)] flex items-center gap-2">
+            <CheckCircle2Icon size={18} className="text-[var(--text-link)]" />
             <span>{liveState}</span>
           </div>
         </div>
@@ -166,7 +166,7 @@ export function OverviewWorkspace() {
             </div>
             <div className="p-2.5 rounded-[6px] bg-[var(--canvas-soft)] border border-[var(--hairline)]">
               <span className="text-[10px] text-[var(--muted)] block">TLS ENCRYPTION</span>
-              <span className="font-semibold text-[#16a34a]">
+              <span className="font-semibold text-[var(--ink)]">
                 {initialContext.tls ? "Enabled (TLS 1.3)" : "Disabled"}
               </span>
             </div>

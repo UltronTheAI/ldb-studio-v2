@@ -137,7 +137,7 @@ export function CollectionSchema({ documents, database, collection }: Collection
                           <span
                             className={
                               type === "String"
-                                ? "text-[#16a34a] font-bold"
+                                ? "text-[var(--text-link)] font-bold"
                                 : type === "Number"
                                 ? "text-[#d97706] font-bold"
                                 : type === "Boolean"
@@ -168,7 +168,7 @@ export function CollectionSchema({ documents, database, collection }: Collection
                         <div
                           style={{ width: `${presencePercent}%` }}
                           className={`h-full rounded-full ${
-                            presencePercent === 100 ? "bg-[#16a34a]" : "bg-[var(--text-link)]"
+                            presencePercent === 100 ? "bg-[var(--ink)]" : "bg-[var(--text-link)]"
                           }`}
                         />
                       </div>

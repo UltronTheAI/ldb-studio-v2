@@ -48,12 +48,12 @@ export function TopAppBar() {
 
         {/* Connection status badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)]">
-          <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[var(--text-link)] animate-pulse" />
           <span className="font-semibold text-[var(--ink)] truncate max-w-[140px] md:max-w-[200px]">
             {initialContext.host}:{initialContext.port}
           </span>
           {initialContext.tls && (
-            <span className="text-[9px] px-1 py-0.2 bg-[#22c55e]/15 text-[#16a34a] font-bold rounded uppercase">
+            <span className="text-[9px] px-1 py-0.2 bg-[var(--surface-card)] text-[var(--ink)] font-bold rounded uppercase border border-[var(--hairline-strong)]">
               TLS
             </span>
           )}

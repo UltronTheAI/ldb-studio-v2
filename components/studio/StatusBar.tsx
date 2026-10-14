@@ -41,7 +41,7 @@ export function StatusBar() {
       {/* Left: Connection State */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-white font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[var(--text-link)] animate-pulse" />
           <span>Connected</span>
         </div>
 
@@ -91,7 +91,7 @@ export function StatusBar() {
               statusMessage.tone === "error"
                 ? "bg-[#ef4444]/20 text-[#ef4444]"
                 : statusMessage.tone === "success"
-                ? "bg-[#16a34a]/20 text-[#22c55e]"
+                ? "bg-[var(--text-link)]/20 text-[#60a5fa]"
                 : "bg-blue-500/20 text-blue-400"
             }`}
           >

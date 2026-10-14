@@ -485,7 +485,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
                     className="p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
                   >
                     {copiedResults ? (
-                      <CheckIcon size={13} className="text-[#16a34a]" />
+                      <CheckIcon size={13} className="text-[var(--text-link)]" />
                     ) : (
                       <CopyIcon size={13} />
                     )}

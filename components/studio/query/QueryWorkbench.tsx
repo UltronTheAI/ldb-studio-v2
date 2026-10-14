@@ -492,7 +492,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                     className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
                   >
                     {copiedResults ? (
-                      <CheckIcon size={13} className="text-[#16a34a]" />
+                      <CheckIcon size={13} className="text-[var(--text-link)]" />
                     ) : (
                       <CopyIcon size={13} />
                     )}

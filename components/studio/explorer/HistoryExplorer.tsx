@@ -59,7 +59,7 @@ export function HistoryExplorer() {
               <div className="flex items-center justify-between text-[10px] text-[var(--muted)] pt-0.5">
                 <span className="flex items-center gap-1">
                   {item.success ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-link)]" />
                   ) : (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
                   )}

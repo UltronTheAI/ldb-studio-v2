@@ -24,7 +24,7 @@ function getTypeBadge(val: unknown) {
   if (typeof val === "object") return <span className="text-[10px] text-[#3b82f6] font-semibold">{"{" + Object.keys(val).length + "}"}</span>;
   if (typeof val === "boolean") return <span className="text-[10px] text-[#ef4444] font-semibold">bool</span>;
   if (typeof val === "number") return <span className="text-[10px] text-[#d97706] font-semibold">num</span>;
-  if (typeof val === "string") return <span className="text-[10px] text-[#16a34a]">str</span>;
+  if (typeof val === "string") return <span className="text-[10px] text-[var(--text-link)]">str</span>;
   return null;
 }
 
@@ -73,7 +73,7 @@ function TreeNode({ name, value, depth = 0 }: TreeNodeProps) {
           <span
             className={`truncate max-w-md ${
               typeof value === "string"
-                ? "text-[#16a34a]"
+                ? "text-[var(--text-link)]"
                 : typeof value === "number"
                 ? "text-[#d97706]"
                 : typeof value === "boolean"
@@ -92,7 +92,7 @@ function TreeNode({ name, value, depth = 0 }: TreeNodeProps) {
           title="Copy value"
           className="opacity-0 group-hover:opacity-100 p-0.5 ml-2 text-[var(--muted)] hover:text-[var(--ink)] rounded"
         >
-          {isCopied ? <CheckIcon size={11} className="text-[#16a34a]" /> : <CopyIcon size={11} />}
+          {isCopied ? <CheckIcon size={11} className="text-[var(--text-link)]" /> : <CopyIcon size={11} />}
         </button>
       </div>
 

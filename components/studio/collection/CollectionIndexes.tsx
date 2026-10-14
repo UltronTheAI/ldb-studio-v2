@@ -128,10 +128,10 @@ export function CollectionIndexes({
           className={`p-3 rounded-[6px] text-xs font-mono flex items-center gap-2 ${
             message.isError
               ? "bg-[#ef4444]/15 border border-[#ef4444]/30 text-[#ef4444]"
-              : "bg-[#16a34a]/15 border border-[#16a34a]/30 text-[#16a34a]"
+              : "bg-[var(--surface-strong)] border border-[var(--hairline-strong)] text-[var(--ink)]"
           }`}
         >
-          {message.isError ? <AlertCircleIcon size={14} /> : <CheckIcon size={14} />}
+          {message.isError ? <AlertCircleIcon size={14} /> : <CheckIcon size={14} className="text-[var(--text-link)]" />}
           <span>{message.text}</span>
         </div>
       )}
@@ -190,7 +190,7 @@ export function CollectionIndexes({
 
                     <td className="px-4 py-3 space-x-1.5">
                       {idx.unique && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#16a34a]/15 text-[#16a34a] font-bold uppercase">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)] font-bold uppercase">
                           Unique
                         </span>
                       )}

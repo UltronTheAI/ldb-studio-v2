@@ -118,7 +118,7 @@ function renderColoredUri(uri: string, isRevealed: boolean) {
           <span className="text-[var(--muted)]">@</span>
         </>
       )}
-      <span className="text-[#16a34a] font-semibold">{host}</span>
+      <span className="text-[var(--ink)] font-semibold">{host}</span>
       {port && (
         <>
           <span className="text-[var(--muted)]">:</span>

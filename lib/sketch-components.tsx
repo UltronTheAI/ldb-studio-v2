@@ -63,7 +63,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
               <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
             </div>
             <div className="hidden sm:flex items-center gap-2 ml-4 px-2.5 py-0.5 rounded-[6px] bg-[#22252c] text-[11px] font-mono text-[#a0a4b0]">
               <span className="text-[#3b82f6]">https://</span>
@@ -71,7 +71,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             </div>
           </div>
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#9094a2]">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+            <span className="inline-block w-2 h-2 rounded-full bg-[#3b82f6] animate-pulse" />
             <span className="text-[#e2e4ea] font-medium">RAFT LEADER • TERM 42</span>
           </div>
         </div>
@@ -120,7 +120,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             </div>
             <div className="hidden md:flex items-center gap-3 text-[12px] font-mono text-[#8d92a0]">
               <span>commit: <strong className="text-white">104,281</strong></span>
-              <span>p99: <strong className="text-[#22c55e]">0.38ms</strong></span>
+              <span>p99: <strong className="text-[#38bdf8]">0.38ms</strong></span>
             </div>
           </div>
 
@@ -140,13 +140,13 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
                   <div className="pl-4">
                     <span className="text-[#c084fc]">&quot;status&quot;</span>
                     <span className="text-[#717684]">: </span>
-                    <span className="text-[#4ade80]">&quot;active&quot;</span>
+                    <span className="text-[#38bdf8]">&quot;active&quot;</span>
                     <span className="text-[#717684]">,</span>
                   </div>
                   <div className="pl-4">
                     <span className="text-[#c084fc]">&quot;tier&quot;</span>
                     <span className="text-[#717684]">: </span>
-                    <span className="text-[#4ade80]">&quot;enterprise&quot;</span>
+                    <span className="text-[#38bdf8]">&quot;enterprise&quot;</span>
                     <span className="text-[#717684]">,</span>
                   </div>
                   <div className="pl-4">
@@ -174,18 +174,18 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
               <div className="md:col-span-5 bg-[#181a20] border border-[#262933] rounded-[8px] p-3.5 font-mono text-[11px]">
                 <div className="flex items-center justify-between text-[11px] text-[#717684] pb-2 border-b border-[#232630] mb-2.5">
                   <span>Streamed Documents (2)</span>
-                  <span className="text-[#22c55e]">✓ 200 OK</span>
+                  <span className="text-[#38bdf8]">✓ 200 OK</span>
                 </div>
                 <div className="space-y-2 text-[#c6c9d2]">
                   <div className="p-2 rounded bg-[#13151a] border border-[#22252e]">
                     <div className="text-[#60a5fa] font-bold">_id: &quot;usr_9918&quot;</div>
                     <div className="text-[#9ea3b0]">username: &quot;alex.dev&quot;</div>
-                    <div className="text-[#4ade80]">status: &quot;active&quot;</div>
+                    <div className="text-[#38bdf8]">status: &quot;active&quot;</div>
                   </div>
                   <div className="p-2 rounded bg-[#13151a] border border-[#22252e]">
                     <div className="text-[#60a5fa] font-bold">_id: &quot;usr_9924&quot;</div>
                     <div className="text-[#9ea3b0]">username: &quot;swaraj.db&quot;</div>
-                    <div className="text-[#4ade80]">status: &quot;active&quot;</div>
+                    <div className="text-[#38bdf8]">status: &quot;active&quot;</div>
                   </div>
                 </div>
               </div>
@@ -194,8 +194,8 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
 
           {activeTab === "cluster" && (
             <div className="grid grid-cols-3 gap-3 font-mono text-[11px]">
-              <div className="p-3 bg-[#181a20] border border-[#22c55e]/40 rounded-[8px]">
-                <div className="text-[#22c55e] font-bold">NODE 01 (LEADER)</div>
+              <div className="p-3 bg-[#181a20] border border-[#3b82f6]/40 rounded-[8px]">
+                <div className="text-[#3b82f6] font-bold">NODE 01 (LEADER)</div>
                 <div className="text-[#9ea3b0] mt-1">Host: 10.0.1.12:8765</div>
                 <div className="text-[#d8dbe2] mt-2">Partitions: [p0, p1, p2]</div>
                 <div className="text-[#717684] mt-1">Raft Term: 42 • Lag: 0ms</div>
@@ -220,12 +220,12 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
               <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
                 <div className="text-white font-bold">idx_status_tier</div>
                 <div className="text-[#717684] mt-1">Fields: status: 1, tier: 1</div>
-                <div className="text-[#22c55e] mt-1">Index type: Compound B-Tree</div>
+                <div className="text-[#3b82f6] mt-1">Index type: Compound B-Tree</div>
               </div>
               <div className="p-3 bg-[#181a20] border border-[#262933] rounded-[8px]">
                 <div className="text-white font-bold">_id_</div>
                 <div className="text-[#717684] mt-1">Fields: _id: 1 (Unique)</div>
-                <div className="text-[#22c55e] mt-1">Primary key hash</div>
+                <div className="text-[#3b82f6] mt-1">Primary key hash</div>
               </div>
             </div>
           )}
@@ -247,7 +247,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
           {/* Mobile App Header */}
           <div className="flex items-center justify-between pb-2 border-b border-[#232734]">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
               <span className="text-[10px] font-mono text-[#a0a4b4]">Expo Go</span>
             </div>
             <span className="text-[9px] font-mono text-[#717688]">v2.0</span>
@@ -261,7 +261,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             </div>
             <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono">
               <span className="text-[#38bdf8]">Connected</span>
-              <span className="text-[#22c55e]">0.4ms</span>
+              <span className="text-[#38bdf8]">0.4ms</span>
             </div>
           </div>
 
@@ -396,7 +396,7 @@ export function InteractiveQueryStage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between font-mono text-xs text-[var(--muted)]">
             <span>STREAMED OUTPUT</span>
-            <span className="font-semibold text-[#16a34a]">2 matched • <span className="text-[#d97706]">0.38ms</span></span>
+            <span className="font-semibold text-[var(--ink)]">2 matched • <span className="text-[#d97706]">0.38ms</span></span>
           </div>
           <pre
             className="editor-scroll h-[175px] overflow-auto rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] dark:bg-[#12141a] p-3 font-mono text-xs leading-5 text-[var(--ink)]"
@@ -404,7 +404,7 @@ export function InteractiveQueryStage() {
               __html: syntaxHighlightJson(sampleResults[activeTab]),
             }}
           />
-          <div className="font-mono text-[11px] text-[#16a34a] text-right font-medium">
+          <div className="font-mono text-[11px] text-[var(--text-link)] text-right font-medium">
             ✓ Result streamed directly from @liorandb/driver
           </div>
         </div>
