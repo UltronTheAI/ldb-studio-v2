@@ -3,12 +3,10 @@
 import React from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import {
-  TerminalIcon,
   PlusIcon,
   FileCodeIcon,
   Trash2Icon,
   PlayIcon,
-  FolderOpenIcon,
 } from "lucide-react";
 
 export function QueryExplorer() {

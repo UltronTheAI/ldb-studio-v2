@@ -5,7 +5,6 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,7 +14,6 @@ import type {
   QueryHistoryItem,
   SavedQueryDraft,
   StudioTab,
-  StudioTabType,
 } from "./workspace-types";
 import {
   loadQueryHistory,

@@ -19,8 +19,6 @@ import {
   SearchIcon,
   BoxesIcon,
   TerminalIcon,
-  CheckIcon,
-  RefreshCwIcon,
 } from "lucide-react";
 
 export function DatabaseTree() {

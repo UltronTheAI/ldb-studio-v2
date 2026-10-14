@@ -1,4 +1,11 @@
-import type { Document, CollectionIndexDefinition, Principal, ServerInfo, ReadyStatus, ClusterSummary, ClusterHealthSnapshot, ClusterPartitionPlacement, UserRecord, RoleRecord, PermissionName, BackupJobRecord, RestoreJobRecord, RedactedSettingsMap, CorsSettings, PerformanceSettings, LimitSettings, BackupSettings } from "@liorandb/driver";
+import type {
+  Document,
+  CollectionIndexDefinition,
+  Principal,
+  ServerInfo,
+  ReadyStatus,
+  ClusterSummary,
+} from "@liorandb/driver";
 
 export type StudioTabType =
   | "collection"

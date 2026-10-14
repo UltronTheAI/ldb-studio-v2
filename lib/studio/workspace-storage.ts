@@ -1,6 +1,5 @@
 import type {
   StudioTab,
-  ActivitySection,
   QueryHistoryItem,
   SavedQueryDraft,
   WorkspaceMetadata,

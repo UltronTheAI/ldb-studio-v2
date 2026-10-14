@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import type { Document } from "@liorandb/driver";
+import React, { useState, useEffect, useCallback } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { StudioTab, DocumentViewMode } from "@/lib/studio/workspace-types";
 import { executeQueryAction } from "@/app/actions";
@@ -12,8 +11,6 @@ import {
   PlayIcon,
   SparklesIcon,
   BookmarkIcon,
-  Trash2Icon,
-  DatabaseIcon,
   Table2Icon,
   CodeIcon,
   ListTreeIcon,
@@ -118,7 +115,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     setStatusMessage({ text: `Saved draft '${queryName}'`, tone: "success" });
   };
 
-  const handleRunQuery = async () => {
+  const handleRunQuery = useCallback(async () => {
     setIsRunning(true);
     setErrorMsg(null);
 
@@ -198,7 +195,20 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [
+    filterCode,
+    projectionCode,
+    sortCode,
+    selectedDb,
+    selectedCol,
+    limitVal,
+    skipVal,
+    tab.id,
+    queryName,
+    state,
+    updateTabState,
+    addQueryHistory,
+  ]);
 
   const handleCopyResults = () => {
     if (!state.results) return;
@@ -230,7 +240,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedDb, selectedCol, filterCode, projectionCode, sortCode, limitVal, skipVal]);
+  }, [handleRunQuery]);
 
   return (
     <div className="flex flex-col h-full bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
