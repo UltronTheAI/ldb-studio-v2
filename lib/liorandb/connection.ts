@@ -1,5 +1,9 @@
 import { isIP } from "node:net";
-import { parseConnectionString, type ImmutableMongoClientConfig } from "@liorandb/driver";
+import {
+  ConfigurationError,
+  parseConnectionString,
+  type ImmutableMongoClientConfig,
+} from "@liorandb/driver";
 import { LocalTargetNotReachableError, ProhibitedTargetError } from "./errors";
 
 export type ConnectionTargetType =
@@ -141,7 +145,10 @@ export function parseAndClassifyConnection(connectionUri: string): {
   targetType: ConnectionTargetType;
   isLocal: boolean;
 } {
-  const parsed = parseConnectionString(connectionUri);
+  const parsed = parseConnectionString(connectionUri, {
+    transport: "grpc",
+    allowHttpFallback: false,
+  });
   const targetType = classifyConnectionTarget(parsed.host);
   const isLocal = targetType === "local-loopback";
 
@@ -159,7 +166,7 @@ export function getSanitizedConnectionMetadata(
     database: parsed.database ?? null,
     protocol: parsed.scheme,
     tls: parsed.tls ?? false,
-    transport: parsed.transport ?? "auto",
+    transport: "grpc",
     targetType,
     isLocal,
   };
@@ -169,6 +176,27 @@ export function validateConnectionTarget(
   connectionUri: string,
   options?: { readonly allowLocal?: boolean },
 ): SanitizedConnectionMetadata {
+  // Check if URI explicitly specifies non-gRPC transport or HTTP fallback
+  try {
+    const rawUrl = new URL(connectionUri);
+    const requestedTransport = rawUrl.searchParams.get("transport");
+    if (requestedTransport && requestedTransport.toLowerCase() !== "grpc") {
+      throw new ConfigurationError(
+        `LioranDB Studio operates exclusively over gRPC transport. Requested transport "${requestedTransport}" is not supported.`,
+      );
+    }
+    const requestedFallback = rawUrl.searchParams.get("allowHttpFallback");
+    if (requestedFallback && requestedFallback.toLowerCase() === "true") {
+      throw new ConfigurationError(
+        "LioranDB Studio operates exclusively over gRPC transport. HTTP fallback cannot be enabled.",
+      );
+    }
+  } catch (err) {
+    if (err instanceof ConfigurationError) {
+      throw err;
+    }
+  }
+
   const metadata = getSanitizedConnectionMetadata(connectionUri);
 
   if (metadata.targetType === "cloud-metadata") {

@@ -22,7 +22,6 @@ import type {
 
 import { validateConnectionTarget } from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
-import { createDatabaseWithDriverFallback } from "@/lib/liorandb/database";
 import { mapStudioError } from "@/lib/liorandb/errors";
 import { parseJsonValue } from "@/lib/liorandb/json";
 import {
@@ -235,10 +234,7 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             );
             return;
           case "createDatabase":
-            await createDatabaseWithDriverFallback(
-              connectionUri,
-              formString(formData, "databaseName"),
-            );
+            await client.createDatabase(formString(formData, "databaseName"));
             return;
           case "dropDatabase": {
             const name = formString(formData, "databaseName");
@@ -903,8 +899,10 @@ export async function createDatabaseAction(params: {
   const start = Date.now();
   try {
     return await runWithSession(async (connectionUri) => {
-      await createDatabaseWithDriverFallback(connectionUri, params.databaseName.trim());
-      return { ok: true, durationMs: Date.now() - start };
+      return await withLioranClient(connectionUri, async (client) => {
+        await client.createDatabase(params.databaseName.trim());
+        return { ok: true, durationMs: Date.now() - start };
+      });
     });
   } catch (error) {
     const mapped = mapStudioError(error);

@@ -1,5 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import {
+  ConfigurationError,
+  ConnectionError,
+  LioranDBClient,
+} from "@liorandb/driver";
 
 import {
   isLoopbackHost,
@@ -194,6 +199,93 @@ describe("LioranDB Studio Connection Architecture & Target Classification", () =
       assert.equal(mapped.title, "Local database detected");
       assert.match(mapped.message, /hosted remotely/);
       assert.equal(mapped.code, "LDB_LOCAL_TARGET_HOSTED_STUDIO");
+    });
+  });
+
+  describe("Exclusive gRPC Transport Enforcement & Zero HTTP Fallback", () => {
+    it("reports transport: grpc unconditionally in connection metadata", () => {
+      const uri = "liorandb://admin:password@swaraj.db.liorandb.com:443/production";
+      const metadata = getSanitizedConnectionMetadata(uri);
+
+      assert.equal(metadata.transport, "grpc");
+    });
+
+    it("forces transport: grpc and allowHttpFallback: false in config parsing", () => {
+      const uri = "liorandb://admin:password@swaraj.db.liorandb.com:443/production";
+      const { parsed } = parseAndClassifyConnection(uri);
+
+      assert.equal(parsed.transport, "grpc");
+      assert.equal(parsed.allowHttpFallback, false);
+    });
+
+    it("rejects connection URIs requesting transport=http with ConfigurationError", () => {
+      const uri = "liorandb://admin:password@swaraj.db.liorandb.com:443/production?transport=http";
+
+      assert.throws(
+        () => validateConnectionTarget(uri),
+        (err: unknown) => {
+          assert.ok(err instanceof ConfigurationError);
+          assert.match(err.message, /exclusively over gRPC/);
+          assert.match(err.message, /not supported/);
+          return true;
+        },
+      );
+    });
+
+    it("rejects connection URIs requesting allowHttpFallback=true with ConfigurationError", () => {
+      const uri = "liorandb://admin:password@swaraj.db.liorandb.com:443/production?allowHttpFallback=true";
+
+      assert.throws(
+        () => validateConnectionTarget(uri),
+        (err: unknown) => {
+          assert.ok(err instanceof ConfigurationError);
+          assert.match(err.message, /exclusively over gRPC/);
+          assert.match(err.message, /HTTP fallback cannot be enabled/);
+          return true;
+        },
+      );
+    });
+
+    it("permits connection URIs explicitly specifying transport=grpc", () => {
+      const uri = "liorandb://admin:password@swaraj.db.liorandb.com:443/production?transport=grpc";
+      const metadata = validateConnectionTarget(uri);
+
+      assert.equal(metadata.transport, "grpc");
+    });
+
+    it("configures LioranDBClient instances with transport: grpc and allowHttpFallback: false", () => {
+      const client = new LioranDBClient(
+        "liorandb://admin:password@swaraj.db.liorandb.com:443/production",
+        {
+          logoutOnClose: false,
+          transport: "grpc",
+          allowHttpFallback: false,
+        },
+      );
+
+      assert.equal(client.options.transport, "grpc");
+      assert.equal(client.options.allowHttpFallback, false);
+    });
+
+    it("maps ConnectionError cleanly with notice that gRPC transport failed and HTTP fallback is disabled", () => {
+      const err = new ConnectionError("The LioranDB server refused the connection.");
+      const mapped = mapStudioError(err);
+
+      assert.equal(mapped.title, "Connection failure");
+      assert.match(mapped.message, /refused the connection/);
+      assert.match(mapped.message, /HTTP fallback disabled/);
+    });
+
+    it("maps ConnectionError with grpcStatusName detail when available", () => {
+      const err = new ConnectionError("The LioranDB server is unavailable.", {
+        grpcStatusCode: 14,
+        grpcStatusName: "UNAVAILABLE",
+      } as unknown as Record<string, unknown>);
+      const mapped = mapStudioError(err);
+
+      assert.equal(mapped.title, "Connection failure");
+      assert.match(mapped.message, /gRPC: UNAVAILABLE/);
+      assert.match(mapped.message, /HTTP fallback disabled/);
     });
   });
 });

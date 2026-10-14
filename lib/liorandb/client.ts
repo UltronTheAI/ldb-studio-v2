@@ -1,4 +1,8 @@
-import { LioranDBClient, type TransportResponseDiagnostics } from "@liorandb/driver";
+import {
+  ConfigurationError,
+  LioranDBClient,
+  type TransportResponseDiagnostics,
+} from "@liorandb/driver";
 import { validateConnectionTarget } from "./connection";
 
 export interface DiagnosticEvent {
@@ -20,7 +24,15 @@ export async function createLioranClient(
 
   const client = new LioranDBClient(connectionUri, {
     logoutOnClose: false,
+    transport: "grpc",
+    allowHttpFallback: false,
   });
+
+  if (client.options.transport !== "grpc" || client.options.allowHttpFallback !== false) {
+    throw new ConfigurationError(
+      "LioranDB Studio enforces exclusive gRPC transport with HTTP fallback disabled.",
+    );
+  }
 
   client.setResponseObserver((event: TransportResponseDiagnostics) => {
     diagnostics?.push({
@@ -28,7 +40,7 @@ export async function createLioranClient(
       transport: event.transport,
       operation: event.operation,
       ok: event.ok,
-      statusCode: event.httpStatus ?? event.grpcStatusCode ?? null,
+      statusCode: event.grpcStatusCode ?? event.httpStatus ?? null,
       requestId: event.requestId ?? null,
     });
   });

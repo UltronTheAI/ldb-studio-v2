@@ -221,17 +221,25 @@ export function mapStudioError(error: unknown): StudioErrorDescriptor {
     error instanceof ServerOverloadedError ||
     error instanceof ServerNotReadyError
   ) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
     return {
       title: "Server unavailable",
-      message: redactMessage(error.message),
+      message: grpcDetail
+        ? `${redactMessage(error.message)} (gRPC: ${grpcDetail})`
+        : redactMessage(error.message),
       code: error.code,
     };
   }
 
   if (error instanceof ConnectionError || error instanceof NetworkError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
     return {
       title: "Connection failure",
-      message: redactMessage(error.message),
+      message: grpcDetail
+        ? `${redactMessage(error.message)} (gRPC: ${grpcDetail}, HTTP fallback disabled)`
+        : `${redactMessage(error.message)} (gRPC transport, HTTP fallback disabled)`,
       code: error.code,
     };
   }
