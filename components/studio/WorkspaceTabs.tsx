@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import type { StudioTab, StudioTabType } from "@/lib/studio/workspace-types";
+import type { StudioTabType } from "@/lib/studio/workspace-types";
 import {
   Table2Icon,
   TerminalIcon,

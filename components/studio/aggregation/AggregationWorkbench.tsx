@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import type { Document } from "@liorandb/driver";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type {
   StudioTab,
@@ -22,7 +21,6 @@ import {
   CodeIcon,
   ListTreeIcon,
   ZapIcon,
-  SparklesIcon,
   AlertCircleIcon,
   CheckIcon,
   DownloadIcon,
@@ -47,7 +45,7 @@ const SUPPORTED_OPERATORS = [
 ];
 
 export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
-  const { databases, collectionsMap, updateTabState, addQueryHistory, setStatusMessage } =
+  const { databases, collectionsMap, updateTabState, addQueryHistory } =
     useWorkspace();
 
   const state = tab.aggregationState || {

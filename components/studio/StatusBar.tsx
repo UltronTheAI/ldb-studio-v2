@@ -3,9 +3,7 @@
 import React from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import {
-  ServerIcon,
   DatabaseIcon,
-  Table2Icon,
   ZapIcon,
   LayersIcon,
   AlertCircleIcon,

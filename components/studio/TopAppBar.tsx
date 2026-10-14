@@ -10,10 +10,7 @@ import {
   RefreshCwIcon,
   PowerIcon,
   DatabaseIcon,
-  ServerIcon,
-  UserIcon,
   ChevronRightIcon,
-  CheckCircle2Icon,
 } from "lucide-react";
 
 export function TopAppBar() {

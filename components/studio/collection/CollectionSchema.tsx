@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import type { Document } from "@liorandb/driver";
-import { SparklesIcon, FileCode2Icon, LayersIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 
 interface CollectionSchemaProps {
   documents: Document[];

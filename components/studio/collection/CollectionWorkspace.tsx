@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import type { Document, CollectionIndexDefinition } from "@liorandb/driver";
+import type { Document } from "@liorandb/driver";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { StudioTab, CollectionSubTab, DocumentViewMode } from "@/lib/studio/workspace-types";
 import {
@@ -27,8 +27,6 @@ import {
   SlidersHorizontalIcon,
   BoxesIcon,
   SparklesIcon,
-  TerminalIcon,
-  GitBranchIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ZapIcon,

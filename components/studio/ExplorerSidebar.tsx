@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import { DatabaseTree } from "./explorer/DatabaseTree";
 import { QueryExplorer } from "./explorer/QueryExplorer";
 import { HistoryExplorer } from "./explorer/HistoryExplorer";
 import { AdminExplorer } from "./explorer/AdminExplorer";
 import {
-  DatabaseIcon,
   RefreshCwIcon,
-  MinusIcon,
   PanelLeftCloseIcon,
 } from "lucide-react";
 

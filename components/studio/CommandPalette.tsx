@@ -15,7 +15,6 @@ import {
   SettingsIcon,
   XIcon,
   MoonIcon,
-  SunIcon,
   RefreshCwIcon,
   PowerIcon,
   CommandIcon,
@@ -239,8 +238,6 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
 
   // Handle keyboard navigation
   useEffect(() => {
-    if (!isCommandPaletteOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -308,7 +305,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
                   key={cmd.id}
                   onClick={() => {
                     cmd.action();
-                    setCommandPaletteOpen(false);
+                    onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between px-3 py-2 rounded-[6px] cursor-pointer text-xs transition ${

@@ -3,17 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import { fetchAdminSectionDataAction } from "@/app/actions";
-import { syntaxHighlightJson } from "@/lib/liorandb/json";
 import {
-  ActivityIcon,
   ServerIcon,
-  ShieldCheckIcon,
-  DatabaseIcon,
   TerminalIcon,
-  ArchiveIcon,
   ZapIcon,
   CheckCircle2Icon,
-  ClockIcon,
   RefreshCwIcon,
 } from "lucide-react";
 

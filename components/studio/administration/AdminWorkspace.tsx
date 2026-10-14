@@ -2,22 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import type { StudioTab } from "@/lib/studio/workspace-types";
-import { useWorkspace } from "@/lib/studio/workspace-context";
 import { fetchAdminSectionDataAction, studioMutationAction } from "@/app/actions";
 import {
   UsersIcon,
   ShieldIcon,
-  NetworkIcon,
   ArchiveIcon,
   SettingsIcon,
   PlusIcon,
   RefreshCwIcon,
   Trash2Icon,
-  KeyRoundIcon,
-  SlidersIcon,
-  GlobeIcon,
-  CpuIcon,
-  HardDriveIcon,
   AlertCircleIcon,
   CheckCircle2Icon,
 } from "lucide-react";
@@ -27,7 +20,6 @@ interface AdminWorkspaceProps {
 }
 
 export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
-  const { updateTabState, setStatusMessage } = useWorkspace();
   const subSection = tab.adminState?.subSection || "users";
   const [settingsPane, setSettingsPane] = useState(tab.adminState?.settingsPane || "general");
 
@@ -37,20 +29,12 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
 
   // User modal
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newUserPass, setNewUserPass] = useState("");
-  const [newUserRoles, setNewUserRoles] = useState("readWrite");
 
   // Role modal
   const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleGrantsJson, setNewRoleGrantsJson] = useState(
-    JSON.stringify([{ permission: "read", scope: { scope_type: "Global" } }], null, 2),
-  );
 
   // Backup modal
   const [showCreateBackupModal, setShowCreateBackupModal] = useState(false);
-  const [backupLabel, setBackupLabel] = useState("");
 
   const loadSectionData = async () => {
     setIsLoading(true);
@@ -96,7 +80,6 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   const users = (data.users as Array<{ id: string; username: string; roles: string[]; enabled: boolean }>) || [];
   const roles = (data.roles as Array<{ id: string; name: string; grants: Array<{ permission: string }> }>) || [];
   const backups = (data.backups as Array<{ id: string; label?: string; created_at_utc_ms: number; status: string }>) || [];
-  const clusterNodes = (data.clusterNodes as Array<{ node_id: number; address: string; state: string }>) || [];
 
   return (
     <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">

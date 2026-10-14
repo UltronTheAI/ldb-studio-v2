@@ -7,7 +7,6 @@ import {
   BoxesIcon,
   PlusIcon,
   Trash2Icon,
-  ShieldCheckIcon,
   CheckIcon,
   AlertCircleIcon,
 } from "lucide-react";
