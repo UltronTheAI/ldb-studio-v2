@@ -1,0 +1,628 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import type { Document, CollectionIndexDefinition } from "@liorandb/driver";
+import { useWorkspace } from "@/lib/studio/workspace-context";
+import type { StudioTab, CollectionSubTab, DocumentViewMode } from "@/lib/studio/workspace-types";
+import {
+  fetchCollectionDocumentsAction,
+  insertOneDocumentAction,
+  updateOneDocumentAction,
+  deleteOneDocumentAction,
+} from "@/app/actions";
+import { DocumentTable } from "./DocumentTable";
+import { DocumentJsonView } from "./DocumentJsonView";
+import { DocumentTreeView } from "./DocumentTreeView";
+import { DocumentEditorModal } from "./DocumentEditorModal";
+import { CollectionIndexes } from "./CollectionIndexes";
+import { CollectionSchema } from "./CollectionSchema";
+import {
+  Table2Icon,
+  CodeIcon,
+  ListTreeIcon,
+  SearchIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  DownloadIcon,
+  SlidersHorizontalIcon,
+  BoxesIcon,
+  SparklesIcon,
+  TerminalIcon,
+  GitBranchIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ZapIcon,
+  Trash2Icon,
+} from "lucide-react";
+
+interface CollectionWorkspaceProps {
+  tab: StudioTab;
+}
+
+export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
+  const { updateTabState, addQueryHistory, setStatusMessage, refreshTrigger } = useWorkspace();
+
+  const database = tab.database || "default";
+  const collection = tab.collection || "collection";
+  const state = tab.collectionState || {
+    subTab: "documents" as CollectionSubTab,
+    viewMode: "table" as DocumentViewMode,
+    filter: "{}",
+    projection: "",
+    sort: "",
+    limit: 50,
+    skip: 0,
+    page: 1,
+    pageSize: 50,
+    totalDocuments: 0,
+    documents: [],
+    indexes: [],
+  };
+
+  const [filterInput, setFilterInput] = useState(state.filter || "{}");
+  const [projectionInput, setProjectionInput] = useState(state.projection || "");
+  const [sortInput, setSortInput] = useState(state.sort || "");
+  const [showOptions, setShowOptions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [executionTime, setExecutionTime] = useState<number | null>(tab.executionDurationMs ?? null);
+
+  // Modal states
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isInserting, setIsInserting] = useState(false);
+  const [activeDocForEdit, setActiveDocForEdit] = useState<Document | null>(null);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load documents
+  const loadDocuments = useCallback(
+    async (overrideParams?: {
+      filter?: string;
+      projection?: string;
+      sort?: string;
+      page?: number;
+      pageSize?: number;
+    }) => {
+      setIsLoading(true);
+      const activeFilter = overrideParams?.filter ?? filterInput;
+      const activeProjection = overrideParams?.projection ?? projectionInput;
+      const activeSort = overrideParams?.sort ?? sortInput;
+      const activePage = overrideParams?.page ?? state.page;
+      const activePageSize = overrideParams?.pageSize ?? state.pageSize;
+      const skip = (activePage - 1) * activePageSize;
+
+      try {
+        const res = await fetchCollectionDocumentsAction({
+          database,
+          collection,
+          filter: activeFilter,
+          projection: activeProjection,
+          sort: activeSort,
+          limit: activePageSize,
+          skip,
+        });
+
+        if (res.ok && res.data) {
+          updateTabState(tab.id, {
+            executionDurationMs: res.durationMs,
+            collectionState: {
+              ...state,
+              filter: activeFilter,
+              projection: activeProjection,
+              sort: activeSort,
+              page: activePage,
+              pageSize: activePageSize,
+              limit: activePageSize,
+              skip,
+              documents: res.data.documents,
+              totalDocuments: res.data.total,
+              indexes: res.data.indexes,
+            },
+          });
+          setExecutionTime(res.durationMs ?? null);
+
+          // Record in history if filter was active
+          if (activeFilter.trim() && activeFilter.trim() !== "{}") {
+            addQueryHistory({
+              id: `hist-${Date.now()}`,
+              timestamp: Date.now(),
+              database,
+              collection,
+              type: "find",
+              querySummary: `find(${activeFilter})`,
+              durationMs: res.durationMs ?? 0,
+              documentCount: res.data.documents.length,
+              success: true,
+            });
+          }
+        } else {
+          setStatusMessage({ text: res.error || "Failed to load collection documents", tone: "error" });
+        }
+      } catch (err: unknown) {
+        setStatusMessage({ text: (err as Error).message, tone: "error" });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      database,
+      collection,
+      filterInput,
+      projectionInput,
+      sortInput,
+      state,
+      tab.id,
+      updateTabState,
+      addQueryHistory,
+      setStatusMessage,
+    ],
+  );
+
+  // Initial load if documents are empty or upon refreshTrigger
+  useEffect(() => {
+    let ignore = false;
+    if (state.documents.length === 0) {
+      void Promise.resolve().then(() => {
+        if (!ignore) {
+          loadDocuments();
+        }
+      });
+    }
+    return () => {
+      ignore = true;
+    };
+  }, [refreshTrigger, loadDocuments, state.documents.length]);
+
+  const handleFilterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadDocuments({ page: 1, filter: filterInput });
+  };
+
+  const handleResetFilter = () => {
+    setFilterInput("{}");
+    setProjectionInput("");
+    setSortInput("");
+    loadDocuments({ filter: "{}", projection: "", sort: "", page: 1 });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    loadDocuments({ page: newPage });
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    loadDocuments({ page: 1, pageSize: newSize });
+  };
+
+  const handleExportJson = () => {
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(state.documents, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${database}_${collection}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleSaveDocument = async (docJson: string, isInsert: boolean): Promise<boolean> => {
+    if (isInsert) {
+      const res = await insertOneDocumentAction({
+        database,
+        collection,
+        documentJson: docJson,
+      });
+      if (res.ok) {
+        setStatusMessage({ text: "Document inserted successfully", tone: "success" });
+        loadDocuments();
+        return true;
+      }
+      setStatusMessage({ text: res.error || "Failed to insert document", tone: "error" });
+      return false;
+    } else {
+      if (!activeDocForEdit || activeDocForEdit._id === undefined) return false;
+      const filterJson = JSON.stringify({ _id: activeDocForEdit._id });
+      const parsedUpdate = JSON.parse(docJson) as Document;
+      delete parsedUpdate._id; // Remove _id from $set
+
+      const res = await updateOneDocumentAction({
+        database,
+        collection,
+        filterJson,
+        updateJson: JSON.stringify({ $set: parsedUpdate }),
+      });
+
+      if (res.ok) {
+        setStatusMessage({ text: "Document updated successfully", tone: "success" });
+        loadDocuments();
+        return true;
+      }
+      setStatusMessage({ text: res.error || "Failed to update document", tone: "error" });
+      return false;
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || deleteTarget._id === undefined) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteOneDocumentAction({
+        database,
+        collection,
+        filterJson: JSON.stringify({ _id: deleteTarget._id }),
+      });
+      if (res.ok) {
+        setStatusMessage({ text: "Document deleted", tone: "success" });
+        setDeleteTarget(null);
+        loadDocuments();
+      } else {
+        setStatusMessage({ text: res.error || "Failed to delete document", tone: "error" });
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const totalPages = Math.ceil(state.totalDocuments / state.pageSize) || 1;
+  const startItem = (state.page - 1) * state.pageSize + 1;
+  const endItem = Math.min(state.page * state.pageSize, state.totalDocuments);
+
+  return (
+    <div className="flex flex-col h-full bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
+      {/* Top Fast Query Filter Bar */}
+      <div className="border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] p-3 space-y-2 shrink-0">
+        <form onSubmit={handleFilterSubmit} className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-[var(--text-link)] select-none">
+              FILTER
+            </span>
+            <input
+              type="text"
+              value={filterInput}
+              onChange={(e) => setFilterInput(e.target.value)}
+              placeholder='{ "field": "value" }'
+              className="w-full h-8 pl-18 pr-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none focus:border-[var(--text-link)]"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowOptions((prev) => !prev)}
+            title="Advanced projection and sort options"
+            className={`h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs font-medium flex items-center gap-1.5 transition ${
+              showOptions || projectionInput || sortInput
+                ? "bg-[var(--surface-strong)] border-[var(--ink)] text-[var(--ink)]"
+                : "text-[var(--body)]"
+            }`}
+          >
+            <SlidersHorizontalIcon size={13} />
+            <span className="hidden sm:inline">Options</span>
+          </button>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-primary h-8 px-3.5 text-xs font-semibold flex items-center gap-1.5"
+          >
+            <SearchIcon size={13} />
+            <span>Find</span>
+          </button>
+
+          {(filterInput !== "{}" || projectionInput || sortInput) && (
+            <button
+              type="button"
+              onClick={handleResetFilter}
+              className="h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--muted)] hover:text-[var(--ink)] transition"
+            >
+              Reset
+            </button>
+          )}
+        </form>
+
+        {/* Collapsible Advanced Options: Projection & Sort */}
+        {showOptions && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-xs animate-in fade-in duration-100">
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-[var(--muted)] mb-1">
+                Projection (Fields to include/exclude)
+              </label>
+              <input
+                type="text"
+                placeholder='["name", "email"] or { "password": 0 }'
+                value={projectionInput}
+                onChange={(e) => setProjectionInput(e.target.value)}
+                className="w-full h-7 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-[var(--muted)] mb-1">
+                Sort (Order specification)
+              </label>
+              <input
+                type="text"
+                placeholder='{ "createdAt": -1, "email": 1 }'
+                value={sortInput}
+                onChange={(e) => setSortInput(e.target.value)}
+                className="w-full h-7 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Sub-Tabs Bar: Documents | Query | Aggregations | Indexes | Schema */}
+      <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0">
+        <div className="flex items-center gap-1 h-full">
+          {[
+            { id: "documents", label: "Documents", icon: Table2Icon },
+            { id: "indexes", label: "Indexes", icon: BoxesIcon },
+            { id: "schema", label: "Schema", icon: SparklesIcon },
+          ].map((item) => {
+            const isActive = state.subTab === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() =>
+                  updateTabState(tab.id, {
+                    collectionState: { ...state, subTab: item.id as CollectionSubTab },
+                  })
+                }
+                className={`flex items-center gap-1.5 h-full px-3 text-xs font-semibold border-b-2 transition ${
+                  isActive
+                    ? "border-b-[var(--text-link)] text-[var(--text-link)]"
+                    : "border-b-transparent text-[var(--body)] hover:text-[var(--ink)]"
+                }`}
+              >
+                <Icon size={13} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right side controls for Documents sub-tab */}
+        {state.subTab === "documents" && (
+          <div className="flex items-center gap-2">
+            {/* View Mode Switcher: Table | JSON | Tree */}
+            <div className="flex items-center rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] p-0.5">
+              {[
+                { id: "table", label: "Table", icon: Table2Icon },
+                { id: "json", label: "JSON", icon: CodeIcon },
+                { id: "tree", label: "Tree", icon: ListTreeIcon },
+              ].map((m) => {
+                const isActive = state.viewMode === m.id;
+                const Icon = m.icon;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() =>
+                      updateTabState(tab.id, {
+                        collectionState: { ...state, viewMode: m.id as DocumentViewMode },
+                      })
+                    }
+                    title={`${m.label} View`}
+                    className={`p-1 rounded-[4px] text-xs transition ${
+                      isActive
+                        ? "bg-[var(--surface-card)] text-[var(--ink)] shadow-xs"
+                        : "text-[var(--muted)] hover:text-[var(--ink)]"
+                    }`}
+                  >
+                    <Icon size={13} />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Actions: Insert, Refresh, Export */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsInserting(true);
+                setActiveDocForEdit(null);
+                setIsEditorOpen(true);
+              }}
+              className="btn-primary h-7 px-2.5 text-xs font-semibold flex items-center gap-1"
+            >
+              <PlusIcon size={12} />
+              <span>Insert</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => loadDocuments()}
+              title="Refresh Documents"
+              className={`p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition ${
+                isLoading ? "animate-spin text-[var(--text-link)]" : ""
+              }`}
+            >
+              <RefreshCwIcon size={13} />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportJson}
+              title="Export loaded documents to JSON"
+              className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+            >
+              <DownloadIcon size={13} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Main Sub-Tab Content */}
+      <div className="flex-1 overflow-hidden p-3">
+        {state.subTab === "documents" && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-hidden">
+              {state.viewMode === "table" && (
+                <DocumentTable
+                  documents={state.documents}
+                  onEdit={(doc) => {
+                    setActiveDocForEdit(doc);
+                    setIsInserting(false);
+                    setIsEditorOpen(true);
+                  }}
+                  onDelete={(doc) => setDeleteTarget(doc)}
+                />
+              )}
+              {state.viewMode === "json" && (
+                <DocumentJsonView
+                  documents={state.documents}
+                  onEdit={(doc) => {
+                    setActiveDocForEdit(doc);
+                    setIsInserting(false);
+                    setIsEditorOpen(true);
+                  }}
+                  onDelete={(doc) => setDeleteTarget(doc)}
+                />
+              )}
+              {state.viewMode === "tree" && (
+                <DocumentTreeView
+                  documents={state.documents}
+                  onEdit={(doc) => {
+                    setActiveDocForEdit(doc);
+                    setIsInserting(false);
+                    setIsEditorOpen(true);
+                  }}
+                  onDelete={(doc) => setDeleteTarget(doc)}
+                />
+              )}
+            </div>
+
+            {/* Pagination & Status Footer */}
+            <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0">
+              <div className="flex items-center gap-3">
+                {state.totalDocuments > 0 ? (
+                  <span>
+                    Showing {startItem} - {endItem} of {state.totalDocuments}
+                  </span>
+                ) : (
+                  <span>0 documents</span>
+                )}
+
+                {typeof executionTime === "number" && (
+                  <span className="flex items-center gap-1 text-[#fbbf24]">
+                    <ZapIcon size={11} />
+                    <span>{executionTime} ms</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Pagination controls */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-[var(--muted)]">Rows:</span>
+                  <select
+                    value={state.pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="h-6 px-1.5 rounded bg-[var(--surface-card)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] focus:outline-none"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={state.page <= 1 || isLoading}
+                    onClick={() => handlePageChange(state.page - 1)}
+                    className="p-1 rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] disabled:opacity-30 disabled:pointer-events-none text-[var(--ink)]"
+                  >
+                    <ChevronLeftIcon size={13} />
+                  </button>
+                  <span className="px-2 font-bold text-[var(--ink)]">
+                    {state.page} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={state.page >= totalPages || isLoading}
+                    onClick={() => handlePageChange(state.page + 1)}
+                    className="p-1 rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] disabled:opacity-30 disabled:pointer-events-none text-[var(--ink)]"
+                  >
+                    <ChevronRightIcon size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {state.subTab === "indexes" && (
+          <CollectionIndexes
+            database={database}
+            collection={collection}
+            indexes={state.indexes}
+            onRefresh={() => loadDocuments()}
+          />
+        )}
+
+        {state.subTab === "schema" && (
+          <CollectionSchema
+            documents={state.documents}
+            database={database}
+            collection={collection}
+          />
+        )}
+      </div>
+
+      {/* Document Insert / Edit Modal */}
+      <DocumentEditorModal
+        isOpen={isEditorOpen}
+        isInserting={isInserting}
+        document={activeDocForEdit}
+        database={database}
+        collection={collection}
+        onSave={handleSaveDocument}
+        onClose={() => {
+          setIsEditorOpen(false);
+          setActiveDocForEdit(null);
+        }}
+      />
+
+      {/* Delete Document Confirmation Dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
+            <h3 className="font-sans text-sm font-bold text-[#ef4444] flex items-center gap-1.5">
+              <Trash2Icon size={16} />
+              <span>Delete Document</span>
+            </h3>
+            <p className="text-xs text-[var(--body)]">
+              Are you sure you want to permanently delete document with ID:{" "}
+              <code className="font-mono text-[var(--ink)] font-bold">
+                {String(deleteTarget._id ?? "unknown")}
+              </code>
+              ?
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-3.5 py-1.5 rounded-[6px] bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs font-bold transition"
+              >
+                {isDeleting ? "Deleting..." : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

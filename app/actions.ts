@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import type {
   BackupSettings,
   BackupSchedule,
+  CollectionIndexDefinition,
   CorsSettings,
   Document,
+  FindOptions,
   LimitOverride,
   LimitSettings,
   PerformanceSettings,
@@ -556,4 +558,490 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
   }
 
   redirectWithMessage(returnTo, "notice", "Operation completed successfully.");
+}
+
+// ==========================================
+// REACTIVE IDE SERVER ACTIONS
+// ==========================================
+
+export interface ActionResult<T> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+  durationMs?: number;
+}
+
+export async function listExplorerTreeAction(): Promise<
+  ActionResult<{ databases: string[]; collectionsMap: Record<string, string[]> }>
+> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const databases = await client.listDatabases();
+        const collectionsMap: Record<string, string[]> = {};
+        for (const dbName of databases) {
+          try {
+            const cols = await client.db(dbName).listCollections();
+            collectionsMap[dbName] = [...cols];
+          } catch {
+            collectionsMap[dbName] = [];
+          }
+        }
+        return {
+          ok: true,
+          data: { databases: [...databases], collectionsMap },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function fetchCollectionDocumentsAction(params: {
+  database: string;
+  collection: string;
+  filter?: string;
+  projection?: string;
+  sort?: string;
+  limit?: number;
+  skip?: number;
+}): Promise<
+  ActionResult<{
+    documents: Document[];
+    total: number;
+    indexes: CollectionIndexDefinition[];
+  }>
+> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        let filterObj: Document | undefined = undefined;
+        if (params.filter?.trim()) {
+          filterObj = JSON.parse(params.filter.trim()) as Document;
+        }
+
+        const options: FindOptions<Document> = {
+          limit: params.limit ?? 50,
+          skip: params.skip ?? 0,
+          ...(params.projection?.trim()
+            ? { projection: JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"] }
+            : {}),
+          ...(params.sort?.trim()
+            ? { sort: JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"] }
+            : {}),
+        };
+
+        const documents = [...(await col.find(filterObj, options).toArray())];
+        let total = documents.length;
+        try {
+          total = await col.countDocuments(filterObj);
+        } catch {
+          // Fallback to returned length if count fails
+        }
+
+        let indexes: CollectionIndexDefinition[] = [];
+        try {
+          indexes = [...(await col.listIndexes())];
+        } catch {
+          // Indexes are optional
+        }
+
+        return {
+          ok: true,
+          data: { documents, total, indexes },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function executeQueryAction(params: {
+  database: string;
+  collection: string;
+  filter?: string;
+  projection?: string;
+  sort?: string;
+  limit?: number;
+  skip?: number;
+}): Promise<ActionResult<{ documents: Document[]; total: number }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        let filterObj: Document | undefined = undefined;
+        if (params.filter?.trim()) {
+          filterObj = JSON.parse(params.filter.trim()) as Document;
+        }
+
+        const options: FindOptions<Document> = {
+          limit: params.limit ?? 50,
+          skip: params.skip ?? 0,
+          ...(params.projection?.trim()
+            ? { projection: JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"] }
+            : {}),
+          ...(params.sort?.trim()
+            ? { sort: JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"] }
+            : {}),
+        };
+
+        const documents = [...(await col.find(filterObj, options).toArray())];
+        let total = documents.length;
+        try {
+          total = await col.countDocuments(filterObj);
+        } catch {
+          // Ignore count error
+        }
+
+        return {
+          ok: true,
+          data: { documents, total },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function executeAggregationAction(params: {
+  database: string;
+  collection: string;
+  pipelineJson: string;
+}): Promise<ActionResult<{ documents: Document[] }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const pipeline = JSON.parse(params.pipelineJson.trim()) as Document[];
+        if (!Array.isArray(pipeline)) {
+          throw new Error("Aggregation pipeline must be a JSON array of stage objects.");
+        }
+
+        const documents = [...(await col.aggregate<Document>(pipeline).toArray())];
+        return {
+          ok: true,
+          data: { documents },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function insertOneDocumentAction(params: {
+  database: string;
+  collection: string;
+  documentJson: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ insertedId: unknown }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const doc = JSON.parse(params.documentJson) as Document;
+        const res = await col.insertOne(doc, { idempotencyKey: params.idempotencyKey });
+        return {
+          ok: true,
+          data: { insertedId: res.insertedId },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function updateOneDocumentAction(params: {
+  database: string;
+  collection: string;
+  filterJson: string;
+  updateJson: string;
+  upsert?: boolean;
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ matchedCount: number; modifiedCount: number; upsertedId: unknown }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const filter = JSON.parse(params.filterJson) as Document;
+        const update = JSON.parse(params.updateJson) as Document;
+        const res = await col.updateOne(filter, update, {
+          upsert: params.upsert,
+          idempotencyKey: params.idempotencyKey,
+        });
+        return {
+          ok: true,
+          data: {
+            matchedCount: res.matchedCount,
+            modifiedCount: res.modifiedCount,
+            upsertedId: res.upsertedId,
+          },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function deleteOneDocumentAction(params: {
+  database: string;
+  collection: string;
+  filterJson: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ deletedCount: number }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const filter = JSON.parse(params.filterJson) as Document;
+        const res = await col.deleteOne(filter, { idempotencyKey: params.idempotencyKey });
+        return {
+          ok: true,
+          data: { deletedCount: res.deletedCount },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function createIndexAction(params: {
+  database: string;
+  collection: string;
+  name?: string;
+  fieldsJson: string;
+  unique?: boolean;
+  sparse?: boolean;
+  partialFilterJson?: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const fields = JSON.parse(params.fieldsJson) as readonly (
+          | string
+          | { readonly field: string; readonly direction?: SortDirection | "Asc" | "Desc" }
+        )[];
+        const partialFilter = params.partialFilterJson?.trim()
+          ? (JSON.parse(params.partialFilterJson.trim()) as Document)
+          : undefined;
+
+        await col.createIndex(
+          {
+            fields,
+            name: params.name || undefined,
+            unique: params.unique,
+            sparse: params.sparse,
+            partialFilter,
+          },
+          { idempotencyKey: params.idempotencyKey },
+        );
+
+        return { ok: true, durationMs: Date.now() - start };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function dropIndexAction(params: {
+  database: string;
+  collection: string;
+  indexName: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        await col.dropIndex(params.indexName, { idempotencyKey: params.idempotencyKey });
+        return { ok: true, durationMs: Date.now() - start };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function createDatabaseAction(params: {
+  databaseName: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      await createDatabaseWithDriverFallback(connectionUri, params.databaseName.trim());
+      return { ok: true, durationMs: Date.now() - start };
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function dropDatabaseAction(params: {
+  databaseName: string;
+  confirmation: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    if (params.databaseName !== params.confirmation) {
+      throw new Error("Confirmation text does not match database name.");
+    }
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        await client.dropDatabase(params.databaseName);
+        return { ok: true, durationMs: Date.now() - start };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function createCollectionAction(params: {
+  databaseName: string;
+  collectionName: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        await client.db(params.databaseName).createCollection(params.collectionName.trim());
+        return { ok: true, durationMs: Date.now() - start };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function dropCollectionAction(params: {
+  databaseName: string;
+  collectionName: string;
+  confirmation: string;
+}): Promise<ActionResult<void>> {
+  const start = Date.now();
+  try {
+    if (params.collectionName !== params.confirmation) {
+      throw new Error("Confirmation text does not match collection name.");
+    }
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        await client.db(params.databaseName).dropCollection(params.collectionName);
+        return { ok: true, durationMs: Date.now() - start };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function fetchAdminSectionDataAction(
+  section: string,
+  params?: { userId?: string; roleId?: string; backupId?: string },
+): Promise<ActionResult<Record<string, unknown>>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client, diagnostics) => {
+        const result: Record<string, unknown> = { diagnostics };
+
+        if (section === "overview") {
+          try {
+            result.live = await client.live();
+            result.ready = await client.ready();
+            result.serverInfo = await client.serverInfo();
+            result.clusterSummary = await client.cluster.summary();
+          } catch {
+            // Ignore partial errors in overview
+          }
+        } else if (section === "users") {
+          result.users = await client.users.list();
+          if (params?.userId) {
+            try {
+              result.selectedUser = await client.users.get(params.userId);
+            } catch {
+              // Ignore
+            }
+          }
+        } else if (section === "roles") {
+          result.roles = await client.roles.listRoles();
+          result.permissions = await client.roles.listPermissions();
+          if (params?.roleId) {
+            try {
+              result.selectedRole = await client.roles.getRole(params.roleId);
+            } catch {
+              // Ignore
+            }
+          }
+        } else if (section === "cluster") {
+          result.clusterNodes = await client.cluster.nodes();
+          result.clusterPartitions = await client.cluster.partitions();
+          result.clusterHealth = await client.cluster.health();
+          result.clusterReadiness = await client.cluster.readiness();
+        } else if (section === "backups") {
+          result.backups = await client.backups.list();
+          if (params?.backupId) {
+            try {
+              result.selectedBackup = await client.backups.get(params.backupId);
+            } catch {
+              // Ignore
+            }
+          }
+        } else if (section === "settings") {
+          result.settingsGeneral = await client.settings.get();
+          result.settingsCors = await client.settings.getCors();
+          result.settingsPerformance = await client.settings.getPerformance();
+          result.settingsLimits = await client.settings.getLimits();
+          result.settingsBackups = await client.settings.getBackups();
+        }
+
+        return {
+          ok: true,
+          data: result,
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
 }
