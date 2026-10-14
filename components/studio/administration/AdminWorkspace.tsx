@@ -588,6 +588,93 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
           </div>
         </div>
       )}
+
+      {/* Create Role Modal */}
+      {showCreateRoleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
+            <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Create Granular Role</h3>
+            <form action={studioMutationAction} className="space-y-3 text-xs">
+              <input type="hidden" name="action" value="createRole" />
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
+                  Role Name *
+                </label>
+                <input
+                  name="name"
+                  required
+                  autoFocus
+                  placeholder="e.g. readAnalytics"
+                  className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
+                  Permission Grants (JSON Array) *
+                </label>
+                <textarea
+                  name="grants"
+                  rows={5}
+                  required
+                  defaultValue={JSON.stringify(
+                    [{ permission: "read", scope: { scope_type: "Global" } }],
+                    null,
+                    2,
+                  )}
+                  className="w-full p-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none resize-none leading-5"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateRoleModal(false)}
+                  className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary h-8 px-3 text-xs">
+                  Create Role
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Take Backup Modal */}
+      {showCreateBackupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
+            <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Take Cluster Node Backup</h3>
+            <form action={studioMutationAction} className="space-y-3 text-xs">
+              <input type="hidden" name="action" value="createBackup" />
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
+                  Backup Label (Optional)
+                </label>
+                <input
+                  name="label"
+                  autoFocus
+                  placeholder="e.g. pre-migration-snapshot"
+                  className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateBackupModal(false)}
+                  className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary h-8 px-3 text-xs">
+                  Create Snapshot
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

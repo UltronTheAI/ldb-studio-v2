@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type {
   StudioTab,
   AggregationStage,
   DocumentViewMode,
+  AggregationTabState,
 } from "@/lib/studio/workspace-types";
 import { executeAggregationAction } from "@/app/actions";
 import { DocumentTable } from "../collection/DocumentTable";
@@ -48,24 +49,28 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
   const { databases, collectionsMap, updateTabState, addQueryHistory } =
     useWorkspace();
 
-  const state = tab.aggregationState || {
-    name: tab.title || "Pipeline 1",
-    database: tab.database || databases[0] || "default",
-    collection: tab.collection || "collection",
-    mode: "visual",
-    stages: [
-      {
-        id: "stage-1",
-        stageOperator: "$match",
-        stageJson: '{\n  "status": "active"\n}',
-        enabled: true,
+  const state = useMemo(
+    (): AggregationTabState =>
+      tab.aggregationState || {
+        name: tab.title || "Pipeline 1",
+        database: tab.database || databases[0] || "default",
+        collection: tab.collection || "collection",
+        mode: "visual",
+        stages: [
+          {
+            id: "stage-1",
+            stageOperator: "$match",
+            stageJson: '{\n  "status": "active"\n}',
+            enabled: true,
+          },
+        ],
+        rawPipelineJson: '[\n  {\n    "$match": {\n      "status": "active"\n    }\n  }\n]',
+        results: null,
+        resultCount: 0,
+        viewMode: "table" as DocumentViewMode,
       },
-    ],
-    rawPipelineJson: '[\n  {\n    "$match": {\n      "status": "active"\n    }\n  }\n]',
-    results: null,
-    resultCount: 0,
-    viewMode: "table" as DocumentViewMode,
-  };
+    [tab.aggregationState, tab.title, tab.database, databases, tab.collection],
+  );
 
   const [pipelineName, setPipelineName] = useState(state.name);
   const [selectedDb, setSelectedDb] = useState(state.database);
@@ -198,6 +203,26 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const handleCopyResults = () => {
+    if (!state.results) return;
+    navigator.clipboard.writeText(JSON.stringify(state.results, null, 2));
+    setCopiedResults(true);
+    setTimeout(() => setCopiedResults(false), 1500);
+  };
+
+  const handleExportJson = () => {
+    if (!state.results) return;
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(state.results, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${pipelineName.replace(/\s+/g, "_")}_results.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
   };
 
   return (
@@ -450,6 +475,31 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
                   );
                 })}
               </div>
+
+              {state.results && state.results.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-[var(--hairline)] pl-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyResults}
+                    title="Copy Output"
+                    className="p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+                  >
+                    {copiedResults ? (
+                      <CheckIcon size={13} className="text-[#16a34a]" />
+                    ) : (
+                      <CopyIcon size={13} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportJson}
+                    title="Download JSON"
+                    className="p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+                  >
+                    <DownloadIcon size={13} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import type { StudioTab, DocumentViewMode } from "@/lib/studio/workspace-types";
+import type { StudioTab, DocumentViewMode, QueryTabState } from "@/lib/studio/workspace-types";
 import { executeQueryAction } from "@/app/actions";
 import { DocumentTable } from "../collection/DocumentTable";
 import { DocumentJsonView } from "../collection/DocumentJsonView";
@@ -36,21 +36,25 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     setStatusMessage,
   } = useWorkspace();
 
-  const state = tab.queryState || {
-    queryName: tab.title || "Query 1",
-    database: tab.database || databases[0] || "default",
-    collection: tab.collection || "collection",
-    queryMode: "find",
-    filter: "{}",
-    projection: "",
-    sort: "",
-    limit: 50,
-    skip: 0,
-    rawJson: JSON.stringify({ filter: {}, limit: 50 }, null, 2),
-    results: null,
-    resultCount: 0,
-    viewMode: "table" as DocumentViewMode,
-  };
+  const state = useMemo(
+    (): QueryTabState =>
+      tab.queryState || {
+        queryName: tab.title || "Query 1",
+        database: tab.database || databases[0] || "default",
+        collection: tab.collection || "collection",
+        queryMode: "find",
+        filter: "{}",
+        projection: "",
+        sort: "",
+        limit: 50,
+        skip: 0,
+        rawJson: JSON.stringify({ filter: {}, limit: 50 }, null, 2),
+        results: null,
+        resultCount: 0,
+        viewMode: "table" as DocumentViewMode,
+      },
+    [tab.queryState, tab.title, tab.database, tab.collection, databases],
+  );
 
   const [queryName, setQueryName] = useState(state.queryName);
   const [selectedDb, setSelectedDb] = useState(state.database);

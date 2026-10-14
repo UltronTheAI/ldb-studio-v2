@@ -1,9 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Document } from "@liorandb/driver";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import type { StudioTab, CollectionSubTab, DocumentViewMode } from "@/lib/studio/workspace-types";
+import type {
+  StudioTab,
+  CollectionSubTab,
+  DocumentViewMode,
+  CollectionTabState,
+} from "@/lib/studio/workspace-types";
 import {
   fetchCollectionDocumentsAction,
   insertOneDocumentAction,
@@ -42,20 +47,24 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
 
   const database = tab.database || "default";
   const collection = tab.collection || "collection";
-  const state = tab.collectionState || {
-    subTab: "documents" as CollectionSubTab,
-    viewMode: "table" as DocumentViewMode,
-    filter: "{}",
-    projection: "",
-    sort: "",
-    limit: 50,
-    skip: 0,
-    page: 1,
-    pageSize: 50,
-    totalDocuments: 0,
-    documents: [],
-    indexes: [],
-  };
+  const state = useMemo(
+    (): CollectionTabState =>
+      tab.collectionState || {
+        subTab: "documents" as CollectionSubTab,
+        viewMode: "table" as DocumentViewMode,
+        filter: "{}",
+        projection: "",
+        sort: "",
+        limit: 50,
+        skip: 0,
+        page: 1,
+        pageSize: 50,
+        totalDocuments: 0,
+        documents: [],
+        indexes: [],
+      },
+    [tab.collectionState],
+  );
 
   const [filterInput, setFilterInput] = useState(state.filter || "{}");
   const [projectionInput, setProjectionInput] = useState(state.projection || "");
