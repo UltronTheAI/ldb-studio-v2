@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -85,6 +86,45 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 let queryCounter = 1;
 
+function getDefaultTabs(initialContext: InitialStudioContext): StudioTab[] {
+  const overviewTab: StudioTab = {
+    id: "tab-overview",
+    title: "Overview",
+    type: "overview",
+  };
+
+  if (
+    initialContext.scopedDatabase &&
+    initialContext.collectionsMap[initialContext.scopedDatabase]?.length
+  ) {
+    const firstCol = initialContext.collectionsMap[initialContext.scopedDatabase][0];
+    const colTab: StudioTab = {
+      id: `tab-col-${initialContext.scopedDatabase}-${firstCol}`,
+      title: firstCol,
+      type: "collection",
+      database: initialContext.scopedDatabase,
+      collection: firstCol,
+      collectionState: {
+        subTab: "documents",
+        viewMode: "table",
+        filter: "{}",
+        projection: "",
+        sort: "",
+        limit: 50,
+        skip: 0,
+        page: 1,
+        pageSize: 50,
+        totalDocuments: 0,
+        documents: [],
+        indexes: [],
+      },
+    };
+    return [overviewTab, colTab];
+  }
+
+  return [overviewTab];
+}
+
 export function WorkspaceProvider({
   initialContext,
   children,
@@ -92,63 +132,15 @@ export function WorkspaceProvider({
   initialContext: InitialStudioContext;
   children: ReactNode;
 }) {
-  const [tabs, setTabs] = useState<StudioTab[]>(() => {
-    const saved = loadSavedTabs();
-    if (saved.length > 0) {
-      return saved;
-    }
+  const isHydratedRef = useRef(false);
 
-    // Initial default tab: Overview
-    const overviewTab: StudioTab = {
-      id: "tab-overview",
-      title: "Overview",
-      type: "overview",
-    };
-
-    // If scoped database exists and has collections, prepare collection tab
-    if (initialContext.scopedDatabase && initialContext.collectionsMap[initialContext.scopedDatabase]?.length) {
-      const firstCol = initialContext.collectionsMap[initialContext.scopedDatabase][0];
-      const colTab: StudioTab = {
-        id: `tab-col-${initialContext.scopedDatabase}-${firstCol}`,
-        title: firstCol,
-        type: "collection",
-        database: initialContext.scopedDatabase,
-        collection: firstCol,
-        collectionState: {
-          subTab: "documents",
-          viewMode: "table",
-          filter: "{}",
-          projection: "",
-          sort: "",
-          limit: 50,
-          skip: 0,
-          page: 1,
-          pageSize: 50,
-          totalDocuments: 0,
-          documents: [],
-          indexes: [],
-        },
-      };
-      return [overviewTab, colTab];
-    }
-
-    return [overviewTab];
-  });
-
+  // Deterministic initial state to match SSR exactly and eliminate hydration mismatches
+  const [tabs, setTabs] = useState<StudioTab[]>(() => getDefaultTabs(initialContext));
   const [activeTabId, setActiveTabId] = useState<string>("tab-overview");
   const [closedTabsHistory, setClosedTabsHistory] = useState<StudioTab[]>([]);
-  const [activeActivity, setActiveActivity] = useState<ActivitySection>(() => {
-    const meta = loadWorkspaceMetadata();
-    return meta.activeActivity || "explorer";
-  });
-  const [sidebarWidth, setSidebarWidthState] = useState<number>(() => {
-    const meta = loadWorkspaceMetadata();
-    return typeof meta.sidebarWidth === "number" ? meta.sidebarWidth : 280;
-  });
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    const meta = loadWorkspaceMetadata();
-    return typeof meta.isSidebarCollapsed === "boolean" ? meta.isSidebarCollapsed : false;
-  });
+  const [activeActivity, setActiveActivity] = useState<ActivitySection>("explorer");
+  const [sidebarWidth, setSidebarWidthState] = useState<number>(280);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [expandedDatabases, setExpandedDatabases] = useState<Record<string, boolean>>(() => {
     const map: Record<string, boolean> = {};
     for (const db of initialContext.databases) {
@@ -162,8 +154,8 @@ export function WorkspaceProvider({
     tone: "info" | "success" | "error";
   } | null>(null);
   const [lastExecutionDurationMs, setLastExecutionDurationMs] = useState<number | null>(null);
-  const [history, setHistory] = useState<QueryHistoryItem[]>(() => loadQueryHistory());
-  const [savedDrafts, setSavedDrafts] = useState<SavedQueryDraft[]>(() => loadSavedQueryDrafts());
+  const [history, setHistory] = useState<QueryHistoryItem[]>([]);
+  const [savedDrafts, setSavedDrafts] = useState<SavedQueryDraft[]>([]);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState<boolean>(false);
   const [databases, setDatabases] = useState<string[]>(initialContext.databases);
   const [collectionsMap, setCollectionsMap] = useState<Record<string, string[]>>(
@@ -171,19 +163,54 @@ export function WorkspaceProvider({
   );
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
-  // Save tabs on change
+  // Restore client-side persisted state from localStorage after mount
   useEffect(() => {
+    isHydratedRef.current = true;
+
+    queueMicrotask(() => {
+      const saved = loadSavedTabs();
+      const meta = loadWorkspaceMetadata();
+
+      if (saved.length > 0) {
+        setTabs(saved);
+        if (meta.activeTabId && saved.some((t) => t.id === meta.activeTabId)) {
+          setActiveTabId(meta.activeTabId);
+        } else {
+          setActiveTabId(saved[0].id);
+        }
+      }
+
+      if (meta.activeActivity) {
+        setActiveActivity(meta.activeActivity);
+      }
+      if (typeof meta.sidebarWidth === "number") {
+        setSidebarWidthState(meta.sidebarWidth);
+      }
+      if (typeof meta.isSidebarCollapsed === "boolean") {
+        setIsSidebarCollapsed(meta.isSidebarCollapsed);
+      }
+
+      setHistory(loadQueryHistory());
+      setSavedDrafts(loadSavedQueryDrafts());
+    });
+  }, []);
+
+  // Save tabs on change (only after client restoration to avoid wiping localStorage with initial default)
+  useEffect(() => {
+    if (!isHydratedRef.current) return;
     saveTabsToStorage(tabs);
   }, [tabs]);
 
-  // Save workspace metadata on change
+  // Save workspace metadata on change (only after client restoration)
   useEffect(() => {
+    if (!isHydratedRef.current) return;
     saveWorkspaceMetadata({
       activeActivity,
       sidebarWidth,
       isSidebarCollapsed,
+      activeTabId,
     });
-  }, [activeActivity, sidebarWidth, isSidebarCollapsed]);
+  }, [activeActivity, sidebarWidth, isSidebarCollapsed, activeTabId]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
