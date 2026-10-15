@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import type { StudioTab } from "@/lib/studio/workspace-types";
 import { fetchAdminSectionDataAction, studioMutationAction } from "@/app/actions";
+import type { UserRecord, RoleRecord, BackupJobRecord } from "@liorandb/driver";
 import {
   UsersIcon,
   ShieldIcon,
@@ -77,9 +78,13 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
     };
   }, [subSection]);
 
-  const users = (data.users as Array<{ id: string; username: string; roles: string[]; enabled: boolean }>) || [];
-  const roles = (data.roles as Array<{ id: string; name: string; grants: Array<{ permission: string }> }>) || [];
-  const backups = (data.backups as Array<{ id: string; label?: string; created_at_utc_ms: number; status: string }>) || [];
+  const users = (data.users as readonly UserRecord[]) || [];
+  const roles = (data.roles as readonly RoleRecord[]) || [];
+  const backups =
+    (data.backups as readonly (BackupJobRecord & {
+      id?: string;
+      created_at_utc_ms?: number;
+    })[]) || [];
 
   return (
     <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
@@ -182,54 +187,57 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </thead>
               <tbody className="divide-y divide-[var(--hairline)]">
                 {users.length === 0 ? (
-                  <tr>
+                  <tr key="empty-users">
                     <td colSpan={4} className="px-4 py-8 text-center text-[var(--muted)]">
                       {isLoading ? "Loading users..." : "No users returned."}
                     </td>
                   </tr>
                 ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="hover:bg-[var(--surface-strong)] transition">
-                      <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
-                        <UsersIcon size={13} className="text-[var(--text-link)]" />
-                        <span>{u.username}</span>
-                      </td>
-                      <td className="px-4 py-3 text-[var(--body)]">
-                        {u.roles?.map((r) => (
+                  users.map((u, idx) => {
+                    const userId = u.id || u.username || `user-${idx}`;
+                    return (
+                      <tr key={userId} className="hover:bg-[var(--surface-strong)] transition">
+                        <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
+                          <UsersIcon size={13} className="text-[var(--text-link)]" />
+                          <span>{u.username}</span>
+                        </td>
+                        <td className="px-4 py-3 text-[var(--body)]">
+                          {u.roles?.map((r) => (
+                            <span
+                              key={r}
+                              className="inline-block px-1.5 py-0.5 rounded bg-[var(--canvas-soft)] border border-[var(--hairline)] mr-1"
+                            >
+                              {r}
+                            </span>
+                          ))}
+                        </td>
+                        <td className="px-4 py-3">
                           <span
-                            key={r}
-                            className="inline-block px-1.5 py-0.5 rounded bg-[var(--canvas-soft)] border border-[var(--hairline)] mr-1"
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                              u.enabled !== false
+                                ? "bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]"
+                                : "bg-[#ef4444]/15 text-[#ef4444]"
+                            }`}
                           >
-                            {r}
+                            {u.enabled !== false ? "Active" : "Disabled"}
                           </span>
-                        ))}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                            u.enabled !== false
-                              ? "bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]"
-                              : "bg-[#ef4444]/15 text-[#ef4444]"
-                          }`}
-                        >
-                          {u.enabled !== false ? "Active" : "Disabled"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <form action={studioMutationAction} className="inline-block">
-                          <input type="hidden" name="action" value="deleteUser" />
-                          <input type="hidden" name="userId" value={u.id} />
-                          <button
-                            type="submit"
-                            title="Delete User"
-                            className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
-                          >
-                            <Trash2Icon size={13} />
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <form action={studioMutationAction} className="inline-block">
+                            <input type="hidden" name="action" value="deleteUser" />
+                            <input type="hidden" name="userId" value={userId} />
+                            <button
+                              type="submit"
+                              title="Delete User"
+                              className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
+                            >
+                              <Trash2Icon size={13} />
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -255,45 +263,48 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </thead>
               <tbody className="divide-y divide-[var(--hairline)]">
                 {roles.length === 0 ? (
-                  <tr>
+                  <tr key="empty-roles">
                     <td colSpan={3} className="px-4 py-8 text-center text-[var(--muted)]">
                       {isLoading ? "Loading roles..." : "No custom roles created yet."}
                     </td>
                   </tr>
                 ) : (
-                  roles.map((r) => (
-                    <tr key={r.id} className="hover:bg-[var(--surface-strong)] transition">
-                      <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
-                        <ShieldIcon size={13} className="text-[#a855f7]" />
-                        <span>{r.name}</span>
-                      </td>
-                      <td className="px-4 py-3 text-[var(--body)]">
-                        <div className="flex flex-wrap gap-1 max-w-lg">
-                          {r.grants?.map((g, i) => (
-                            <span
-                              key={i}
-                              className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--canvas-soft)] border border-[var(--hairline)] text-[var(--ink)]"
+                  roles.map((r, idx) => {
+                    const roleId = r.id || r.name || `role-${idx}`;
+                    return (
+                      <tr key={roleId} className="hover:bg-[var(--surface-strong)] transition">
+                        <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
+                          <ShieldIcon size={13} className="text-[#a855f7]" />
+                          <span>{r.name}</span>
+                        </td>
+                        <td className="px-4 py-3 text-[var(--body)]">
+                          <div className="flex flex-wrap gap-1 max-w-lg">
+                            {r.grants?.map((g, i) => (
+                              <span
+                                key={`${roleId}-grant-${i}-${g.permission}`}
+                                className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--canvas-soft)] border border-[var(--hairline)] text-[var(--ink)]"
+                              >
+                                {g.permission}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <form action={studioMutationAction} className="inline-block">
+                            <input type="hidden" name="action" value="deleteRole" />
+                            <input type="hidden" name="roleId" value={roleId} />
+                            <button
+                              type="submit"
+                              title="Delete Role"
+                              className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
                             >
-                              {g.permission}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <form action={studioMutationAction} className="inline-block">
-                          <input type="hidden" name="action" value="deleteRole" />
-                          <input type="hidden" name="roleId" value={r.id} />
-                          <button
-                            type="submit"
-                            title="Delete Role"
-                            className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
-                          >
-                            <Trash2Icon size={13} />
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))
+                              <Trash2Icon size={13} />
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -323,41 +334,45 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                 </thead>
                 <tbody className="divide-y divide-[var(--hairline)]">
                   {backups.length === 0 ? (
-                    <tr>
+                    <tr key="empty-backups">
                       <td colSpan={4} className="px-4 py-8 text-center text-[var(--muted)]">
                         {isLoading ? "Loading backups..." : "No backups found."}
                       </td>
                     </tr>
                   ) : (
-                    backups.map((b) => (
-                      <tr key={b.id} className="hover:bg-[var(--surface-strong)] transition">
-                        <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
-                          <ArchiveIcon size={13} className="text-[#f59e0b]" />
-                          <span>{b.label || b.id}</span>
-                        </td>
-                        <td className="px-4 py-3 text-[var(--body)]">
-                          {new Date(b.created_at_utc_ms).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]">
-                            {b.status || "Complete"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <form action={studioMutationAction} className="inline-block">
-                            <input type="hidden" name="action" value="deleteBackup" />
-                            <input type="hidden" name="backupId" value={b.id} />
-                            <button
-                              type="submit"
-                              title="Delete Backup"
-                              className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
-                            >
-                              <Trash2Icon size={13} />
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
-                    ))
+                    backups.map((b, idx) => {
+                      const backupId = b.backup_id || b.id || `backup-${idx}`;
+                      const createdAt = b.created_at_ms || b.created_at_utc_ms;
+                      return (
+                        <tr key={backupId} className="hover:bg-[var(--surface-strong)] transition">
+                          <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
+                            <ArchiveIcon size={13} className="text-[#f59e0b]" />
+                            <span>{b.label || backupId}</span>
+                          </td>
+                          <td className="px-4 py-3 text-[var(--body)]">
+                            {createdAt ? new Date(createdAt).toLocaleString() : "Unknown"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]">
+                              {b.status || "Complete"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <form action={studioMutationAction} className="inline-block">
+                              <input type="hidden" name="action" value="deleteBackup" />
+                              <input type="hidden" name="backupId" value={backupId} />
+                              <button
+                                type="submit"
+                                title="Delete Backup"
+                                className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
+                              >
+                                <Trash2Icon size={13} />
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

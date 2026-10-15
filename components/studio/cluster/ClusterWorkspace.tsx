@@ -276,7 +276,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
               </thead>
               <tbody className="divide-y divide-[var(--hairline)]">
                 {partitions.length === 0 ? (
-                  <tr>
+                  <tr key="empty-partition-0">
                     <td className="px-4 py-3 font-bold text-[var(--ink)]">Partition 0</td>
                     <td className="px-4 py-3 text-[var(--body)]">Node #{currentNodeId}</td>
                     <td className="px-4 py-3 text-[var(--muted)]">Standalone (1 copy)</td>
