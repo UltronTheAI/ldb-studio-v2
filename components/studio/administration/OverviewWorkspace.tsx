@@ -65,22 +65,22 @@ export function OverviewWorkspace() {
   const nodeId = (data.live as { node_id?: number } | null)?.node_id ?? 1;
 
   return (
-    <div className="w-full h-full p-3 sm:p-6 overflow-y-auto editor-scroll space-y-4 sm:space-y-6">
+    <div className="w-full h-full p-6 overflow-y-auto editor-scroll space-y-6">
       {/* Overview Top Hero */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h2 className="font-sans text-base sm:text-lg font-bold text-[var(--ink)]">
+            <h2 className="font-sans text-lg font-bold text-[var(--ink)]">
               Cluster Node #{nodeId} Connected
             </h2>
           </div>
-          <p className="text-xs text-[var(--muted)] font-mono break-all sm:break-normal">
+          <p className="text-xs text-[var(--muted)] font-mono">
             {initialContext.protocol}://{initialContext.host}:{initialContext.port} • Authenticated as{" "}
             <span className="font-bold text-[var(--ink)]">{initialContext.principal.username}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={loadData}
@@ -106,8 +106,8 @@ export function OverviewWorkspace() {
       {isLoading && !data.live ? (
         <CardSkeletonWidget count={4} message="Fetching live cluster telemetry..." />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-3.5 sm:p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
               Live Node State
             </div>
@@ -117,7 +117,7 @@ export function OverviewWorkspace() {
             </div>
           </div>
 
-          <div className="p-3.5 sm:p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
               Cluster Readiness
             </div>
@@ -126,7 +126,7 @@ export function OverviewWorkspace() {
             </div>
           </div>
 
-          <div className="p-3.5 sm:p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
               Online Databases
             </div>
@@ -135,7 +135,7 @@ export function OverviewWorkspace() {
             </div>
           </div>
 
-          <div className="p-3.5 sm:p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
               Total Collections
             </div>
@@ -147,15 +147,15 @@ export function OverviewWorkspace() {
       )}
 
       {/* Detailed Diagnostics Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Connection Profile */}
-        <div className="p-3.5 sm:p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-3 sm:space-y-4">
+        <div className="p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-4">
           <h3 className="font-sans text-sm font-bold text-[var(--ink)] flex items-center gap-2">
             <ServerIcon size={15} className="text-[var(--text-link)]" />
             <span>Endpoint Configuration</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-3 text-xs font-mono">
             <div className="p-2.5 rounded-[6px] bg-[var(--canvas-soft)] border border-[var(--hairline)]">
               <span className="text-[10px] text-[var(--muted)] block">HOST</span>
               <span className="font-semibold text-[var(--ink)]">{initialContext.host}</span>
@@ -178,13 +178,13 @@ export function OverviewWorkspace() {
         </div>
 
         {/* Quick Operations Navigation */}
-        <div className="p-3.5 sm:p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-3 sm:space-y-4">
+        <div className="p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-4">
           <h3 className="font-sans text-sm font-bold text-[var(--ink)] flex items-center gap-2">
             <ZapIcon size={15} className="text-[#fbbf24]" />
             <span>Fast Administration Shortcuts</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <button
               type="button"
               onClick={() => openAdminTab("users")}

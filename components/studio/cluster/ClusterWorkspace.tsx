@@ -86,18 +86,18 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
   return (
     <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Header */}
-      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
-        <div className="flex items-center gap-2 min-w-0">
-          <NetworkIcon size={16} className="text-[var(--text-link)] shrink-0" />
-          <h2 className="font-sans text-xs sm:text-sm font-bold text-[var(--ink)] truncate">
+      <div className="h-11 px-4 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center justify-between shrink-0 select-none">
+        <div className="flex items-center gap-2">
+          <NetworkIcon size={16} className="text-[var(--text-link)]" />
+          <h2 className="font-sans text-sm font-bold text-[var(--ink)]">
             {tab?.title || "Cluster Consensus & Topology Map"}
           </h2>
-          <span className="hidden xs:inline-block text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)] shrink-0">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
             Protocol v{clusterSummary?.protocol_version ?? 1}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={loadClusterData}
@@ -111,16 +111,16 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
           <button
             type="button"
             onClick={() => openQueryTab()}
-            className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
+            className="btn-primary h-7 px-3 text-xs font-semibold flex items-center gap-1"
           >
             <TerminalIcon size={12} />
-            <span className="hidden sm:inline">Open Query Tab</span>
+            <span>Open Query Tab</span>
           </button>
         </div>
       </div>
 
       {/* Main Body */}
-      <div className="flex-1 overflow-y-auto editor-scroll p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex-1 overflow-y-auto editor-scroll p-6 space-y-6">
         {error && (
           <div className="p-3 rounded-[6px] text-xs font-mono bg-[#ef4444]/15 border border-[#ef4444]/30 text-[#ef4444] flex items-center gap-2">
             <span>{error}</span>
@@ -128,7 +128,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
         )}
 
         {/* High-level Consensus Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
               Active Nodes
@@ -271,8 +271,8 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
               message="Fetching partition placements and sharding..."
             />
           ) : (
-            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
-            <table className="w-full min-w-[550px] border-collapse text-left text-xs font-mono">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
+            <table className="w-full border-collapse text-left text-xs font-mono">
               <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                 <tr>
                   <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
@@ -346,8 +346,8 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
               <span>Partition Log Sequence &amp; WAL Diagnostics</span>
             </h3>
 
-            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
-              <table className="w-full min-w-[600px] border-collapse text-left text-xs font-mono">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
+              <table className="w-full border-collapse text-left text-xs font-mono">
                 <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                   <tr>
                     <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">

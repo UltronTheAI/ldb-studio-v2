@@ -38,9 +38,9 @@ export function TopAppBar() {
   return (
     <header className="h-11 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] px-3 flex items-center justify-between select-none z-30 shrink-0">
       {/* Left: Brand & Breadcrumb */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex items-center gap-3">
         <div
-          className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-[var(--hairline)] shrink-0"
+          className="flex items-center gap-2 pr-3 border-r border-[var(--hairline)]"
           title="LioranDB Studio"
         >
           <LioranDBLogo size={20} showText={false} />
@@ -49,14 +49,9 @@ export function TopAppBar() {
           </span>
         </div>
 
-        {/* Mobile active context indicator */}
-        <div className="flex md:hidden items-center gap-1 text-[11px] font-mono text-[var(--ink)] truncate max-w-[140px]">
-          <span className="truncate">{activeTab?.title || "Studio"}</span>
-        </div>
-
         {/* Connection status badge */}
         <div
-          className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)] shrink-0"
+          className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)]"
           title={`${initialContext.host}:${initialContext.port}`}
         >
           <span className="font-semibold text-[var(--ink)]">
@@ -106,17 +101,7 @@ export function TopAppBar() {
       </div>
 
       {/* Right: Actions, Theme, Account & Logout */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        {/* Mobile Search Button */}
-        <button
-          type="button"
-          onClick={() => setCommandPaletteOpen(true)}
-          title="Search commands (Ctrl+P)"
-          className="sm:hidden p-1.5 rounded-[6px] text-[var(--body)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
-        >
-          <SearchIcon size={14} />
-        </button>
-
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
           onClick={handleRefreshAll}

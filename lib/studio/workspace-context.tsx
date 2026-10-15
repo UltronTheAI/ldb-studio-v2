@@ -258,15 +258,8 @@ export function WorkspaceProvider({
     );
   }, []);
 
-  const autoCloseMobileDrawer = useCallback(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setIsSidebarCollapsed(true);
-    }
-  }, []);
-
   const openCollectionTab = useCallback(
     (database: string, collection: string) => {
-      autoCloseMobileDrawer();
       const tabId = `col-${database}-${collection}`;
       const existing = tabs.find((t) => t.id === tabId);
       if (existing) {
@@ -299,12 +292,11 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [tabs, autoCloseMobileDrawer],
+    [tabs],
   );
 
   const openQueryTab = useCallback(
     (database?: string, collection?: string, initialFilter = "{}") => {
-      autoCloseMobileDrawer();
       const targetDb = database || databases[0] || "default";
       const targetCol = collection || collectionsMap[targetDb]?.[0] || "collection";
       const tabId = `query-${Date.now()}-${queryCounter++}`;
@@ -336,12 +328,11 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [databases, collectionsMap, autoCloseMobileDrawer],
+    [databases, collectionsMap],
   );
 
   const openAggregationTab = useCallback(
     (database?: string, collection?: string) => {
-      autoCloseMobileDrawer();
       const targetDb = database || databases[0] || "default";
       const targetCol = collection || collectionsMap[targetDb]?.[0] || "collection";
       const tabId = `agg-${Date.now()}-${queryCounter++}`;
@@ -376,12 +367,11 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [databases, collectionsMap, autoCloseMobileDrawer],
+    [databases, collectionsMap],
   );
 
   const openIndexesTab = useCallback(
     (database: string, collection: string) => {
-      autoCloseMobileDrawer();
       const tabId = `indexes-${database}-${collection}`;
       const existing = tabs.find((t) => t.id === tabId);
       if (existing) {
@@ -405,11 +395,10 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [tabs, autoCloseMobileDrawer],
+    [tabs],
   );
 
   const openOverviewTab = useCallback(() => {
-    autoCloseMobileDrawer();
     const tabId = "tab-overview";
     const existing = tabs.find((t) => t.id === tabId);
     if (!existing) {
@@ -423,10 +412,9 @@ export function WorkspaceProvider({
       ]);
     }
     setActiveTabId(tabId);
-  }, [tabs, autoCloseMobileDrawer]);
+  }, [tabs]);
 
   const openClusterTab = useCallback(() => {
-    autoCloseMobileDrawer();
     const tabId = "tab-cluster";
     const existing = tabs.find((t) => t.id === tabId);
     if (!existing) {
@@ -440,14 +428,13 @@ export function WorkspaceProvider({
       ]);
     }
     setActiveTabId(tabId);
-  }, [tabs, autoCloseMobileDrawer]);
+  }, [tabs]);
 
   const openAdminTab = useCallback(
     (
       subSection: "users" | "roles" | "backups" | "settings",
       settingsPane?: "general" | "cors" | "performance" | "limits" | "backups",
     ) => {
-      autoCloseMobileDrawer();
       const tabId = `admin-${subSection}`;
       const titles: Record<string, string> = {
         users: "User Governance",
@@ -480,7 +467,7 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [tabs, updateTabState, autoCloseMobileDrawer],
+    [tabs, updateTabState],
   );
 
   const closeTab = useCallback(

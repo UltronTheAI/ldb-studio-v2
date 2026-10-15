@@ -81,65 +81,56 @@ export function ExplorerSidebar() {
   };
 
   return (
-    <>
-      {/* Mobile Backdrop Overlay */}
-      <div
-        className="md:hidden fixed inset-0 top-11 bottom-6 left-12 z-30 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
-        onClick={toggleSidebar}
-        aria-hidden="true"
-      />
+    <div
+      style={{ width: `${sidebarWidth}px` }}
+      className="relative flex flex-col h-full border-r border-[var(--hairline-strong)] bg-[var(--surface-card)] select-none shrink-0 overflow-hidden"
+    >
+      {/* Sidebar Header */}
+      <div className="h-9 px-3 border-b border-[var(--hairline)] flex items-center justify-between shrink-0 bg-[var(--surface-card)]">
+        <span className="font-sans text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] truncate">
+          {titles[activeActivity] || "EXPLORER"}
+        </span>
 
-      <div
-        style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}
-        className="fixed md:relative top-11 md:top-0 bottom-6 md:bottom-0 left-12 md:left-0 z-40 md:z-auto w-[calc(100vw-48px)] sm:w-80 md:w-[var(--sidebar-width)] flex flex-col h-[calc(100vh-44px-24px)] md:h-full border-r border-[var(--hairline-strong)] bg-[var(--surface-card)] select-none shrink-0 overflow-hidden shadow-2xl md:shadow-none animate-in md:animate-none slide-in-from-left-4 duration-150"
-      >
-        {/* Sidebar Header */}
-        <div className="h-9 px-3 border-b border-[var(--hairline)] flex items-center justify-between shrink-0 bg-[var(--surface-card)]">
-          <span className="font-sans text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] truncate">
-            {titles[activeActivity] || "EXPLORER"}
-          </span>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={handleRefresh}
-              title="Refresh Explorer"
-              className={`p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition ${
-                isRefreshing ? "animate-spin text-[var(--text-link)]" : ""
-              }`}
-            >
-              <RefreshCwIcon size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              title="Close Sidebar"
-              className="p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
-            >
-              <PanelLeftCloseIcon size={12} />
-            </button>
-          </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            title="Refresh Explorer"
+            className={`p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition ${
+              isRefreshing ? "animate-spin text-[var(--text-link)]" : ""
+            }`}
+          >
+            <RefreshCwIcon size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            title="Collapse Sidebar (Ctrl+B)"
+            className="p-1 rounded-[4px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+          >
+            <PanelLeftCloseIcon size={12} />
+          </button>
         </div>
-
-        {/* Main View Area */}
-        <div className="flex-1 overflow-hidden">
-          {activeActivity === "explorer" && <DatabaseTree />}
-          {activeActivity === "query" && <QueryExplorer />}
-          {activeActivity === "history" && <HistoryExplorer />}
-          {activeActivity === "admin" && <GovernanceExplorer />}
-          {activeActivity === "cluster" && <ClusterExplorer />}
-          {activeActivity === "backups" && <BackupExplorer />}
-          {activeActivity === "settings" && <AdminExplorer />}
-        </div>
-
-        {/* Drag Resize Handle on right edge - desktop only */}
-        <div
-          onMouseDown={handleMouseDown}
-          className={`hidden md:block absolute top-0 right-0 w-[4px] h-full cursor-col-resize hover:bg-[var(--text-link)] transition ${
-            isDragging ? "bg-[var(--text-link)]" : "bg-transparent"
-          }`}
-        />
       </div>
-    </>
+
+      {/* Main View Area */}
+      <div className="flex-1 overflow-hidden">
+        {activeActivity === "explorer" && <DatabaseTree />}
+        {activeActivity === "query" && <QueryExplorer />}
+        {activeActivity === "history" && <HistoryExplorer />}
+        {activeActivity === "admin" && <GovernanceExplorer />}
+        {activeActivity === "cluster" && <ClusterExplorer />}
+        {activeActivity === "backups" && <BackupExplorer />}
+        {activeActivity === "settings" && <AdminExplorer />}
+      </div>
+
+      {/* Drag Resize Handle on right edge */}
+      <div
+        onMouseDown={handleMouseDown}
+        className={`absolute top-0 right-0 w-[4px] h-full cursor-col-resize hover:bg-[var(--text-link)] transition ${
+          isDragging ? "bg-[var(--text-link)]" : "bg-transparent"
+        }`}
+      />
+    </div>
   );
 }
