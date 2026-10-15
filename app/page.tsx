@@ -898,10 +898,6 @@ export default async function Home({ searchParams }: PageProps) {
         {/* Hero Section: Pure white canvas with soft sky-blue gradient wash & Centered Device Mockup */}
         <section className="hero-sky-wash relative pt-16 sm:pt-24 pb-16 overflow-hidden">
           <div className="relative z-10 mx-auto max-w-[1200px] px-6 text-center">
-            {/* Headline in display-mega */}
-            <div className="inline-flex items-center gap-2 mb-6 badge-pill">
-              <span>Studio 2.0 • Developer Control Plane</span>
-            </div>
 
             <h1 className="font-display-mega text-[var(--ink)] max-w-4xl mx-auto">
               Meet your database thinking partner.
