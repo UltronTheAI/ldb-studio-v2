@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 interface ClusterWorkspaceProps {
-  tab: StudioTab;
+  tab?: StudioTab;
 }
 
 export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
@@ -89,7 +89,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
         <div className="flex items-center gap-2">
           <NetworkIcon size={16} className="text-[var(--text-link)]" />
           <h2 className="font-sans text-sm font-bold text-[var(--ink)]">
-            Cluster Consensus &amp; Topology Map
+            {tab?.title || "Cluster Consensus & Topology Map"}
           </h2>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
             Protocol v{clusterSummary?.protocol_version ?? 1}

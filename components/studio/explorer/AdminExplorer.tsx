@@ -3,10 +3,6 @@
 import React from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import {
-  UsersIcon,
-  ShieldIcon,
-  NetworkIcon,
-  ArchiveIcon,
   SlidersIcon,
   GlobeIcon,
   CpuIcon,
@@ -15,7 +11,7 @@ import {
 } from "lucide-react";
 
 export function AdminExplorer() {
-  const { openAdminTab, openClusterTab, openOverviewTab } = useWorkspace();
+  const { openAdminTab, openOverviewTab } = useWorkspace();
 
   const adminSections = [
     {
