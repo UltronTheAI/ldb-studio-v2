@@ -84,39 +84,6 @@ export default async function Image() {
               </span>
             </div>
           </div>
-
-          {/* Badge Pill */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 18px",
-              backgroundColor: "#f0f0f3",
-              border: "1px solid #dcdee0",
-              borderRadius: "9999px",
-            }}
-          >
-            <div
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "9999px",
-                backgroundColor: "#16a34a",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#171717",
-                letterSpacing: "0.88px",
-                textTransform: "uppercase",
-              }}
-            >
-              Developer Control Plane
-            </span>
-          </div>
         </div>
 
         {/* Center Hero Section */}
