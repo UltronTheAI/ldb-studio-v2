@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://studio.liorandb.internal"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://studio.liorandb.com"),
   title: {
     default: "LioranDB Studio — Developer Control Plane",
     template: "%s | LioranDB Studio",
@@ -21,10 +21,14 @@ export const metadata: Metadata = {
     "gRPC",
     "Query Workbench",
   ],
+  alternates: {
+    canonical: "https://studio.liorandb.com",
+  },
   openGraph: {
     title: "LioranDB Studio — Developer Control Plane",
     description:
       "A quietly confident developer-platform console and control plane for LioranDB deployments. Browse collections, evaluate live queries, and inspect Raft cluster topologies.",
+    url: "https://studio.liorandb.com",
     siteName: "LioranDB Studio",
     locale: "en_US",
     type: "website",

@@ -67,7 +67,7 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             </div>
             <div className="hidden sm:flex items-center gap-2 ml-4 px-2.5 py-0.5 rounded-[6px] bg-[#22252c] text-[11px] font-mono text-[#a0a4b0]">
               <span className="text-[#3b82f6]">https://</span>
-              <span>studio.liorandb.internal/cluster/production</span>
+              <span>studio.liorandb.com/cluster/production</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#9094a2]">
