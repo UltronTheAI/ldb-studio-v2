@@ -24,8 +24,6 @@ export interface SavedConnection {
   lastUsedAt?: number;
 }
 
-const STORAGE_KEY = "liorandb_studio_saved_connections_v2";
-
 const INITIAL_DEFAULT_CONNECTIONS: SavedConnection[] = [
   {
     id: "conn_cloud_prod",
@@ -48,6 +46,12 @@ const INITIAL_DEFAULT_CONNECTIONS: SavedConnection[] = [
   },
 ];
 
+const STORAGE_KEY = "liorandb_studio_saved_connections_v2";
+const LEGACY_STORAGE_KEYS = [
+  "liorandb_studio_saved_connections",
+  "liorandb_studio_saved_connections_v1",
+];
+
 function subscribeConnections(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener("liorandb_connections_update", callback);
@@ -59,13 +63,23 @@ function subscribeConnections(callback: () => void) {
 
 function getConnectionsSnapshot(): string {
   if (typeof window === "undefined") {
-    return "";
+    return JSON.stringify(INITIAL_DEFAULT_CONNECTIONS);
   }
-  return window.localStorage.getItem(STORAGE_KEY) ?? "";
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (raw === null) {
+    try {
+      const initialJson = JSON.stringify(INITIAL_DEFAULT_CONNECTIONS);
+      window.localStorage.setItem(STORAGE_KEY, initialJson);
+      return initialJson;
+    } catch {
+      return JSON.stringify(INITIAL_DEFAULT_CONNECTIONS);
+    }
+  }
+  return raw;
 }
 
 function getServerConnectionsSnapshot(): string {
-  return "";
+  return JSON.stringify(INITIAL_DEFAULT_CONNECTIONS);
 }
 
 function maskConnectionString(uri: string): string {
@@ -156,7 +170,7 @@ export function ConnectionPortal({
     }
     try {
       const parsed = JSON.parse(storedJson);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
       return INITIAL_DEFAULT_CONNECTIONS;
@@ -203,6 +217,11 @@ export function ConnectionPortal({
   const persistConnections = (updated: SavedConnection[]) => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      LEGACY_STORAGE_KEYS.forEach((k) => {
+        try {
+          window.localStorage.removeItem(k);
+        } catch {}
+      });
       window.dispatchEvent(new Event("liorandb_connections_update"));
     } catch (e) {
       console.error("Failed to persist saved connections:", e);
