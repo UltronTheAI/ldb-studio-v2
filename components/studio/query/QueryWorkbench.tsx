@@ -277,22 +277,22 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
   return (
     <div className="flex flex-col h-full bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Controls Toolbar */}
-      <div className="h-11 px-3 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center justify-between gap-3 shrink-0 select-none">
+      <div className="min-h-11 px-2.5 sm:px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
         {/* Left: Query Name & Target DB / Collection */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
           <input
             type="text"
             value={queryName}
             onChange={(e) => setQueryName(e.target.value)}
-            className="w-32 sm:w-44 h-7 px-2 font-bold text-xs rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-[var(--ink)] focus:outline-none focus:border-[var(--text-link)] truncate"
+            className="w-28 sm:w-44 h-7 px-2 font-bold text-xs rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-[var(--ink)] focus:outline-none focus:border-[var(--text-link)] truncate"
           />
 
-          <div className="flex items-center gap-1.5 pl-2 border-l border-[var(--hairline)]">
-            <span className="text-[11px] text-[var(--muted)] font-mono">DB:</span>
+          <div className="flex items-center gap-1.5 pl-1.5 sm:pl-2 border-l border-[var(--hairline)]">
+            <span className="text-[10px] sm:text-[11px] text-[var(--muted)] font-mono">DB:</span>
             <select
               value={selectedDb}
               onChange={(e) => handleDbChange(e.target.value)}
-              className="h-7 px-2 rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs font-mono text-[var(--ink)] focus:outline-none"
+              className="h-7 px-1.5 rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs font-mono text-[var(--ink)] focus:outline-none max-w-[90px] sm:max-w-none truncate"
             >
               {databases.map((db) => (
                 <option key={db} value={db}>
@@ -301,11 +301,11 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
               ))}
             </select>
 
-            <span className="text-[11px] text-[var(--muted)] font-mono">Collection:</span>
+            <span className="text-[10px] sm:text-[11px] text-[var(--muted)] font-mono">Col:</span>
             <select
               value={selectedCol}
               onChange={(e) => setSelectedCol(e.target.value)}
-              className="h-7 px-2 rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs font-mono text-[var(--ink)] focus:outline-none"
+              className="h-7 px-1.5 rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs font-mono text-[var(--ink)] focus:outline-none max-w-[90px] sm:max-w-none truncate"
             >
               {availableCollections.map((col) => (
                 <option key={col} value={col}>
@@ -317,7 +317,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={handleFormatCode}
@@ -459,7 +459,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
         {/* Results Half */}
         <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full bg-[var(--canvas)] overflow-hidden">
           {/* Results Toolbar */}
-          <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0">
+          <div className="min-h-9 px-2.5 sm:px-3 py-1 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-1.5 select-none shrink-0">
             <div className="flex items-center gap-3">
               <span className="font-sans text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
                 RESULTS

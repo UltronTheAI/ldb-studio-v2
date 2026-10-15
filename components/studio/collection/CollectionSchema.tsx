@@ -94,9 +94,9 @@ export function CollectionSchema({
   }
 
   return (
-    <div className="w-full h-full p-4 overflow-y-auto editor-scroll space-y-4">
+    <div className="w-full h-full p-3 sm:p-4 overflow-y-auto editor-scroll space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-sans text-sm font-bold text-[var(--ink)] flex items-center gap-2">
             <SparklesIcon size={14} className="text-[#a855f7]" />
@@ -113,8 +113,8 @@ export function CollectionSchema({
       </div>
 
       {/* Fields Breakdown Table */}
-      <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-        <table className="w-full border-collapse text-left text-xs font-mono">
+      <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+        <table className="w-full min-w-[550px] border-collapse text-left text-xs font-mono">
           <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
             <tr>
               <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px] w-48">

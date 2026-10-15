@@ -92,13 +92,13 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   return (
     <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Section Header */}
-      <div className="h-11 px-4 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center justify-between shrink-0 select-none">
-        <div className="flex items-center gap-2">
-          {subSection === "users" && <UsersIcon size={16} className="text-[var(--text-link)]" />}
-          {subSection === "roles" && <ShieldIcon size={16} className="text-[#a855f7]" />}
-          {subSection === "backups" && <ArchiveIcon size={16} className="text-[#f59e0b]" />}
-          {subSection === "settings" && <SettingsIcon size={16} className="text-[var(--ink)]" />}
-          <h2 className="font-sans text-sm font-bold text-[var(--ink)] capitalize">
+      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
+        <div className="flex items-center gap-2 min-w-0">
+          {subSection === "users" && <UsersIcon size={16} className="text-[var(--text-link)] shrink-0" />}
+          {subSection === "roles" && <ShieldIcon size={16} className="text-[#a855f7] shrink-0" />}
+          {subSection === "backups" && <ArchiveIcon size={16} className="text-[#f59e0b] shrink-0" />}
+          {subSection === "settings" && <SettingsIcon size={16} className="text-[var(--ink)] shrink-0" />}
+          <h2 className="font-sans text-xs sm:text-sm font-bold text-[var(--ink)] capitalize truncate">
             {subSection === "users" && "User Accounts & Authentication"}
             {subSection === "roles" && "Granular Roles & Access Grants"}
             {subSection === "backups" && "Cluster Backup Repository"}
@@ -106,12 +106,12 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {subSection === "users" && (
             <button
               type="button"
               onClick={() => setShowCreateUserModal(true)}
-              className="btn-primary h-7 px-3 text-xs font-semibold flex items-center gap-1"
+              className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
             >
               <PlusIcon size={12} />
               <span>Create User</span>
@@ -122,7 +122,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
             <button
               type="button"
               onClick={() => setShowCreateRoleModal(true)}
-              className="btn-primary h-7 px-3 text-xs font-semibold flex items-center gap-1"
+              className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
             >
               <PlusIcon size={12} />
               <span>Create Role</span>
@@ -133,7 +133,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
             <button
               type="button"
               onClick={() => setShowCreateBackupModal(true)}
-              className="btn-primary h-7 px-3 text-xs font-semibold flex items-center gap-1"
+              className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
             >
               <PlusIcon size={12} />
               <span>Take Backup</span>
@@ -154,7 +154,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
       </div>
 
       {/* Main Admin Content Body */}
-      <div className="flex-1 overflow-y-auto editor-scroll p-6">
+      <div className="flex-1 overflow-y-auto editor-scroll p-3 sm:p-6">
         {message && (
           <div
             className={`mb-4 p-3 rounded-[6px] text-xs font-mono flex items-center gap-2 ${
@@ -177,8 +177,8 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               message="Loading user accounts from auth service..."
             />
           ) : (
-            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-              <table className="w-full border-collapse text-left text-xs font-mono">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+              <table className="w-full min-w-[500px] border-collapse text-left text-xs font-mono">
                 <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                   <tr>
                     <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
@@ -264,8 +264,8 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               message="Loading RBAC roles and permissions..."
             />
           ) : (
-            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-              <table className="w-full border-collapse text-left text-xs font-mono">
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+              <table className="w-full min-w-[500px] border-collapse text-left text-xs font-mono">
                 <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                   <tr>
                     <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
@@ -340,8 +340,8 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
             />
           ) : (
             <div className="space-y-4">
-              <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-                <table className="w-full border-collapse text-left text-xs font-mono">
+              <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+                <table className="w-full min-w-[550px] border-collapse text-left text-xs font-mono">
                   <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                     <tr>
                       <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
@@ -409,8 +409,8 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
 
         {/* 4. SETTINGS SUBSECTION */}
         {subSection === "settings" && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-[var(--hairline)] pb-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--hairline)] pb-2">
               {[
                 { id: "general", label: "General" },
                 { id: "cors", label: "CORS Rules" },
@@ -430,7 +430,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                       },
                     });
                   }}
-                  className={`px-3 py-1.5 rounded-[6px] text-xs font-semibold transition ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-[6px] text-xs font-semibold transition ${
                     settingsPane === p.id
                       ? "bg-[var(--primary)] text-[var(--on-primary)] shadow-xs"
                       : "text-[var(--body)] hover:bg-[var(--surface-strong)]"
@@ -441,7 +441,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               ))}
             </div>
 
-            <div className="p-5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
+            <div className="p-3.5 sm:p-5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
               <h3 className="font-sans text-sm font-bold text-[var(--ink)] mb-2 capitalize">
                 {settingsPane} Configuration
               </h3>
@@ -495,7 +495,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               {settingsPane === "performance" && (
                 <form action={studioMutationAction} className="space-y-4">
                   <input type="hidden" name="action" value="updatePerformanceGui" />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs font-mono">
                     <div>
                       <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
                         Controller Interval (ms)
@@ -539,7 +539,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               {settingsPane === "limits" && (
                 <form action={studioMutationAction} className="space-y-4">
                   <input type="hidden" name="action" value="updateLimitsGui" />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs font-mono">
                     <div>
                       <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
                         Max Reads / Sec

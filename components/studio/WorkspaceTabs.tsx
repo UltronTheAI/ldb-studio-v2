@@ -98,7 +98,7 @@ export function WorkspaceTabs() {
                   tabId: tab.id,
                 });
               }}
-              className={`group relative flex items-center gap-2 h-full px-3 border-r border-[var(--hairline)] cursor-pointer text-xs font-medium transition shrink-0 max-w-[200px] ${
+              className={`group relative flex items-center gap-2 h-full px-2.5 sm:px-3 border-r border-[var(--hairline)] cursor-pointer text-xs font-medium transition shrink-0 max-w-[130px] sm:max-w-[200px] ${
                 isActive
                   ? "bg-[var(--canvas)] text-[var(--ink)] font-semibold border-b-2 border-b-[var(--text-link)] shadow-xs"
                   : "bg-[var(--surface-card)] text-[var(--body)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)]"
@@ -124,7 +124,7 @@ export function WorkspaceTabs() {
                   closeTab(tab.id);
                 }}
                 title="Close Tab (Ctrl+W)"
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[var(--hairline-strong)] text-[var(--muted)] hover:text-[var(--ink)] transition shrink-0"
+                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-0.5 rounded hover:bg-[var(--hairline-strong)] text-[var(--muted)] hover:text-[var(--ink)] transition shrink-0"
               >
                 <XIcon size={12} />
               </button>

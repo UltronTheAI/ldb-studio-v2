@@ -103,9 +103,9 @@ export function CollectionIndexes({
   };
 
   return (
-    <div className="w-full h-full p-4 overflow-y-auto editor-scroll space-y-4">
+    <div className="w-full h-full p-3 sm:p-4 overflow-y-auto editor-scroll space-y-4">
       {/* Header bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-sans text-sm font-bold text-[var(--ink)]">
             Indexes in {database}.{collection}
@@ -118,7 +118,7 @@ export function CollectionIndexes({
         <button
           type="button"
           onClick={() => setShowCreateModal(true)}
-          className="btn-primary h-8 px-3 text-xs font-semibold flex items-center gap-1.5"
+          className="btn-primary h-8 px-3 text-xs font-semibold flex items-center gap-1.5 shrink-0"
         >
           <PlusIcon size={14} />
           <span>Create Index</span>
@@ -147,8 +147,8 @@ export function CollectionIndexes({
           message={`Fetching indexes for ${collection}...`}
         />
       ) : (
-        <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-          <table className="w-full border-collapse text-left text-xs font-mono">
+        <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+          <table className="w-full min-w-[500px] border-collapse text-left text-xs font-mono">
             <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
               <tr>
                 <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
@@ -264,7 +264,7 @@ export function CollectionIndexes({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
                     Sort Direction

@@ -363,7 +363,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       </div>
 
       {/* Sub-Tabs Bar: Documents | Query | Aggregations | Indexes | Schema */}
-      <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0">
+      <div className="min-h-9 px-2 sm:px-3 py-1 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-1.5 select-none shrink-0">
         <div className="flex items-center gap-1 h-full">
           {[
             { id: "documents", label: "Documents", icon: Table2Icon },
@@ -381,7 +381,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
                     collectionState: { ...state, subTab: item.id as CollectionSubTab },
                   })
                 }
-                className={`flex items-center gap-1.5 h-full px-3 text-xs font-semibold border-b-2 transition ${
+                className={`flex items-center gap-1.5 h-full px-2.5 sm:px-3 text-xs font-semibold border-b-2 transition ${
                   isActive
                     ? "border-b-[var(--text-link)] text-[var(--text-link)]"
                     : "border-b-transparent text-[var(--body)] hover:text-[var(--ink)]"
@@ -396,7 +396,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
 
         {/* Right side controls for Documents sub-tab */}
         {state.subTab === "documents" && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* View Mode Switcher: Table | JSON | Tree */}
             <div className="flex items-center rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] p-0.5">
               {[
@@ -439,7 +439,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               className="btn-primary h-7 px-2.5 text-xs font-semibold flex items-center gap-1"
             >
               <PlusIcon size={12} />
-              <span>Insert</span>
+              <span className="hidden sm:inline">Insert</span>
             </button>
 
             <button
@@ -466,7 +466,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       </div>
 
       {/* Main Sub-Tab Content */}
-      <div className="flex-1 overflow-hidden p-3">
+      <div className="flex-1 overflow-hidden p-2 sm:p-3">
         {state.subTab === "documents" && (
           <div className="flex flex-col h-full">
             <div className="relative flex-1 overflow-hidden">
@@ -519,7 +519,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             </div>
 
             {/* Pagination & Status Footer */}
-            <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0">
+            <div className="min-h-10 py-1.5 px-1 border-t border-[var(--hairline)] flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-[var(--body)] select-none shrink-0">
               <div className="flex items-center gap-3">
                 {state.totalDocuments > 0 ? (
                   <span>

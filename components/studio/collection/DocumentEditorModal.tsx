@@ -106,20 +106,20 @@ function DocumentEditorDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-2xl rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4">
+      <div className="w-full max-w-2xl rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] animate-in fade-in zoom-in-95 duration-100">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
           <div>
-            <h3 className="font-sans text-sm font-bold text-[var(--ink)]">
+            <h3 className="font-sans text-xs sm:text-sm font-bold text-[var(--ink)]">
               {isInserting ? "Insert Document" : "Edit Document"}
             </h3>
-            <p className="font-mono text-xs text-[var(--muted)]">
+            <p className="font-mono text-[11px] sm:text-xs text-[var(--muted)]">
               {database}.{collection}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {!isInserting && (
               <button
                 type="button"
@@ -128,7 +128,7 @@ function DocumentEditorDialog({
                 className="px-2 py-1 text-xs rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-[var(--ink)] flex items-center gap-1 font-medium transition"
               >
                 <LayersIcon size={12} />
-                <span>Clone as New</span>
+                <span className="hidden xs:inline">Clone as New</span>
               </button>
             )}
             <button
@@ -160,7 +160,7 @@ function DocumentEditorDialog({
 
         {/* Editor Body */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 p-4 overflow-hidden flex flex-col">
+          <div className="flex-1 p-2 sm:p-4 overflow-hidden flex flex-col">
             <textarea
               value={jsonText}
               onChange={(e) => {
@@ -169,14 +169,14 @@ function DocumentEditorDialog({
               }}
               rows={16}
               autoFocus
-              className="w-full flex-1 p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white font-mono text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] editor-scroll resize-none"
+              className="w-full flex-1 p-2.5 sm:p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white font-mono text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] editor-scroll resize-none"
               spellCheck={false}
             />
           </div>
 
           {/* Footer Controls */}
-          <div className="px-4 py-3 bg-[var(--canvas-soft)] border-t border-[var(--hairline)] flex items-center justify-between">
-            <div className="text-[11px] text-[var(--muted)] font-mono">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[var(--canvas-soft)] border-t border-[var(--hairline)] flex flex-wrap items-center justify-between gap-2">
+            <div className="hidden sm:block text-[11px] text-[var(--muted)] font-mono">
               Valid JSON format required. Keys must be double-quoted.
             </div>
 
