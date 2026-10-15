@@ -164,10 +164,10 @@ export function CollectionSchema({ documents, database, collection }: Collection
                         </span>
                         <span className="font-bold text-[var(--ink)]">{presencePercent}%</span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-[var(--surface-strong)] overflow-hidden">
+                      <div className="w-full h-1.5 rounded-[2px] bg-[var(--surface-strong)] overflow-hidden">
                         <div
                           style={{ width: `${presencePercent}%` }}
-                          className={`h-full rounded-full ${
+                          className={`h-full rounded-[2px] ${
                             presencePercent === 100 ? "bg-[var(--ink)]" : "bg-[var(--text-link)]"
                           }`}
                         />

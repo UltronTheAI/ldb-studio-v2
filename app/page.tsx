@@ -735,7 +735,7 @@ function SectionAlert({ error }: { readonly error?: SectionError }) {
   return (
     <div className="mb-4 rounded-[8px] border border-[var(--semantic-error)] bg-[var(--semantic-error)]/10 p-4 text-[var(--ink)]">
       <div className="flex items-center gap-2">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--semantic-error)] font-mono text-xs font-bold text-white">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--semantic-error)] font-mono text-xs font-bold text-white">
           ×
         </span>
         <strong className="block text-sm font-semibold text-[var(--semantic-error)]">{error.title}</strong>
@@ -901,7 +901,6 @@ export default async function Home({ searchParams }: PageProps) {
           <div className="relative z-10 mx-auto max-w-[1200px] px-6 text-center">
             {/* Headline in display-mega */}
             <div className="inline-flex items-center gap-2 mb-6 badge-pill">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-link)]" />
               <span>Studio 2.0 • Developer Control Plane</span>
             </div>
 

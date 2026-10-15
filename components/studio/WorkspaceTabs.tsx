@@ -107,7 +107,7 @@ export function WorkspaceTabs() {
 
               {/* Dirty indicator */}
               {tab.isDirty && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-warning)] shrink-0" />
+                <span className="text-[var(--accent-warning)] font-bold text-xs shrink-0 leading-none select-none">*</span>
               )}
 
               {/* Close Button */}

@@ -40,8 +40,7 @@ export function StatusBar() {
     <footer className="h-6 border-t border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-[#9aa0a6] px-3 flex items-center justify-between text-[11px] font-mono select-none shrink-0 z-20">
       {/* Left: Connection State */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-white font-medium">
-          <span className="w-2 h-2 rounded-full bg-[var(--text-link)] animate-pulse" />
+        <div className="flex items-center text-white font-medium">
           <span>Connected</span>
         </div>
 

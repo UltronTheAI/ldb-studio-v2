@@ -69,7 +69,6 @@ export function OverviewWorkspace() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-link)] animate-pulse" />
             <h2 className="font-sans text-lg font-bold text-[var(--ink)]">
               Cluster Node #{nodeId} Connected
             </h2>

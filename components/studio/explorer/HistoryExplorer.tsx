@@ -57,12 +57,7 @@ export function HistoryExplorer() {
               </div>
 
               <div className="flex items-center justify-between text-[10px] text-[var(--muted)] pt-0.5">
-                <span className="flex items-center gap-1">
-                  {item.success ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-link)]" />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
-                  )}
+                <span className={item.success ? "text-[var(--text-link)] font-medium" : "text-[#ef4444] font-medium"}>
                   {item.success ? `${item.documentCount} docs` : "Failed"}
                 </span>
                 <span>{new Date(item.timestamp).toLocaleTimeString()}</span>

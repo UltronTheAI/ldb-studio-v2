@@ -48,7 +48,6 @@ export function TopAppBar() {
 
         {/* Connection status badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)]">
-          <span className="w-2 h-2 rounded-full bg-[var(--text-link)] animate-pulse" />
           <span className="font-semibold text-[var(--ink)] truncate max-w-[140px] md:max-w-[200px]">
             {initialContext.host}:{initialContext.port}
           </span>
@@ -115,7 +114,7 @@ export function TopAppBar() {
             onClick={() => setShowAccountDropdown((prev) => !prev)}
             className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] transition"
           >
-            <div className="w-5 h-5 rounded-full bg-[var(--primary)] text-[var(--on-primary)] flex items-center justify-center font-bold text-[10px]">
+            <div className="w-5 h-5 rounded-[4px] bg-[var(--primary)] text-[var(--on-primary)] flex items-center justify-center font-bold text-[10px]">
               {initialContext.principal.username.charAt(0).toUpperCase()}
             </div>
             <span className="font-semibold text-xs hidden lg:inline max-w-[80px] truncate">

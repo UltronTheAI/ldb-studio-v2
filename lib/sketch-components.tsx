@@ -61,9 +61,9 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
         <div className="flex items-center justify-between px-3 py-2 border-b border-[#2d3039] bg-[#17191e] rounded-t-[10px]">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
+              <span className="w-2.5 h-1.5 rounded-[2px] bg-[#3b3e4a]" />
+              <span className="w-2.5 h-1.5 rounded-[2px] bg-[#3b3e4a]" />
+              <span className="w-2.5 h-1.5 rounded-[2px] bg-[#3b3e4a]" />
             </div>
             <div className="hidden sm:flex items-center gap-2 ml-4 px-2.5 py-0.5 rounded-[6px] bg-[#22252c] text-[11px] font-mono text-[#a0a4b0]">
               <span className="text-[#3b82f6]">https://</span>
@@ -71,7 +71,6 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
             </div>
           </div>
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#9094a2]">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#3b82f6] animate-pulse" />
             <span className="text-[#e2e4ea] font-medium">RAFT LEADER • TERM 42</span>
           </div>
         </div>
@@ -234,20 +233,19 @@ export function ExpoDeviceMockupHero({ className = "" }: { className?: string })
 
       {/* MacBook Bottom Base & Notch */}
       <div className="relative mx-auto w-[104%] -left-[2%] h-3 rounded-b-[14px] bg-[#2d3038] dark:bg-[#1e2028] shadow-md flex items-center justify-center">
-        <div className="w-16 h-1 rounded-full bg-[#181a20]" />
+        <div className="w-16 h-1 rounded-[2px] bg-[#181a20]" />
       </div>
 
       {/* Layered iPhone Mockup (Expo Go / Client Simulator) */}
       <div className="hidden sm:block absolute -right-4 -bottom-6 w-[220px] rounded-[32px] border-[4px] border-[#2d3038] bg-[#0c0d12] p-2 shadow-[0_25px_50px_rgba(0,0,0,0.35)] z-20">
         {/* Dynamic Island */}
-        <div className="mx-auto w-16 h-3 rounded-full bg-black mb-2" />
+        <div className="mx-auto w-16 h-3 rounded-[6px] bg-black mb-2" />
 
         {/* Screen Content */}
         <div className="rounded-[22px] bg-[#14161f] p-3 text-white font-sans overflow-hidden">
           {/* Mobile App Header */}
           <div className="flex items-center justify-between pb-2 border-b border-[#232734]">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
               <span className="text-[10px] font-mono text-[#a0a4b4]">Expo Go</span>
             </div>
             <span className="text-[9px] font-mono text-[#717688]">v2.0</span>
@@ -416,7 +414,7 @@ export function InteractiveQueryStage() {
 // Subtle separator / decorative underline replacement
 export function SketchUnderline({ className = "" }: { className?: string }) {
   return (
-    <div className={`h-[2px] w-16 bg-[var(--primary)] rounded-full ${className}`} />
+    <div className={`h-[2px] w-16 bg-[var(--primary)] rounded-[1px] ${className}`} />
   );
 }
 
