@@ -20,6 +20,7 @@ interface ActivityItem {
   id: ActivitySection;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  disabled?: boolean;
 }
 
 const ACTIVITIES: ActivityItem[] = [
@@ -28,7 +29,12 @@ const ACTIVITIES: ActivityItem[] = [
   { id: "history", label: "Execution History", icon: HistoryIcon },
   { id: "admin", label: "Governance & RBAC", icon: ShieldIcon },
   { id: "cluster", label: "Cluster Topology", icon: NetworkIcon },
-  { id: "backups", label: "Backup Management", icon: ArchiveIcon },
+  {
+    id: "backups",
+    label: "Backup Management (Disabled)",
+    icon: ArchiveIcon,
+    disabled: true,
+  },
 ];
 
 export function ActivityBar() {
@@ -42,7 +48,9 @@ export function ActivityBar() {
     openClusterTab,
   } = useWorkspace();
 
-  const handleActivityClick = (id: ActivitySection) => {
+  const handleActivityClick = (item: ActivityItem) => {
+    if (item.disabled) return;
+    const id = item.id;
     if (activeActivity === id && !isSidebarCollapsed) {
       // Toggle collapse if clicking the currently active one
       toggleSidebar();
@@ -74,15 +82,22 @@ export function ActivityBar() {
             <button
               key={item.id}
               type="button"
-              onClick={() => handleActivityClick(item.id)}
-              title={`${item.label} (Click to switch)`}
+              disabled={item.disabled}
+              onClick={() => handleActivityClick(item)}
+              title={
+                item.disabled
+                  ? "Backup Management (Disabled - We will bring it in the future)"
+                  : `${item.label} (Click to switch)`
+              }
               className={`relative w-10 h-10 rounded-[6px] flex items-center justify-center transition ${
-                isActive
+                item.disabled
+                  ? "opacity-35 cursor-not-allowed hover:bg-transparent"
+                  : isActive
                   ? "text-white bg-[#252830]"
                   : "hover:text-[#e4e7eb] hover:bg-[#1a1d24]"
               }`}
             >
-              {isActive && (
+              {isActive && !item.disabled && (
                 <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-[var(--text-link)] rounded-r" />
               )}
               <Icon size={18} />

@@ -203,11 +203,12 @@ export function OverviewWorkspace() {
             </button>
             <button
               type="button"
-              onClick={() => openAdminTab("backups")}
-              className="p-3 rounded-[6px] border border-[var(--hairline)] hover:bg-[var(--surface-strong)] hover:border-[var(--muted)] text-left transition font-semibold text-[var(--ink)] flex items-center justify-between"
+              disabled
+              title="Backup management is disabled. We will bring this feature in a future update."
+              className="p-3 rounded-[6px] border border-[var(--hairline)] opacity-40 cursor-not-allowed text-left transition font-semibold text-[var(--ink)] flex items-center justify-between"
             >
               <span>Backups &amp; Snapshots</span>
-              <span className="text-[var(--muted)] font-mono text-[10px]">Cold store</span>
+              <span className="text-[var(--muted)] font-mono text-[10px]">Coming in future</span>
             </button>
             <button
               type="button"

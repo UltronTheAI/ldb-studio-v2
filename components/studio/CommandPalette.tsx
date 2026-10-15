@@ -12,7 +12,6 @@ import {
   ShieldIcon,
   UsersIcon,
   NetworkIcon,
-  ArchiveIcon,
   SettingsIcon,
   XIcon,
   MoonIcon,
@@ -151,13 +150,6 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         category: "Navigation",
         icon: ShieldIcon,
         action: () => openAdminTab("roles"),
-      },
-      {
-        id: "nav-backups",
-        title: "Go to Backups Repository",
-        category: "Navigation",
-        icon: ArchiveIcon,
-        action: () => openAdminTab("backups"),
       },
       {
         id: "nav-settings",
