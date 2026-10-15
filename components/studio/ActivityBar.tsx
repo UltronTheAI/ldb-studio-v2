@@ -46,6 +46,7 @@ export function ActivityBar() {
     openQueryTab,
     openAdminTab,
     openClusterTab,
+    activeTab,
   } = useWorkspace();
 
   const handleActivityClick = (item: ActivityItem) => {
@@ -122,13 +123,11 @@ export function ActivityBar() {
         <button
           type="button"
           onClick={() => {
-            setActiveActivity("settings");
-            if (isSidebarCollapsed) toggleSidebar();
             openAdminTab("settings");
           }}
           title="Studio Settings"
           className={`w-10 h-10 rounded-[6px] flex items-center justify-center transition ${
-            activeActivity === "settings"
+            activeTab?.type === "admin" && activeTab?.adminState?.subSection === "settings"
               ? "text-white bg-[#252830]"
               : "hover:text-[#e4e7eb] hover:bg-[#1a1d24]"
           }`}

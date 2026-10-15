@@ -30,7 +30,15 @@ interface AdminWorkspaceProps {
 export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   const { updateTabState } = useWorkspace();
   const subSection = tab.adminState?.subSection || "users";
-  const [settingsPane, setSettingsPane] = useState(tab.adminState?.settingsPane || "general");
+  const [settingsPane, setSettingsPane] = useState<
+    "general" | "cors" | "performance" | "limits" | "backups"
+  >(() => {
+    const pane = tab.adminState?.settingsPane;
+    if (pane === "performance" || pane === "limits" || pane === "backups") {
+      return "general";
+    }
+    return pane || "general";
+  });
 
   const [data, setData] = useState<Record<string, unknown>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -361,8 +369,8 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               {[
                 { id: "general", label: "General" },
                 { id: "cors", label: "CORS Rules" },
-                { id: "performance", label: "Performance" },
-                { id: "limits", label: "Limits & Caps" },
+                { id: "performance", label: "Performance (Disabled)", disabled: true },
+                { id: "limits", label: "Limits & Caps (Disabled)", disabled: true },
                 { id: "backups", label: "Backup Policy (Disabled)", disabled: true },
               ].map((p) => (
                 <button
@@ -371,7 +379,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                   disabled={p.disabled}
                   title={
                     p.disabled
-                      ? "Backup configuration is disabled. We will bring this feature in a future update."
+                      ? `${p.label} is currently disabled. We will bring this feature in a future update.`
                       : undefined
                   }
                   onClick={() => {
@@ -450,91 +458,27 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               )}
 
               {settingsPane === "performance" && (
-                <form action={studioMutationAction} className="space-y-4">
-                  <input type="hidden" name="action" value="updatePerformanceGui" />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Controller Interval (ms)
-                      </label>
-                      <input
-                        name="controller_interval_ms"
-                        type="number"
-                        defaultValue={100}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Query Parallelism Cap
-                      </label>
-                      <input
-                        name="query_parallelism_cap"
-                        type="number"
-                        defaultValue={8}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Result Batch Size
-                      </label>
-                      <input
-                        name="result_batch_size"
-                        type="number"
-                        defaultValue={100}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <button type="submit" className="btn-primary h-8 px-4 text-xs font-semibold">
-                    Save Performance Configuration
-                  </button>
-                </form>
+                <div className="p-8 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] text-center space-y-2 font-sans">
+                  <div className="text-xs font-bold text-[var(--ink)]">Performance Configuration Disabled</div>
+                  <p className="text-[11px] text-[var(--muted)] max-w-sm mx-auto">
+                    Engine &amp; Compaction performance tuning is currently disabled. We will bring this feature in a future update!
+                  </p>
+                  <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                    Coming in future
+                  </span>
+                </div>
               )}
 
               {settingsPane === "limits" && (
-                <form action={studioMutationAction} className="space-y-4">
-                  <input type="hidden" name="action" value="updateLimitsGui" />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Max Reads / Sec
-                      </label>
-                      <input
-                        name="server_max_reads_per_second"
-                        type="number"
-                        defaultValue={10000}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Max Writes / Sec
-                      </label>
-                      <input
-                        name="server_max_writes_per_second"
-                        type="number"
-                        defaultValue={5000}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[var(--muted)] mb-1">
-                        Max Concurrent Requests
-                      </label>
-                      <input
-                        name="server_max_concurrent_requests"
-                        type="number"
-                        defaultValue={256}
-                        className="w-full h-8 px-2 rounded-[4px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs text-[var(--ink)] focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <button type="submit" className="btn-primary h-8 px-4 text-xs font-semibold">
-                    Save Limit Configuration
-                  </button>
-                </form>
+                <div className="p-8 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] text-center space-y-2 font-sans">
+                  <div className="text-xs font-bold text-[var(--ink)]">Limits &amp; Caps Configuration Disabled</div>
+                  <p className="text-[11px] text-[var(--muted)] max-w-sm mx-auto">
+                    Throttling &amp; Resource Caps settings are currently disabled. We will bring this feature in a future update!
+                  </p>
+                  <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                    Coming in future
+                  </span>
+                </div>
               )}
 
               {settingsPane === "backups" && (

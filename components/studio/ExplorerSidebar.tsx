@@ -5,7 +5,6 @@ import { useWorkspace } from "@/lib/studio/workspace-context";
 import { DatabaseTree } from "./explorer/DatabaseTree";
 import { QueryExplorer } from "./explorer/QueryExplorer";
 import { HistoryExplorer } from "./explorer/HistoryExplorer";
-import { AdminExplorer } from "./explorer/AdminExplorer";
 import { GovernanceExplorer } from "./explorer/GovernanceExplorer";
 import { ClusterExplorer } from "./explorer/ClusterExplorer";
 import { BackupExplorer } from "./explorer/BackupExplorer";
@@ -68,7 +67,6 @@ export function ExplorerSidebar() {
     admin: "GOVERNANCE",
     cluster: "CLUSTER TOPOLOGY",
     backups: "BACKUP REPOSITORY",
-    settings: "PREFERENCES",
   };
 
   const handleRefresh = async () => {
@@ -121,7 +119,6 @@ export function ExplorerSidebar() {
         {activeActivity === "admin" && <GovernanceExplorer />}
         {activeActivity === "cluster" && <ClusterExplorer />}
         {activeActivity === "backups" && <BackupExplorer />}
-        {activeActivity === "settings" && <AdminExplorer />}
       </div>
 
       {/* Drag Resize Handle on right edge */}

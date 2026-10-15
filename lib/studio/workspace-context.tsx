@@ -182,7 +182,7 @@ export function WorkspaceProvider({
         }
       }
 
-      if (meta.activeActivity) {
+      if (meta.activeActivity && (meta.activeActivity as string) !== "settings") {
         setActiveActivity(meta.activeActivity);
       }
       if (typeof meta.sidebarWidth === "number") {
