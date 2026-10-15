@@ -66,31 +66,83 @@ function escapeHtml(input: string): string {
 }
 
 export function syntaxHighlightJson(value: unknown): string {
+  if (value === undefined || value === "") {
+    return "";
+  }
   const json = typeof value === "string" ? value : prettyJson(value);
   const escaped = escapeHtml(json);
 
+  const tokenRegex =
+    /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\u[\da-fA-F]{4}|\\[^u]|[^\\"\n])*"?|'(?:\\u[\da-fA-F]{4}|\\[^u]|[^\\'\n])*'?)(\s*:)?|([$a-zA-Z_][a-zA-Z0-9_$]*)(\s*:)|(\b(?:true|false)\b)|(\b(?:null|undefined)\b)|(-?\b\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?\b)|([{}])|([\[\]])|([:,])/g;
+
   return escaped.replace(
-    /("(?:\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?/g,
-    (match, stringToken: string | undefined, keySuffix: string | undefined, literalToken: string | undefined) => {
+    tokenRegex,
+    (
+      match,
+      comment: string | undefined,
+      stringToken: string | undefined,
+      stringColon: string | undefined,
+      identToken: string | undefined,
+      identColon: string | undefined,
+      boolToken: string | undefined,
+      nullToken: string | undefined,
+      numToken: string | undefined,
+      brace: string | undefined,
+      bracket: string | undefined,
+      punct: string | undefined,
+    ) => {
+      if (comment) {
+        return `<span class="json-comment">${comment}</span>`;
+      }
       if (stringToken) {
-        if (keySuffix) {
-          if (stringToken.startsWith('"\\$') || stringToken.startsWith('"$')) {
-            return `<span class="json-operator">${stringToken}</span>${keySuffix}`;
+        if (stringColon !== undefined) {
+          const colonHtml = `<span class="json-colon">${stringColon}</span>`;
+          if (
+            stringToken.startsWith('"\\$') ||
+            stringToken.startsWith('"$') ||
+            stringToken.startsWith("'$")
+          ) {
+            return `<span class="json-operator">${stringToken}</span>${colonHtml}`;
           }
-          return `<span class="json-key">${stringToken}</span>${keySuffix}`;
+          if (stringToken === '"_id"' || stringToken === "'_id'") {
+            return `<span class="json-key-id">${stringToken}</span>${colonHtml}`;
+          }
+          return `<span class="json-key">${stringToken}</span>${colonHtml}`;
         }
         return `<span class="json-string">${stringToken}</span>`;
       }
-
-      if (literalToken === "true" || literalToken === "false") {
-        return `<span class="json-boolean">${match}</span>`;
+      if (identToken) {
+        const colonHtml = `<span class="json-colon">${identColon}</span>`;
+        if (identToken.startsWith("$")) {
+          return `<span class="json-operator">${identToken}</span>${colonHtml}`;
+        }
+        if (identToken === "_id") {
+          return `<span class="json-key-id">${identToken}</span>${colonHtml}`;
+        }
+        return `<span class="json-key">${identToken}</span>${colonHtml}`;
       }
-
-      if (literalToken === "null") {
-        return `<span class="json-null">${match}</span>`;
+      if (boolToken) {
+        return `<span class="json-boolean">${boolToken}</span>`;
       }
-
-      return `<span class="json-number">${match}</span>`;
+      if (nullToken) {
+        return `<span class="json-null">${nullToken}</span>`;
+      }
+      if (numToken) {
+        return `<span class="json-number">${numToken}</span>`;
+      }
+      if (brace) {
+        return `<span class="json-brace">${brace}</span>`;
+      }
+      if (bracket) {
+        return `<span class="json-bracket">${bracket}</span>`;
+      }
+      if (punct === ":") {
+        return `<span class="json-colon">:</span>`;
+      }
+      if (punct === ",") {
+        return `<span class="json-comma">,</span>`;
+      }
+      return match;
     },
   );
 }

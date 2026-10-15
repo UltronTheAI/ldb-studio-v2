@@ -8,6 +8,7 @@ import {
   SparklesIcon,
   LayersIcon,
 } from "lucide-react";
+import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
 
 interface DocumentEditorModalProps {
   isOpen: boolean;
@@ -160,17 +161,21 @@ function DocumentEditorDialog({
 
         {/* Editor Body */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 p-4 overflow-hidden flex flex-col">
-            <textarea
+          <div className="flex-1 p-4 overflow-hidden flex flex-col min-h-0">
+            <JsonCodeEditor
               value={jsonText}
-              onChange={(e) => {
-                setJsonText(e.target.value);
+              onChange={(val) => {
+                setJsonText(val);
                 setValidationError(null);
               }}
               rows={16}
               autoFocus
-              className="w-full flex-1 p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white font-mono text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] editor-scroll resize-none"
-              spellCheck={false}
+              showLineNumbers
+              showToolbar
+              title="Document JSON"
+              badge={isInserting ? "Insert" : "Update"}
+              className="w-full flex-1 min-h-0"
+              onFormat={handleFormat}
             />
           </div>
 

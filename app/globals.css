@@ -493,32 +493,63 @@ html.dark .expo-card:hover {
 
 /* Syntax Highlighting */
 .json-key {
-  color: #7957d5;
+  color: #7c3aed;
   font-weight: 600;
+}
+
+.json-key-id {
+  color: #0284c7;
+  font-weight: 700;
 }
 
 .json-operator {
-  color: #0d74ce;
-  font-weight: 600;
+  color: #d97706;
+  font-weight: 700;
 }
 
 .json-string {
-  color: #0284c7;
-  font-weight: 400;
+  color: #16a34a;
+  font-weight: 500;
 }
 
 .json-number {
-  color: #d97706;
-  font-weight: 500;
+  color: #ea580c;
+  font-weight: 600;
 }
 
 .json-boolean {
   color: #e11d48;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .json-null {
   color: #64748b;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.json-brace {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.json-bracket {
+  color: #a21caf;
+  font-weight: 600;
+}
+
+.json-colon {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.json-comma {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.json-comment {
+  color: #9ca3af;
   font-style: italic;
 }
 
@@ -526,24 +557,48 @@ html.dark .json-key {
   color: #c084fc;
 }
 
-html.dark .json-operator {
-  color: #60a5fa;
-}
-
-html.dark .json-string {
+html.dark .json-key-id {
   color: #38bdf8;
 }
 
+html.dark .json-operator {
+  color: #facc15;
+}
+
+html.dark .json-string {
+  color: #4ade80;
+}
+
 html.dark .json-number {
-  color: #fbbf24;
+  color: #fb923c;
 }
 
 html.dark .json-boolean {
-  color: #fb7185;
+  color: #f43f5e;
 }
 
 html.dark .json-null {
   color: #94a3b8;
+}
+
+html.dark .json-brace {
+  color: #facc15;
+}
+
+html.dark .json-bracket {
+  color: #f472b6;
+}
+
+html.dark .json-colon {
+  color: #94a3b8;
+}
+
+html.dark .json-comma {
+  color: #64748b;
+}
+
+html.dark .json-comment {
+  color: #6b7280;
 }
 
 code:not(pre code) {

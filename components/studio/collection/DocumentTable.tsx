@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import type { Document } from "@liorandb/driver";
+import { syntaxHighlightJson } from "@/lib/liorandb/json";
 import {
   CopyIcon,
   PencilIcon,
@@ -189,9 +190,10 @@ export function DocumentTable({ documents, onEdit, onDelete }: DocumentTableProp
                             </span>
                           </button>
                           {isExpanded && (
-                            <pre className="mt-1 p-2 rounded bg-[var(--canvas-soft)] border border-[var(--hairline)] text-[10px] overflow-x-auto max-h-36 editor-scroll">
-                              {JSON.stringify(val, null, 2)}
-                            </pre>
+                            <pre
+                              className="mt-1 p-2 rounded bg-[var(--surface-dark)] border border-[var(--hairline-strong)] text-[10px] leading-relaxed overflow-x-auto max-h-36 editor-scroll font-mono"
+                              dangerouslySetInnerHTML={{ __html: syntaxHighlightJson(val) }}
+                            />
                           )}
                         </div>
                       ) : (

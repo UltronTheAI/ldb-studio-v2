@@ -23,6 +23,7 @@ import { DocumentTreeView } from "../collection/DocumentTreeView";
 import { DocumentEditorModal } from "../collection/DocumentEditorModal";
 import { QueryInsertModal } from "./QueryInsertModal";
 import { TableSkeletonWidget } from "../widgets/LoadingWidget";
+import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
 import {
   PlayIcon,
   SparklesIcon,
@@ -914,16 +915,17 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                   <label className="block text-[11px] font-bold text-[var(--ink)] uppercase tracking-wider mb-1">
                     Filter JSON Object
                   </label>
-                  <textarea
+                  <JsonCodeEditor
                     value={filterCode}
-                    onChange={(e) => {
-                      setFilterCode(e.target.value);
+                    onChange={(val) => {
+                      setFilterCode(val);
                       setErrorMsg(null);
                     }}
                     rows={6}
                     placeholder='{ "status": "active" }'
-                    className="w-full p-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                    spellCheck={false}
+                    showLineNumbers
+                    showToolbar
+                    title="Filter"
                   />
                 </div>
 
@@ -932,16 +934,16 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                     <label className="block text-[11px] font-bold text-[var(--ink)] uppercase tracking-wider mb-1">
                       Projection (Optional)
                     </label>
-                    <textarea
+                    <JsonCodeEditor
                       value={projectionCode}
-                      onChange={(e) => {
-                        setProjectionCode(e.target.value);
+                      onChange={(val) => {
+                        setProjectionCode(val);
                         setErrorMsg(null);
                       }}
                       rows={3}
                       placeholder='["name", "email"]'
-                      className="w-full p-2 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                      spellCheck={false}
+                      showToolbar
+                      title="Projection"
                     />
                   </div>
 
@@ -949,16 +951,16 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                     <label className="block text-[11px] font-bold text-[var(--ink)] uppercase tracking-wider mb-1">
                       Sort (Optional)
                     </label>
-                    <textarea
+                    <JsonCodeEditor
                       value={sortCode}
-                      onChange={(e) => {
-                        setSortCode(e.target.value);
+                      onChange={(val) => {
+                        setSortCode(val);
                         setErrorMsg(null);
                       }}
                       rows={3}
                       placeholder='{ "createdAt": -1 }'
-                      className="w-full p-2 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                      spellCheck={false}
+                      showToolbar
+                      title="Sort"
                     />
                   </div>
                 </div>
@@ -1003,16 +1005,17 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                   </label>
                   <span className="text-[10px] text-[var(--muted)]">_id auto-assigned if omitted</span>
                 </div>
-                <textarea
+                <JsonCodeEditor
                   value={insertDocCode}
-                  onChange={(e) => {
-                    setInsertDocCode(e.target.value);
+                  onChange={(val) => {
+                    setInsertDocCode(val);
                     setErrorMsg(null);
                   }}
                   rows={12}
                   placeholder='{ "title": "Example", "score": 95 }'
-                  className="w-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                  spellCheck={false}
+                  showLineNumbers
+                  showToolbar
+                  title="Insert Document"
                 />
               </div>
             )}
@@ -1026,16 +1029,17 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                   </label>
                   <span className="text-[10px] text-[var(--muted)]">[ {`{...}`}, {`{...}`} ]</span>
                 </div>
-                <textarea
+                <JsonCodeEditor
                   value={insertManyDocsCode}
-                  onChange={(e) => {
-                    setInsertManyDocsCode(e.target.value);
+                  onChange={(val) => {
+                    setInsertManyDocsCode(val);
                     setErrorMsg(null);
                   }}
                   rows={12}
                   placeholder='[\n  { "name": "Item A", "count": 1 },\n  { "name": "Item B", "count": 2 }\n]'
-                  className="w-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                  spellCheck={false}
+                  showLineNumbers
+                  showToolbar
+                  title="Insert Documents Array"
                 />
               </div>
             )}
@@ -1049,16 +1053,17 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                   </label>
                   <span className="text-[10px] text-[#ef4444]">Deletes 1 matching document</span>
                 </div>
-                <textarea
+                <JsonCodeEditor
                   value={deleteOneFilterCode}
-                  onChange={(e) => {
-                    setDeleteOneFilterCode(e.target.value);
+                  onChange={(val) => {
+                    setDeleteOneFilterCode(val);
                     setErrorMsg(null);
                   }}
                   rows={8}
                   placeholder='{ "_id": "doc-id-here" }'
-                  className="w-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                  spellCheck={false}
+                  showLineNumbers
+                  showToolbar
+                  title="Delete Filter"
                 />
                 <div className="p-3 rounded-[6px] bg-[var(--canvas-soft)] border border-[var(--hairline)] text-xs text-[var(--muted)] space-y-1 font-sans">
                   <div className="font-semibold text-[var(--ink)]">Target Filtering Notice:</div>
@@ -1078,16 +1083,17 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                   </label>
                   <span className="text-[10px] text-[#ef4444] font-bold">Caution: Multi-document deletion</span>
                 </div>
-                <textarea
+                <JsonCodeEditor
                   value={deleteManyFilterCode}
-                  onChange={(e) => {
-                    setDeleteManyFilterCode(e.target.value);
+                  onChange={(val) => {
+                    setDeleteManyFilterCode(val);
                     setErrorMsg(null);
                   }}
                   rows={8}
                   placeholder='{ "status": "expired" }'
-                  className="w-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                  spellCheck={false}
+                  showLineNumbers
+                  showToolbar
+                  title="Delete Many Filter"
                 />
                 <div className="p-3 rounded-[6px] bg-[#ef4444]/10 border border-[#ef4444]/30 text-xs text-[#ef4444] space-y-1 font-sans">
                   <div className="font-bold flex items-center gap-1.5">

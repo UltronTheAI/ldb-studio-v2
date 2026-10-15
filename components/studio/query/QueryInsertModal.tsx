@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { insertOneDocumentAction, insertManyDocumentsAction } from "@/app/actions";
 import { useWorkspace } from "@/lib/studio/workspace-context";
+import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
 
 interface QueryInsertModalProps {
   isOpen: boolean;
@@ -284,23 +285,24 @@ export function QueryInsertModal({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-4 overflow-hidden space-y-3">
-          <div className="flex-1 flex flex-col">
-            <label className="block text-[11px] font-bold text-[var(--ink)] uppercase tracking-wider mb-1.5 select-none">
-              {insertMode === "one" ? "Document JSON" : "Documents JSON Array"}
-            </label>
-            <textarea
+          <div className="flex-1 flex flex-col min-h-0">
+            <JsonCodeEditor
               value={insertMode === "one" ? oneDocJson : manyDocsJson}
-              onChange={(e) => {
+              onChange={(val) => {
                 if (insertMode === "one") {
-                  setOneDocJson(e.target.value);
+                  setOneDocJson(val);
                 } else {
-                  setManyDocsJson(e.target.value);
+                  setManyDocsJson(val);
                 }
                 setErrorMsg(null);
               }}
               rows={14}
-              spellCheck={false}
-              className="flex-1 w-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white font-mono text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-none editor-scroll"
+              showLineNumbers
+              showToolbar
+              title={insertMode === "one" ? "Document JSON" : "Documents JSON Array"}
+              badge={insertMode === "one" ? "Single Object" : "Array"}
+              className="flex-1 w-full min-h-0"
+              onFormat={handleFormat}
             />
           </div>
 

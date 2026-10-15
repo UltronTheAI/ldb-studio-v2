@@ -13,6 +13,7 @@ import { DocumentTable } from "../collection/DocumentTable";
 import { DocumentJsonView } from "../collection/DocumentJsonView";
 import { DocumentTreeView } from "../collection/DocumentTreeView";
 import { TableSkeletonWidget } from "../widgets/LoadingWidget";
+import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
 import {
   PlayIcon,
   PlusIcon,
@@ -433,26 +434,28 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
 
                     {/* Stage JSON Body */}
                     <div className="p-2">
-                      <textarea
+                      <JsonCodeEditor
                         value={stage.stageJson}
-                        onChange={(e) =>
-                          handleUpdateStage(stage.id, stage.stageOperator, e.target.value)
+                        onChange={(val) =>
+                          handleUpdateStage(stage.id, stage.stageOperator, val)
                         }
                         rows={4}
-                        className="w-full p-2 rounded-[4px] border border-[var(--hairline)] bg-[var(--surface-dark)] text-white text-xs font-mono leading-5 focus:outline-none focus:border-[var(--text-link)] resize-y editor-scroll"
-                        spellCheck={false}
+                        showToolbar
+                        title={`${stage.stageOperator} Stage`}
                       />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <textarea
+              <JsonCodeEditor
                 value={rawJson}
-                onChange={(e) => setRawJson(e.target.value)}
+                onChange={(val) => setRawJson(val)}
                 rows={16}
-                className="w-full h-full p-3 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-white font-mono text-xs leading-5 focus:outline-none focus:border-[var(--text-link)] resize-none editor-scroll"
-                spellCheck={false}
+                showLineNumbers
+                showToolbar
+                title="Aggregation Pipeline Array"
+                className="w-full h-full"
               />
             )}
           </div>
