@@ -127,25 +127,37 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
 
         <div className="flex items-center gap-2 shrink-0">
           {subSection === "users" && (
-            <button
-              type="button"
-              onClick={() => setShowCreateUserModal(true)}
-              className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
-            >
-              <PlusIcon size={12} />
-              <span>Create User</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                View Only
+              </span>
+              <button
+                type="button"
+                disabled
+                title="User creation is disabled. Governance is currently view-only."
+                className="h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] text-[var(--muted)] opacity-50 cursor-not-allowed"
+              >
+                <PlusIcon size={12} />
+                <span>Create User</span>
+              </button>
+            </div>
           )}
 
           {subSection === "roles" && (
-            <button
-              type="button"
-              onClick={() => setShowCreateRoleModal(true)}
-              className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1"
-            >
-              <PlusIcon size={12} />
-              <span>Create Role</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                View Only
+              </span>
+              <button
+                type="button"
+                disabled
+                title="Role creation is disabled. Governance is currently view-only."
+                className="h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] text-[var(--muted)] opacity-50 cursor-not-allowed"
+              >
+                <PlusIcon size={12} />
+                <span>Create Role</span>
+              </button>
+            </div>
           )}
 
           {subSection === "backups" && (
@@ -205,7 +217,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                       State
                     </th>
                     <th className="px-4 py-2.5 text-center font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                      Actions
+                      Access
                     </th>
                   </tr>
                 </thead>
@@ -247,17 +259,12 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <form action={studioMutationAction} className="inline-block">
-                              <input type="hidden" name="action" value="deleteUser" />
-                              <input type="hidden" name="userId" value={userId} />
-                              <button
-                                type="submit"
-                                title="Delete User"
-                                className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
-                              >
-                                <Trash2Icon size={13} />
-                              </button>
-                            </form>
+                            <span
+                              title="User editing and deletion is disabled. Governance is currently view-only."
+                              className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--canvas-soft)] text-[var(--muted)] border border-[var(--hairline)]"
+                            >
+                              View Only
+                            </span>
                           </td>
                         </tr>
                       );
@@ -289,7 +296,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                       Permission Grants
                     </th>
                     <th className="px-4 py-2.5 text-center font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                      Action
+                      Access
                     </th>
                   </tr>
                 </thead>
@@ -322,17 +329,12 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <form action={studioMutationAction} className="inline-block">
-                              <input type="hidden" name="action" value="deleteRole" />
-                              <input type="hidden" name="roleId" value={roleId} />
-                              <button
-                                type="submit"
-                                title="Delete Role"
-                                className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition"
-                              >
-                                <Trash2Icon size={13} />
-                              </button>
-                            </form>
+                            <span
+                              title="Role editing and deletion is disabled. Governance is currently view-only."
+                              className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--canvas-soft)] text-[var(--muted)] border border-[var(--hairline)]"
+                            >
+                              View Only
+                            </span>
                           </td>
                         </tr>
                       );

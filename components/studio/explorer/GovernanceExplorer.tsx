@@ -102,9 +102,9 @@ export function GovernanceExplorer() {
           <span>Users Directory</span>
           <button
             type="button"
-            onClick={() => openAdminTab("users")}
-            title="Create User in Governance tab"
-            className="flex items-center gap-0.5 text-[10px] text-[var(--text-link)] hover:underline normal-case font-medium"
+            disabled
+            title="User creation is disabled. Governance is currently view-only."
+            className="flex items-center gap-0.5 text-[10px] text-[var(--muted)] opacity-50 cursor-not-allowed normal-case font-medium"
           >
             <PlusIcon size={10} />
             <span>Add</span>
@@ -148,9 +148,9 @@ export function GovernanceExplorer() {
           <span>RBAC Roles</span>
           <button
             type="button"
-            onClick={() => openAdminTab("roles")}
-            title="Create Role in Governance tab"
-            className="flex items-center gap-0.5 text-[10px] text-[var(--text-link)] hover:underline normal-case font-medium"
+            disabled
+            title="Role creation is disabled. Governance is currently view-only."
+            className="flex items-center gap-0.5 text-[10px] text-[var(--muted)] opacity-50 cursor-not-allowed normal-case font-medium"
           >
             <PlusIcon size={10} />
             <span>Add</span>
