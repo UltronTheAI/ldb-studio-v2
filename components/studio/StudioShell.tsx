@@ -14,6 +14,7 @@ import { QueryWorkbench } from "./query/QueryWorkbench";
 import { AggregationWorkbench } from "./aggregation/AggregationWorkbench";
 import { OverviewWorkspace } from "./administration/OverviewWorkspace";
 import { AdminWorkspace } from "./administration/AdminWorkspace";
+import { ClusterWorkspace } from "./cluster/ClusterWorkspace";
 
 function StudioWorkspaceMain() {
   const { activeTab } = useWorkspace();
@@ -61,7 +62,10 @@ function StudioWorkspaceMain() {
               />
             )}
             {activeTab.type === "overview" && <OverviewWorkspace />}
-            {(activeTab.type === "admin" || activeTab.type === "cluster") && (
+            {activeTab.type === "cluster" && (
+              <ClusterWorkspace key={activeTab.id} tab={activeTab} />
+            )}
+            {activeTab.type === "admin" && (
               <AdminWorkspace key={activeTab.id} tab={activeTab} />
             )}
           </>

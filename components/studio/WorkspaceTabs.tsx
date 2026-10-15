@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import type { StudioTabType } from "@/lib/studio/workspace-types";
+import type { StudioTab } from "@/lib/studio/workspace-types";
 import {
   Table2Icon,
   TerminalIcon,
@@ -11,14 +11,17 @@ import {
   ShieldIcon,
   NetworkIcon,
   ActivityIcon,
+  UsersIcon,
+  ArchiveIcon,
+  SettingsIcon,
   XIcon,
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react";
 
-function getTabIcon(type: StudioTabType) {
-  switch (type) {
+function getTabIcon(tab: StudioTab) {
+  switch (tab.type) {
     case "collection":
       return Table2Icon;
     case "query":
@@ -28,6 +31,9 @@ function getTabIcon(type: StudioTabType) {
     case "indexes":
       return BoxesIcon;
     case "admin":
+      if (tab.adminState?.subSection === "users") return UsersIcon;
+      if (tab.adminState?.subSection === "backups") return ArchiveIcon;
+      if (tab.adminState?.subSection === "settings") return SettingsIcon;
       return ShieldIcon;
     case "cluster":
       return NetworkIcon;
@@ -71,7 +77,7 @@ export function WorkspaceTabs() {
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
-          const Icon = getTabIcon(tab.type);
+          const Icon = getTabIcon(tab);
 
           return (
             <div

@@ -422,7 +422,7 @@ export function WorkspaceProvider({
       const titles: Record<string, string> = {
         users: "User Governance",
         roles: "Roles & Permissions",
-        backups: "Backup Manager",
+        backups: "Backup Repository",
         settings: "Studio Settings",
       };
 

@@ -20,33 +20,9 @@ export function AdminExplorer() {
   const adminSections = [
     {
       id: "overview",
-      label: "System Health & Live Status",
+      label: "System Health & Diagnostics",
       icon: ActivityIcon,
       action: () => openOverviewTab(),
-    },
-    {
-      id: "users",
-      label: "User Accounts & Authentication",
-      icon: UsersIcon,
-      action: () => openAdminTab("users"),
-    },
-    {
-      id: "roles",
-      label: "Roles & Granular RBAC Grants",
-      icon: ShieldIcon,
-      action: () => openAdminTab("roles"),
-    },
-    {
-      id: "cluster",
-      label: "Cluster Topology & Raft Nodes",
-      icon: NetworkIcon,
-      action: () => openClusterTab(),
-    },
-    {
-      id: "backups",
-      label: "Backups & Snapshots",
-      icon: ArchiveIcon,
-      action: () => openAdminTab("backups"),
     },
   ];
 
@@ -81,7 +57,7 @@ export function AdminExplorer() {
     <div className="flex flex-col h-full select-none text-xs p-2 space-y-4 overflow-y-auto sidebar-scroll">
       <div className="space-y-1">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] px-1">
-          Governance &amp; Operations
+          System Diagnostics
         </div>
         {adminSections.map((sec) => {
           const Icon = sec.icon;

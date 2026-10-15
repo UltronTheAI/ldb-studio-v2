@@ -10,6 +10,7 @@ import {
   TerminalIcon,
   GitBranchIcon,
   ShieldIcon,
+  UsersIcon,
   NetworkIcon,
   ArchiveIcon,
   SettingsIcon,
@@ -141,7 +142,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         id: "nav-users",
         title: "Go to User Governance",
         category: "Navigation",
-        icon: ShieldIcon,
+        icon: UsersIcon,
         action: () => openAdminTab("users"),
       },
       {

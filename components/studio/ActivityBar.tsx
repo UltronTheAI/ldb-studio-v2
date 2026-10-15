@@ -54,8 +54,12 @@ export function ActivityBar() {
     }
 
     // Proactively launch relevant views if appropriate
-    if (id === "cluster") {
+    if (id === "admin") {
+      openAdminTab("users");
+    } else if (id === "cluster") {
       openClusterTab();
+    } else if (id === "backups") {
+      openAdminTab("backups");
     }
   };
 

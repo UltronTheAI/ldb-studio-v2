@@ -6,6 +6,9 @@ import { DatabaseTree } from "./explorer/DatabaseTree";
 import { QueryExplorer } from "./explorer/QueryExplorer";
 import { HistoryExplorer } from "./explorer/HistoryExplorer";
 import { AdminExplorer } from "./explorer/AdminExplorer";
+import { GovernanceExplorer } from "./explorer/GovernanceExplorer";
+import { ClusterExplorer } from "./explorer/ClusterExplorer";
+import { BackupExplorer } from "./explorer/BackupExplorer";
 import {
   RefreshCwIcon,
   PanelLeftCloseIcon,
@@ -115,10 +118,10 @@ export function ExplorerSidebar() {
         {activeActivity === "explorer" && <DatabaseTree />}
         {activeActivity === "query" && <QueryExplorer />}
         {activeActivity === "history" && <HistoryExplorer />}
-        {(activeActivity === "admin" ||
-          activeActivity === "cluster" ||
-          activeActivity === "backups" ||
-          activeActivity === "settings") && <AdminExplorer />}
+        {activeActivity === "admin" && <GovernanceExplorer />}
+        {activeActivity === "cluster" && <ClusterExplorer />}
+        {activeActivity === "backups" && <BackupExplorer />}
+        {activeActivity === "settings" && <AdminExplorer />}
       </div>
 
       {/* Drag Resize Handle on right edge */}
