@@ -56,7 +56,6 @@ import {
 import { destroyStudioSession, getStudioSession } from "@/lib/liorandb/session";
 import {
   LioranDBLogo,
-  ExpoDeviceMockupHero,
   InteractiveQueryStage,
   EcosystemTilesGrid,
 } from "@/lib/sketch-components";
@@ -925,11 +924,6 @@ export default async function Home({ searchParams }: PageProps) {
               >
                 Try Query Sandbox
               </a>
-            </div>
-
-            {/* Signature Feature: Device Mockup Card (MacBook + iPhone composite over gradient sky wash) */}
-            <div className="mt-14 sm:mt-20">
-              <ExpoDeviceMockupHero />
             </div>
           </div>
         </section>
