@@ -332,6 +332,19 @@ export function ConnectionPortal({
     }
   };
 
+  // Delete all profiles
+  const handleClearAllProfiles = () => {
+    if (
+      typeof window !== "undefined" &&
+      window.confirm(
+        `Are you sure you want to delete all ${connections.length} saved connection profiles? This action cannot be undone.`
+      )
+    ) {
+      persistConnections([]);
+      setFilterQuery("");
+    }
+  };
+
   // Copy URI to clipboard
   const handleCopyUri = (id: string, uri: string) => {
     navigator.clipboard.writeText(uri).then(() => {
@@ -434,10 +447,10 @@ export function ConnectionPortal({
       {/* TAB 1: SAVED CONNECTIONS MANAGER */}
       {activeTab === "saved" && (
         <div className="space-y-6">
-          {/* Top Action Bar: Search & New Profile Button */}
+          {/* Top Action Bar: Search & Profile Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1">
-              <span className="absolute inset-y-0 left-3 flex items-center text-[var(--muted)] pointer-events-none">
+              <span className="absolute inset-y-0 left-3.5 flex items-center text-[var(--muted)] pointer-events-none z-10">
                 <SearchIcon size={14} />
               </span>
               <input
@@ -445,18 +458,50 @@ export function ConnectionPortal({
                 placeholder="Filter saved profiles by name or host..."
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="expo-input pl-9 text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setFilterQuery("");
+                }}
+                style={{
+                  paddingLeft: "2.5rem",
+                  paddingRight: filterQuery ? "2.5rem" : "1rem",
+                }}
+                className="expo-input !pl-10 text-xs"
               />
+              {filterQuery && (
+                <button
+                  type="button"
+                  onClick={() => setFilterQuery("")}
+                  title="Clear filter (Esc)"
+                  aria-label="Clear filter"
+                  className="absolute inset-y-0 right-3 flex items-center text-[var(--muted)] hover:text-[var(--ink)] transition p-1"
+                >
+                  <XIcon size={14} />
+                </button>
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleStartCreate}
-              className="btn-primary shrink-0"
-            >
-              <PlusIcon size={14} />
-              <span>Add New Profile</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {connections.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllProfiles}
+                  className="btn-secondary text-xs h-[44px] text-[var(--muted)] hover:text-[var(--semantic-error)] hover:border-[var(--semantic-error)] transition"
+                  title="Delete all saved connection profiles"
+                >
+                  <Trash2Icon size={14} />
+                  <span>Clear All</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleStartCreate}
+                className="btn-primary h-[44px] shrink-0"
+              >
+                <PlusIcon size={14} />
+                <span>Add New Profile</span>
+              </button>
+            </div>
           </div>
 
           {/* Inline Create / Edit Modal / Form */}
