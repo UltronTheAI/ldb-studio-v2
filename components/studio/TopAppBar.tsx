@@ -39,10 +39,13 @@ export function TopAppBar() {
     <header className="h-11 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] px-3 flex items-center justify-between select-none z-30 shrink-0">
       {/* Left: Brand & Breadcrumb */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 pr-3 border-r border-[var(--hairline)]">
-          <LioranDBLogo size={20} />
-          <span className="font-sans text-xs font-bold tracking-tight text-[var(--ink)]">
-            LioranDB<span className="text-[var(--text-link)] font-semibold ml-0.5">IDE</span>
+        <div
+          className="flex items-center gap-2 pr-3 border-r border-[var(--hairline)]"
+          title="LioranDB Studio"
+        >
+          <LioranDBLogo size={20} showText={false} />
+          <span className="font-sans text-xs font-bold tracking-wider text-[var(--ink)]">
+            LS
           </span>
         </div>
 
