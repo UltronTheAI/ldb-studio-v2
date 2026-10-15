@@ -56,17 +56,22 @@ export interface CollectionTabState {
   isInserting?: boolean;
 }
 
+export type QueryOperationMode = "find" | "insertOne" | "insertMany" | "deleteOne" | "deleteMany" | "raw";
+
 export interface QueryTabState {
   queryName: string;
   database: string;
   collection: string;
-  queryMode: "find" | "raw";
+  queryMode: QueryOperationMode;
   filter: string;
   projection: string;
   sort: string;
   limit: number;
   skip: number;
   rawJson: string;
+  insertDocJson?: string;
+  insertManyDocsJson?: string;
+  deleteFilterJson?: string;
   results: Document[] | null;
   resultCount: number;
   viewMode: DocumentViewMode;
@@ -127,7 +132,7 @@ export interface QueryHistoryItem {
   timestamp: number;
   database: string;
   collection: string;
-  type: "find" | "aggregate";
+  type: "find" | "aggregate" | "insert" | "delete" | "mutation";
   querySummary: string;
   durationMs: number;
   documentCount: number;
@@ -140,7 +145,7 @@ export interface SavedQueryDraft {
   name: string;
   database: string;
   collection: string;
-  type: "find" | "aggregate";
+  type: "find" | "aggregate" | "mutation";
   content: string;
   updatedAt: number;
 }

@@ -127,6 +127,41 @@ describe("LioranDB Studio IDE Workspace & State Management", () => {
       assert.strictEqual(loaded[0].queryState?.results, null);
       assert.strictEqual(loaded[0].queryState?.filter, '{"active": true}');
     });
+
+    it("persists query mutation modes and documents json safely", () => {
+      mockLocalStorage.clear();
+
+      const insertTab: StudioTab = {
+        id: "tab-query-insert",
+        title: "Insert Batch",
+        type: "query",
+        database: "store",
+        collection: "items",
+        queryState: {
+          queryName: "Insert Batch",
+          database: "store",
+          collection: "items",
+          queryMode: "insertMany",
+          filter: "{}",
+          projection: "",
+          sort: "",
+          limit: 50,
+          skip: 0,
+          rawJson: "{}",
+          insertManyDocsJson: '[{"name": "Item 1"}]',
+          results: [{ _id: "item-1", name: "Item 1" }],
+          resultCount: 1,
+          viewMode: "table",
+        },
+      };
+
+      saveTabsToStorage([insertTab]);
+      const loaded = loadSavedTabs();
+      assert.strictEqual(loaded.length, 1);
+      assert.strictEqual(loaded[0].queryState?.queryMode, "insertMany");
+      assert.strictEqual(loaded[0].queryState?.insertManyDocsJson, '[{"name": "Item 1"}]');
+      assert.strictEqual(loaded[0].queryState?.results, null);
+    });
   });
 
   describe("Query History Management", () => {
@@ -160,6 +195,39 @@ describe("LioranDB Studio IDE Workspace & State Management", () => {
       clearQueryHistory();
       const loaded = loadQueryHistory();
       assert.strictEqual(loaded.length, 0);
+    });
+
+    it("records insert and delete operations in query history", () => {
+      mockLocalStorage.clear();
+
+      saveQueryHistoryItem({
+        id: "hist-insert-1",
+        timestamp: Date.now(),
+        database: "store",
+        collection: "items",
+        type: "insert",
+        querySummary: "insertOne({ name: 'Apple' })",
+        durationMs: 8,
+        documentCount: 1,
+        success: true,
+      });
+
+      saveQueryHistoryItem({
+        id: "hist-delete-1",
+        timestamp: Date.now() + 1,
+        database: "store",
+        collection: "items",
+        type: "delete",
+        querySummary: "deleteOne({ _id: 'item-1' })",
+        durationMs: 4,
+        documentCount: 1,
+        success: true,
+      });
+
+      const loaded = loadQueryHistory();
+      assert.strictEqual(loaded.length, 2);
+      assert.strictEqual(loaded[0].type, "delete");
+      assert.strictEqual(loaded[1].type, "insert");
     });
   });
 

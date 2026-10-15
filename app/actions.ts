@@ -811,6 +811,38 @@ export async function insertOneDocumentAction(params: {
   }
 }
 
+export async function insertManyDocumentsAction(params: {
+  database: string;
+  collection: string;
+  documentsJson: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ insertedCount: number; insertedIds: readonly unknown[] }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const docs = JSON.parse(params.documentsJson) as Document[];
+        if (!Array.isArray(docs)) {
+          throw new Error("Input must be a JSON array of documents.");
+        }
+        const res = await col.insertMany(docs, { idempotencyKey: params.idempotencyKey });
+        return {
+          ok: true,
+          data: {
+            insertedCount: res.insertedIds.length,
+            insertedIds: res.insertedIds,
+          },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
 export async function updateOneDocumentAction(params: {
   database: string;
   collection: string;
@@ -860,6 +892,32 @@ export async function deleteOneDocumentAction(params: {
         const col = client.db(params.database).collection<Document>(params.collection);
         const filter = JSON.parse(params.filterJson) as Document;
         const res = await col.deleteOne(filter, { idempotencyKey: params.idempotencyKey });
+        return {
+          ok: true,
+          data: { deletedCount: res.deletedCount },
+          durationMs: Date.now() - start,
+        };
+      });
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+  }
+}
+
+export async function deleteManyDocumentsAction(params: {
+  database: string;
+  collection: string;
+  filterJson: string;
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ deletedCount: number }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const filter = JSON.parse(params.filterJson) as Document;
+        const res = await col.deleteMany(filter, { idempotencyKey: params.idempotencyKey });
         return {
           ok: true,
           data: { deletedCount: res.deletedCount },
