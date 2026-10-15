@@ -68,12 +68,20 @@ export function WorkspaceTabs() {
     scrollRef.current.scrollBy({ left: delta, behavior: "smooth" });
   };
 
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      scrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
     <div className="h-9 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center select-none z-10 shrink-0">
       {/* Scrollable Tabs List */}
       <div
         ref={scrollRef}
-        className="flex-1 flex items-center overflow-x-auto no-scrollbar h-full"
+        onWheel={handleWheel}
+        className="flex-1 flex items-center overflow-x-auto tabs-scroll h-full"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
