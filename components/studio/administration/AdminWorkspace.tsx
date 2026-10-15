@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import type { StudioTab } from "@/lib/studio/workspace-types";
 import { fetchAdminSectionDataAction, studioMutationAction } from "@/app/actions";
+import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { UserRecord, RoleRecord, BackupJobRecord } from "@liorandb/driver";
 import {
   UsersIcon,
@@ -21,6 +22,7 @@ interface AdminWorkspaceProps {
 }
 
 export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
+  const { updateTabState } = useWorkspace();
   const subSection = tab.adminState?.subSection || "users";
   const [settingsPane, setSettingsPane] = useState(tab.adminState?.settingsPane || "general");
 
@@ -393,7 +395,16 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => setSettingsPane(p.id as typeof settingsPane)}
+                  onClick={() => {
+                    const newPane = p.id as typeof settingsPane;
+                    setSettingsPane(newPane);
+                    updateTabState(tab.id, {
+                      adminState: {
+                        subSection,
+                        settingsPane: newPane,
+                      },
+                    });
+                  }}
                   className={`px-3 py-1.5 rounded-[6px] text-xs font-semibold transition ${
                     settingsPane === p.id
                       ? "bg-[var(--primary)] text-[var(--on-primary)] shadow-xs"

@@ -15,6 +15,7 @@ import { AggregationWorkbench } from "./aggregation/AggregationWorkbench";
 import { OverviewWorkspace } from "./administration/OverviewWorkspace";
 import { AdminWorkspace } from "./administration/AdminWorkspace";
 import { ClusterWorkspace } from "./cluster/ClusterWorkspace";
+import { StudioLoadingOverlay } from "./StudioLoadingOverlay";
 
 function StudioWorkspaceMain() {
   const { activeTab } = useWorkspace();
@@ -80,6 +81,9 @@ function StudioWorkspaceMain() {
 export function StudioShell({ initialContext }: { initialContext: InitialStudioContext }) {
   return (
     <WorkspaceProvider initialContext={initialContext}>
+      {/* 3-Second Compulsory State Restoration & Loading Screen */}
+      <StudioLoadingOverlay />
+
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--canvas)] text-[var(--ink)] antialiased select-none font-sans">
         {/* Top Application Bar */}
         <TopAppBar />

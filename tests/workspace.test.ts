@@ -11,6 +11,8 @@ import {
   loadSavedQueryDrafts,
   removeQueryDraftFromStorage,
   clearQueryHistory,
+  saveWorkspaceMetadata,
+  loadWorkspaceMetadata,
 } from "../lib/studio/workspace-storage";
 
 describe("LioranDB Studio IDE Workspace & State Management", () => {
@@ -193,6 +195,27 @@ describe("LioranDB Studio IDE Workspace & State Management", () => {
       removeQueryDraftFromStorage("draft-1");
       drafts = loadSavedQueryDrafts();
       assert.strictEqual(drafts.length, 0);
+    });
+  });
+
+  describe("Workspace Metadata & Active View Persistence", () => {
+    it("persists and restores active tab, active activity, and expanded databases", () => {
+      mockLocalStorage.clear();
+
+      saveWorkspaceMetadata({
+        activeTabId: "tab-col-orders",
+        activeActivity: "cluster",
+        sidebarWidth: 320,
+        isSidebarCollapsed: false,
+        expandedDatabases: ["production", "analytics"],
+      });
+
+      const meta = loadWorkspaceMetadata();
+      assert.strictEqual(meta.activeTabId, "tab-col-orders");
+      assert.strictEqual(meta.activeActivity, "cluster");
+      assert.strictEqual(meta.sidebarWidth, 320);
+      assert.strictEqual(meta.isSidebarCollapsed, false);
+      assert.deepStrictEqual(meta.expandedDatabases, ["production", "analytics"]);
     });
   });
 });

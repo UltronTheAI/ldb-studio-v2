@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type {
   StudioTab,
@@ -85,6 +85,40 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
   const [copiedResults, setCopiedResults] = useState(false);
 
   const availableCollections = collectionsMap[selectedDb] || [];
+
+  // Sync state back to tab so reload and persistence replay exact pipeline
+  const lastAggSyncRef = useRef<string>("");
+  useEffect(() => {
+    const serialized = JSON.stringify({
+      selectedDb,
+      selectedCol,
+      mode,
+      stages,
+      rawJson,
+      pipelineName,
+    });
+    if (lastAggSyncRef.current === serialized) return;
+    lastAggSyncRef.current = serialized;
+
+    const timeout = setTimeout(() => {
+      updateTabState(tab.id, {
+        title: pipelineName,
+        database: selectedDb,
+        collection: selectedCol,
+        aggregationState: {
+          ...state,
+          name: pipelineName,
+          database: selectedDb,
+          collection: selectedCol,
+          mode,
+          stages,
+          rawPipelineJson: rawJson,
+        },
+      });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [selectedDb, selectedCol, mode, stages, rawJson, pipelineName, tab.id, updateTabState, state]);
 
   // Generate full raw pipeline JSON from enabled stages
   const compilePipelineJson = (currentStages: AggregationStage[]): string => {

@@ -80,6 +80,7 @@ export interface WorkspaceContextValue {
   refreshExplorer: () => Promise<void>;
   refreshActiveTab: () => void;
   refreshTrigger: number;
+  isRestored: boolean;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -132,7 +133,8 @@ export function WorkspaceProvider({
   initialContext: InitialStudioContext;
   children: ReactNode;
 }) {
-  const isHydratedRef = useRef(false);
+  const isRestoredRef = useRef(false);
+  const [isRestored, setIsRestored] = useState(false);
 
   // Deterministic initial state to match SSR exactly and eliminate hydration mismatches
   const [tabs, setTabs] = useState<StudioTab[]>(() => getDefaultTabs(initialContext));
@@ -165,9 +167,9 @@ export function WorkspaceProvider({
 
   // Restore client-side persisted state from localStorage after mount
   useEffect(() => {
-    isHydratedRef.current = true;
-
-    queueMicrotask(() => {
+    let ignore = false;
+    void Promise.resolve().then(() => {
+      if (ignore) return;
       const saved = loadSavedTabs();
       const meta = loadWorkspaceMetadata();
 
@@ -189,28 +191,43 @@ export function WorkspaceProvider({
       if (typeof meta.isSidebarCollapsed === "boolean") {
         setIsSidebarCollapsed(meta.isSidebarCollapsed);
       }
+      if (meta.expandedDatabases && Array.isArray(meta.expandedDatabases)) {
+        const map: Record<string, boolean> = {};
+        for (const db of meta.expandedDatabases) {
+          map[db] = true;
+        }
+        setExpandedDatabases(map);
+      }
 
       setHistory(loadQueryHistory());
       setSavedDrafts(loadSavedQueryDrafts());
+
+      isRestoredRef.current = true;
+      setIsRestored(true);
     });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   // Save tabs on change (only after client restoration to avoid wiping localStorage with initial default)
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isRestoredRef.current) return;
     saveTabsToStorage(tabs);
   }, [tabs]);
 
   // Save workspace metadata on change (only after client restoration)
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isRestoredRef.current) return;
     saveWorkspaceMetadata({
       activeActivity,
       sidebarWidth,
       isSidebarCollapsed,
       activeTabId,
+      expandedDatabases: Object.keys(expandedDatabases).filter((k) => expandedDatabases[k]),
     });
-  }, [activeActivity, sidebarWidth, isSidebarCollapsed, activeTabId]);
+  }, [activeActivity, sidebarWidth, isSidebarCollapsed, activeTabId, expandedDatabases]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -687,6 +704,7 @@ export function WorkspaceProvider({
         refreshExplorer,
         refreshActiveTab,
         refreshTrigger,
+        isRestored,
       }}
     >
       {children}

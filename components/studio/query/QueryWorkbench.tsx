@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { StudioTab, DocumentViewMode, QueryTabState } from "@/lib/studio/workspace-types";
 import { executeQueryAction } from "@/app/actions";
@@ -71,6 +71,33 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
   const [copiedResults, setCopiedResults] = useState(false);
 
   const availableCollections = collectionsMap[selectedDb] || [];
+
+  // Sync state back to tab so reload and persistence replay exact query
+  const lastStateSyncRef = useRef<string>("");
+  useEffect(() => {
+    const key = `${selectedDb}:${selectedCol}:${filterCode}:${projectionCode}:${sortCode}:${limitVal}:${skipVal}`;
+    if (lastStateSyncRef.current === key) return;
+    lastStateSyncRef.current = key;
+
+    const timeout = setTimeout(() => {
+      updateTabState(tab.id, {
+        database: selectedDb,
+        collection: selectedCol,
+        queryState: {
+          ...state,
+          database: selectedDb,
+          collection: selectedCol,
+          filter: filterCode,
+          projection: projectionCode,
+          sort: sortCode,
+          limit: limitVal,
+          skip: skipVal,
+        },
+      });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [selectedDb, selectedCol, filterCode, projectionCode, sortCode, limitVal, skipVal, tab.id, updateTabState, state]);
 
   // Sync collection when database changes
   const handleDbChange = (newDb: string) => {
