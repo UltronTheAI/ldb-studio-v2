@@ -7,7 +7,7 @@ import {
   ZapIcon,
   LayersIcon,
   AlertCircleIcon,
-  CheckCircle2Icon,
+  CheckIcon,
   CommandIcon,
 } from "lucide-react";
 
@@ -97,7 +97,7 @@ export function StatusBar() {
             {statusMessage.tone === "error" ? (
               <AlertCircleIcon size={10} />
             ) : (
-              <CheckCircle2Icon size={10} />
+              <CheckIcon size={10} />
             )}
             <span className="truncate max-w-[200px]">{statusMessage.text}</span>
           </div>

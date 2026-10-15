@@ -101,7 +101,7 @@ export function StudioLoadingOverlay() {
         </div>
 
         {/* Compulsory 3-Second Progress Bar */}
-        <div className="w-full max-w-[200px] h-1 rounded-full bg-white/10 overflow-hidden mt-1">
+        <div className="w-full max-w-[200px] h-1 rounded-[2px] bg-white/10 overflow-hidden mt-1">
           <div
             className="h-full bg-[var(--text-link)] transition-all ease-linear duration-75"
             style={{ width: `${progress}%` }}

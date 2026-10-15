@@ -21,6 +21,7 @@ import { DocumentTreeView } from "./DocumentTreeView";
 import { DocumentEditorModal } from "./DocumentEditorModal";
 import { CollectionIndexes } from "./CollectionIndexes";
 import { CollectionSchema } from "./CollectionSchema";
+import { TableSkeletonWidget, LoadingOverlayWidget } from "../widgets/LoadingWidget";
 import {
   Table2Icon,
   CodeIcon,
@@ -468,39 +469,52 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       <div className="flex-1 overflow-hidden p-3">
         {state.subTab === "documents" && (
           <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-hidden">
-              {state.viewMode === "table" && (
-                <DocumentTable
-                  documents={state.documents}
-                  onEdit={(doc) => {
-                    setActiveDocForEdit(doc);
-                    setIsInserting(false);
-                    setIsEditorOpen(true);
-                  }}
-                  onDelete={(doc) => setDeleteTarget(doc)}
+            <div className="relative flex-1 overflow-hidden">
+              {isLoading && state.documents.length === 0 ? (
+                <TableSkeletonWidget
+                  columns={5}
+                  rows={8}
+                  message={`Fetching documents from ${collection}...`}
                 />
-              )}
-              {state.viewMode === "json" && (
-                <DocumentJsonView
-                  documents={state.documents}
-                  onEdit={(doc) => {
-                    setActiveDocForEdit(doc);
-                    setIsInserting(false);
-                    setIsEditorOpen(true);
-                  }}
-                  onDelete={(doc) => setDeleteTarget(doc)}
-                />
-              )}
-              {state.viewMode === "tree" && (
-                <DocumentTreeView
-                  documents={state.documents}
-                  onEdit={(doc) => {
-                    setActiveDocForEdit(doc);
-                    setIsInserting(false);
-                    setIsEditorOpen(true);
-                  }}
-                  onDelete={(doc) => setDeleteTarget(doc)}
-                />
+              ) : (
+                <>
+                  {state.viewMode === "table" && (
+                    <DocumentTable
+                      documents={state.documents}
+                      onEdit={(doc) => {
+                        setActiveDocForEdit(doc);
+                        setIsInserting(false);
+                        setIsEditorOpen(true);
+                      }}
+                      onDelete={(doc) => setDeleteTarget(doc)}
+                    />
+                  )}
+                  {state.viewMode === "json" && (
+                    <DocumentJsonView
+                      documents={state.documents}
+                      onEdit={(doc) => {
+                        setActiveDocForEdit(doc);
+                        setIsInserting(false);
+                        setIsEditorOpen(true);
+                      }}
+                      onDelete={(doc) => setDeleteTarget(doc)}
+                    />
+                  )}
+                  {state.viewMode === "tree" && (
+                    <DocumentTreeView
+                      documents={state.documents}
+                      onEdit={(doc) => {
+                        setActiveDocForEdit(doc);
+                        setIsInserting(false);
+                        setIsEditorOpen(true);
+                      }}
+                      onDelete={(doc) => setDeleteTarget(doc)}
+                    />
+                  )}
+                  {isLoading && state.documents.length > 0 && (
+                    <LoadingOverlayWidget message={`Querying ${collection}...`} />
+                  )}
+                </>
               )}
             </div>
 
@@ -570,6 +584,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             database={database}
             collection={collection}
             indexes={state.indexes}
+            isLoading={isLoading}
             onRefresh={() => loadDocuments()}
           />
         )}
@@ -579,6 +594,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             documents={state.documents}
             database={database}
             collection={collection}
+            isLoading={isLoading}
           />
         )}
       </div>

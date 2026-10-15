@@ -12,6 +12,7 @@ import { executeAggregationAction } from "@/app/actions";
 import { DocumentTable } from "../collection/DocumentTable";
 import { DocumentJsonView } from "../collection/DocumentJsonView";
 import { DocumentTreeView } from "../collection/DocumentTreeView";
+import { TableSkeletonWidget } from "../widgets/LoadingWidget";
 import {
   PlayIcon,
   PlusIcon,
@@ -538,7 +539,13 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
           </div>
 
           <div className="flex-1 overflow-hidden p-3">
-            {errorMsg ? (
+            {isRunning ? (
+              <TableSkeletonWidget
+                columns={4}
+                rows={8}
+                message={`Executing aggregation on ${selectedDb}.${selectedCol}...`}
+              />
+            ) : errorMsg ? (
               <div className="p-4 rounded-[8px] border border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444] font-mono text-xs space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   <AlertCircleIcon size={14} />

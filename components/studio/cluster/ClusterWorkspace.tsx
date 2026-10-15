@@ -23,6 +23,7 @@ import {
   DatabaseIcon,
   TerminalIcon,
 } from "lucide-react";
+import { CardSkeletonWidget, TableSkeletonWidget } from "../widgets/LoadingWidget";
 
 interface ClusterWorkspaceProps {
   tab?: StudioTab;
@@ -181,67 +182,74 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {activeNodes.length === 0 ? (
-              <div className="p-5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs font-mono text-[var(--muted)]">
-                Node #0: {initialContext.host}:{initialContext.port} (Leader)
-              </div>
-            ) : (
-              activeNodes.map((n) => {
-                const isCurrent = n.id === currentNodeId;
-                const isSelected = selectedNodeId === n.id;
-                return (
-                  <div
-                    key={n.id}
-                    onClick={() => setSelectedNodeId(n.id)}
-                    className={`p-4 rounded-[10px] border cursor-pointer transition ${
-                      isSelected
-                        ? "border-[var(--text-link)] bg-[var(--surface-strong)] ring-1 ring-[var(--text-link)]"
-                        : "border-[var(--hairline-strong)] bg-[var(--surface-card)] hover:border-[var(--muted)]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between pb-2 border-b border-[var(--hairline)] mb-2.5">
-                      <div className="flex items-center gap-2">
-                        <CpuIcon size={14} className="text-[var(--text-link)]" />
-                        <span className="font-mono text-sm font-bold text-[var(--ink)]">
-                          Node #{n.id}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {isCurrent && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)] font-bold uppercase">
-                            This Endpoint
+          {isLoading && nodes.length === 0 ? (
+            <CardSkeletonWidget
+              count={3}
+              message="Connecting to cluster topology and Raft consensus..."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {activeNodes.length === 0 ? (
+                <div className="p-5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs font-mono text-[var(--muted)]">
+                  Node #0: {initialContext.host}:{initialContext.port} (Leader)
+                </div>
+              ) : (
+                activeNodes.map((n) => {
+                  const isCurrent = n.id === currentNodeId;
+                  const isSelected = selectedNodeId === n.id;
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={() => setSelectedNodeId(n.id)}
+                      className={`p-4 rounded-[10px] border cursor-pointer transition ${
+                        isSelected
+                          ? "border-[var(--text-link)] bg-[var(--surface-strong)] ring-1 ring-[var(--text-link)]"
+                          : "border-[var(--hairline-strong)] bg-[var(--surface-card)] hover:border-[var(--muted)]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-[var(--hairline)] mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <CpuIcon size={14} className="text-[var(--text-link)]" />
+                          <span className="font-mono text-sm font-bold text-[var(--ink)]">
+                            Node #{n.id}
                           </span>
-                        )}
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--text-link)]/10 text-[var(--text-link)] font-bold uppercase">
-                          {isCurrent ? "Active Leader" : "Follower"}
-                        </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {isCurrent && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)] font-bold uppercase">
+                              This Endpoint
+                            </span>
+                          )}
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--text-link)]/10 text-[var(--text-link)] font-bold uppercase">
+                            {isCurrent ? "Active Leader" : "Follower"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5 text-xs font-mono">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[var(--muted)]">Listen Addr:</span>
-                        <span className="font-semibold text-[var(--ink)]">{n.listen_addr}</span>
+                      <div className="space-y-1.5 text-xs font-mono">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[var(--muted)]">Listen Addr:</span>
+                          <span className="font-semibold text-[var(--ink)]">{n.listen_addr}</span>
+                        </div>
+                        {n.public_addr && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-[var(--muted)]">Public Addr:</span>
+                            <span className="text-[var(--body)]">{n.public_addr}</span>
+                          </div>
+                        )}
+                        {n.metrics_addr && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-[var(--muted)]">Metrics Addr:</span>
+                            <span className="text-[var(--body)]">{n.metrics_addr}</span>
+                          </div>
+                        )}
                       </div>
-                      {n.public_addr && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--muted)]">Public Addr:</span>
-                          <span className="text-[var(--body)]">{n.public_addr}</span>
-                        </div>
-                      )}
-                      {n.metrics_addr && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--muted)]">Metrics Addr:</span>
-                          <span className="text-[var(--body)]">{n.metrics_addr}</span>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
 
         {/* 2. Partition Placements Table */}
@@ -256,7 +264,14 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
             </span>
           </div>
 
-          <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
+          {isLoading && partitions.length === 0 ? (
+            <TableSkeletonWidget
+              columns={4}
+              rows={3}
+              message="Fetching partition placements and sharding..."
+            />
+          ) : (
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
             <table className="w-full border-collapse text-left text-xs font-mono">
               <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
                 <tr>
@@ -320,6 +335,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
               </tbody>
             </table>
           </div>
+          )}
         </div>
 
         {/* 3. Partition Telemetry & WAL Health */}

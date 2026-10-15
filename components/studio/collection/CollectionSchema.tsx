@@ -3,11 +3,13 @@
 import React, { useMemo } from "react";
 import type { Document } from "@liorandb/driver";
 import { SparklesIcon } from "lucide-react";
+import { TableSkeletonWidget } from "../widgets/LoadingWidget";
 
 interface CollectionSchemaProps {
   documents: Document[];
   database: string;
   collection: string;
+  isLoading?: boolean;
 }
 
 interface InferredField {
@@ -31,7 +33,12 @@ function detectValueType(val: unknown): string {
   return "Unknown";
 }
 
-export function CollectionSchema({ documents, database, collection }: CollectionSchemaProps) {
+export function CollectionSchema({
+  documents,
+  database,
+  collection,
+  isLoading = false,
+}: CollectionSchemaProps) {
   const fields = useMemo(() => {
     if (documents.length === 0) return [];
 
@@ -65,6 +72,18 @@ export function CollectionSchema({ documents, database, collection }: Collection
       return b.count - a.count;
     });
   }, [documents]);
+
+  if (isLoading && documents.length === 0) {
+    return (
+      <div className="p-4 h-full">
+        <TableSkeletonWidget
+          columns={4}
+          rows={6}
+          message={`Analyzing schema fields for ${collection}...`}
+        />
+      </div>
+    );
+  }
 
   if (documents.length === 0) {
     return (

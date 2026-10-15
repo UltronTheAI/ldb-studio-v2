@@ -10,11 +10,13 @@ import {
   CheckIcon,
   AlertCircleIcon,
 } from "lucide-react";
+import { TableSkeletonWidget } from "../widgets/LoadingWidget";
 
 interface CollectionIndexesProps {
   database: string;
   collection: string;
   indexes: CollectionIndexDefinition[];
+  isLoading?: boolean;
   onRefresh: () => void;
 }
 
@@ -22,6 +24,7 @@ export function CollectionIndexes({
   database,
   collection,
   indexes,
+  isLoading = false,
   onRefresh,
 }: CollectionIndexesProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -137,32 +140,39 @@ export function CollectionIndexes({
       )}
 
       {/* Index Table */}
-      <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
-        <table className="w-full border-collapse text-left text-xs font-mono">
-          <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
-            <tr>
-              <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                Index Name
-              </th>
-              <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                Key Fields
-              </th>
-              <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                Properties
-              </th>
-              <th className="w-16 px-4 py-2.5 text-center font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--hairline)]">
-            {indexes.length === 0 ? (
+      {isLoading && indexes.length === 0 ? (
+        <TableSkeletonWidget
+          columns={4}
+          rows={4}
+          message={`Fetching indexes for ${collection}...`}
+        />
+      ) : (
+        <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-hidden shadow-xs">
+          <table className="w-full border-collapse text-left text-xs font-mono">
+            <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-[var(--muted)]">
-                  No indexes found for this collection.
-                </td>
+                <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                  Index Name
+                </th>
+                <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                  Key Fields
+                </th>
+                <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                  Properties
+                </th>
+                <th className="w-16 px-4 py-2.5 text-center font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                  Action
+                </th>
               </tr>
-            ) : (
+            </thead>
+            <tbody className="divide-y divide-[var(--hairline)]">
+              {indexes.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-[var(--muted)]">
+                    No indexes found for this collection.
+                  </td>
+                </tr>
+              ) : (
               indexes.map((idx) => {
                 const isPrimary = idx.name === "_id_" || idx.name === "primary";
                 return (
@@ -228,6 +238,7 @@ export function CollectionIndexes({
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Create Index Modal */}
       {showCreateModal && (

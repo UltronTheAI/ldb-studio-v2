@@ -7,9 +7,10 @@ import {
   ServerIcon,
   TerminalIcon,
   ZapIcon,
-  CheckCircle2Icon,
+  ActivityIcon,
   RefreshCwIcon,
 } from "lucide-react";
+import { CardSkeletonWidget } from "../widgets/LoadingWidget";
 
 export function OverviewWorkspace() {
   const { initialContext, openQueryTab, openAdminTab, databases, collectionsMap } = useWorkspace();
@@ -102,44 +103,48 @@ export function OverviewWorkspace() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            Live Node State
+      {isLoading && !data.live ? (
+        <CardSkeletonWidget count={4} message="Fetching live cluster telemetry..." />
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+              Live Node State
+            </div>
+            <div className="text-xl font-bold font-mono text-[var(--ink)] flex items-center gap-2">
+              <ActivityIcon size={18} className="text-[var(--text-link)]" />
+              <span>{liveState}</span>
+            </div>
           </div>
-          <div className="text-xl font-bold font-mono text-[var(--ink)] flex items-center gap-2">
-            <CheckCircle2Icon size={18} className="text-[var(--text-link)]" />
-            <span>{liveState}</span>
-          </div>
-        </div>
 
-        <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            Cluster Readiness
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+              Cluster Readiness
+            </div>
+            <div className="text-xl font-bold font-mono text-[var(--ink)]">
+              {readyState}
+            </div>
           </div>
-          <div className="text-xl font-bold font-mono text-[var(--ink)]">
-            {readyState}
-          </div>
-        </div>
 
-        <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            Online Databases
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+              Online Databases
+            </div>
+            <div className="text-xl font-bold font-mono text-[var(--text-link)]">
+              {databases.length}
+            </div>
           </div>
-          <div className="text-xl font-bold font-mono text-[var(--text-link)]">
-            {databases.length}
-          </div>
-        </div>
 
-        <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            Total Collections
-          </div>
-          <div className="text-xl font-bold font-mono text-[var(--ink)]">
-            {totalCollections}
+          <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+              Total Collections
+            </div>
+            <div className="text-xl font-bold font-mono text-[var(--ink)]">
+              {totalCollections}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Detailed Diagnostics Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
