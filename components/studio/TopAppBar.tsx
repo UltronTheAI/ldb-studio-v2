@@ -50,9 +50,14 @@ export function TopAppBar() {
         </div>
 
         {/* Connection status badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)]">
-          <span className="font-semibold text-[var(--ink)] truncate max-w-[140px] md:max-w-[200px]">
-            {initialContext.host}:{initialContext.port}
+        <div
+          className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[var(--surface-strong)] text-[11px] font-mono text-[var(--body)] border border-[var(--hairline)]"
+          title={`${initialContext.host}:${initialContext.port}`}
+        >
+          <span className="font-semibold text-[var(--ink)]">
+            {initialContext.host && initialContext.host.length > 3
+              ? `${initialContext.host.slice(0, 3)}...`
+              : initialContext.host || "..."}
           </span>
           {initialContext.tls && (
             <span className="text-[9px] px-1 py-0.2 bg-[var(--surface-card)] text-[var(--ink)] font-bold rounded uppercase border border-[var(--hairline-strong)]">
