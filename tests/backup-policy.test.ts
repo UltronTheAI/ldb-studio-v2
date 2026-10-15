@@ -2,7 +2,10 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import {
   DEFAULT_MAX_MANUAL_BACKUPS,
+  FIXED_MAX_MANUAL_BACKUPS,
   MAX_RETENTION_DAYS,
+  FIXED_RETENTION_DAYS,
+  DEFAULT_BACKUP_TIMEZONE,
   filterManualBackups,
   filterAutomaticBackups,
   getBackupExpirationInfo,
@@ -12,11 +15,16 @@ import {
 
 describe("LioranDB Studio Backup Policy & Automation", () => {
   describe("Manual Backup Quota & Limit Enforcement", () => {
-    it("defaults to max 10 manual backups", () => {
+    it("permanently fixes max manual backups to 10", () => {
       assert.strictEqual(DEFAULT_MAX_MANUAL_BACKUPS, 10);
+      assert.strictEqual(FIXED_MAX_MANUAL_BACKUPS, 10);
     });
 
-    it("allows creating backups when manual count is below limit", () => {
+    it("uses IST as default backup schedule timezone", () => {
+      assert.strictEqual(DEFAULT_BACKUP_TIMEZONE, "IST");
+    });
+
+    it("allows creating backups when manual count is below 10", () => {
       const res = checkManualBackupLimit(5, 10);
       assert.strictEqual(res.allowed, true);
       assert.strictEqual(res.current, 5);
@@ -25,24 +33,13 @@ describe("LioranDB Studio Backup Policy & Automation", () => {
       assert.strictEqual(res.error, undefined);
     });
 
-    it("blocks creating backups when manual count reaches default 10 limit", () => {
+    it("blocks creating backups when manual count reaches fixed 10 limit", () => {
       const res = checkManualBackupLimit(10, 10);
       assert.strictEqual(res.allowed, false);
       assert.strictEqual(res.current, 10);
       assert.strictEqual(res.max, 10);
       assert.strictEqual(res.remaining, 0);
       assert.match(res.error || "", /Manual backup capacity reached/);
-    });
-
-    it("respects user-modified manual backup quota", () => {
-      // User modified limit to 5
-      const res5 = checkManualBackupLimit(5, 5);
-      assert.strictEqual(res5.allowed, false);
-
-      // User modified limit to 15
-      const res15 = checkManualBackupLimit(10, 15);
-      assert.strictEqual(res15.allowed, true);
-      assert.strictEqual(res15.remaining, 5);
     });
 
     it("excludes automatic backups (Daily, Weekly) from manual backup limit", () => {
@@ -81,6 +78,7 @@ describe("LioranDB Studio Backup Policy & Automation", () => {
   describe("Retention Period Rules (Max 3 Days)", () => {
     it("enforces MAX_RETENTION_DAYS constant as 3", () => {
       assert.strictEqual(MAX_RETENTION_DAYS, 3);
+      assert.strictEqual(FIXED_RETENTION_DAYS, 3);
     });
 
     it("accepts valid retention days between 1 and 3", () => {
@@ -123,7 +121,6 @@ describe("LioranDB Studio Backup Policy & Automation", () => {
 
   describe("Backup Expiration Calculation", () => {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-    const ONE_HOUR_MS = 60 * 60 * 1000;
 
     it("marks fresh backup (< 1 hour old) with 3 days retention as not expired", () => {
       const now = Date.now();

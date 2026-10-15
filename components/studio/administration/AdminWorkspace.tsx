@@ -25,6 +25,8 @@ import {
   getBackupExpirationInfo,
 } from "@/lib/studio/backup-policy";
 
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 interface AdminWorkspaceProps {
   tab: StudioTab;
 }
@@ -153,11 +155,11 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               <button
                 type="button"
                 onClick={() => setShowBackupPolicyModal(true)}
-                title="Configure backup policy & schedules"
+                title="Configure automated backup schedules (IST)"
                 className="h-7 px-2.5 rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5 transition"
               >
                 <SlidersIcon size={12} />
-                <span className="hidden sm:inline">Backup Policy</span>
+                <span className="hidden sm:inline">Schedules (IST)</span>
               </button>
               <button
                 type="button"
@@ -412,14 +414,14 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     />
                   </div>
                   <div className="text-[10px] text-[var(--muted)]">
-                    Excludes automatic daily &amp; weekly backups
+                    Fixed limit: max 10 manual snapshots (automated excluded)
                   </div>
                 </div>
 
                 {/* 2. Automated Schedules KPI */}
                 <div className="p-3.5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                    <span>Automated Schedules</span>
+                    <span>Automated Schedules (IST)</span>
                     <button
                       type="button"
                       onClick={() => setShowBackupPolicyModal(true)}
@@ -439,7 +441,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                         }`}
                       >
                         {backupSettings?.daily?.enabled
-                          ? `Active (${String(backupSettings.daily.hour ?? 2).padStart(2, "0")}:${String(backupSettings.daily.minute ?? 0).padStart(2, "0")} UTC)`
+                          ? `Active (${String(backupSettings.daily.hour ?? 2).padStart(2, "0")}:${String(backupSettings.daily.minute ?? 0).padStart(2, "0")} IST)`
                           : "Disabled"}
                       </span>
                     </div>
@@ -453,7 +455,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                         }`}
                       >
                         {backupSettings?.weekly?.enabled
-                          ? `Active (${String(backupSettings.weekly.hour ?? 3).padStart(2, "0")}:${String(backupSettings.weekly.minute ?? 0).padStart(2, "0")} UTC)`
+                          ? `Active (${WEEKDAY_SHORT[backupSettings.weekly.weekday ?? 0] || "Sun"} ${String(backupSettings.weekly.hour ?? 3).padStart(2, "0")}:${String(backupSettings.weekly.minute ?? 0).padStart(2, "0")} IST)`
                           : "Disabled"}
                       </span>
                     </div>
@@ -468,11 +470,11 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                   <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
                     <span>Retention Policy</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded font-bold uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline)]">
-                      Max 3 Days
+                      Fixed 3 Days
                     </span>
                   </div>
                   <div className="text-xs text-[var(--body)] font-mono">
-                    Retention capped at 3 days per backup.
+                    Retention fixed at 3 days per snapshot.
                   </div>
                   <div className="pt-1 flex items-center justify-between">
                     <span className="text-[10px] text-[var(--muted)] font-mono">
@@ -785,56 +787,53 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                   <input type="hidden" name="hourly_enabled" value="false" />
                   <input type="hidden" name="hourly_hour" value="0" />
                   <input type="hidden" name="hourly_minute" value="0" />
-                  <input type="hidden" name="hourly_timezone" value="UTC" />
+                  <input type="hidden" name="hourly_timezone" value="IST" />
                   <input type="hidden" name="monthly_enabled" value="false" />
                   <input type="hidden" name="monthly_hour" value="0" />
                   <input type="hidden" name="monthly_minute" value="0" />
-                  <input type="hidden" name="monthly_timezone" value="UTC" />
+                  <input type="hidden" name="monthly_timezone" value="IST" />
                   <input type="hidden" name="keep_hourly" value="0" />
                   <input type="hidden" name="keep_weekly" value="1" />
                   <input type="hidden" name="keep_monthly" value="0" />
 
                   <div className="space-y-4 text-xs font-mono">
-                    {/* Manual Quota */}
-                    <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2">
-                      <div className="font-sans font-bold text-xs text-[var(--ink)] flex items-center justify-between">
-                        <span>Manual User Backups Quota</span>
-                        <span className="text-[10px] text-[var(--muted)]">Excludes automatic backups</span>
+                    {/* Fixed Policy Notice */}
+                    <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-1.5 font-sans">
+                      <div className="font-bold text-xs text-[var(--ink)] flex items-center justify-between">
+                        <span>Cluster Backup Policy</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                          System Enforced
+                        </span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[var(--muted)] pt-1">
                         <div>
-                          <label className="block text-[10px] text-[var(--muted)] mb-1">
-                            Max Manual Backups Limit (1 - 50)
-                          </label>
-                          <input
-                            name="max_manual_backups"
-                            type="number"
-                            min="1"
-                            max="50"
-                            defaultValue={maxManualBackups}
-                            className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                          />
+                          • <strong>Manual Capacity:</strong> Fixed max 10 snapshots ({manualBackups.length}/10 used, automated excluded)
                         </div>
-                        <div className="text-[11px] text-[var(--body)] font-sans">
-                          Currently <strong>{manualBackups.length}</strong> manual backups taken. Automatic daily &amp; weekly backups do not count towards this limit.
+                        <div>
+                          • <strong>Retention Lifespan:</strong> Fixed max 3 days per snapshot
                         </div>
                       </div>
                     </div>
 
                     {/* Daily Schedule */}
                     <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
-                      <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
-                        <input
-                          type="checkbox"
-                          name="daily_enabled"
-                          defaultChecked={backupSettings?.daily?.enabled ?? false}
-                          className="rounded accent-black"
-                        />
-                        <span>Enable Automated Daily Backup</span>
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
+                          <input
+                            type="checkbox"
+                            name="daily_enabled"
+                            defaultChecked={backupSettings?.daily?.enabled ?? false}
+                            className="rounded accent-black"
+                          />
+                          <span>Enable Automated Daily Backup</span>
+                        </label>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                          Daily Schedule (IST)
+                        </span>
+                      </div>
                       <div className="grid grid-cols-2 gap-3 pt-1">
                         <div>
-                          <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Hour (0-23 UTC)</label>
+                          <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Hour (0-23 IST)</label>
                           <input
                             name="daily_hour"
                             type="number"
@@ -856,20 +855,25 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                           />
                         </div>
                       </div>
-                      <input type="hidden" name="daily_timezone" value="UTC" />
+                      <input type="hidden" name="daily_timezone" value="IST" />
                     </div>
 
                     {/* Weekly Schedule */}
                     <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
-                      <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
-                        <input
-                          type="checkbox"
-                          name="weekly_enabled"
-                          defaultChecked={backupSettings?.weekly?.enabled ?? false}
-                          className="rounded accent-black"
-                        />
-                        <span>Enable Automated Weekly Backup</span>
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
+                          <input
+                            type="checkbox"
+                            name="weekly_enabled"
+                            defaultChecked={backupSettings?.weekly?.enabled ?? false}
+                            className="rounded accent-black"
+                          />
+                          <span>Enable Automated Weekly Backup</span>
+                        </label>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                          Weekly Schedule (IST)
+                        </span>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                         <div>
                           <label className="block text-[10px] text-[var(--muted)] mb-1">Day of Week</label>
@@ -888,7 +892,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] text-[var(--muted)] mb-1">Hour (0-23 UTC)</label>
+                          <label className="block text-[10px] text-[var(--muted)] mb-1">Hour (0-23 IST)</label>
                           <input
                             name="weekly_hour"
                             type="number"
@@ -910,51 +914,12 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                           />
                         </div>
                       </div>
-                      <input type="hidden" name="weekly_timezone" value="UTC" />
-                    </div>
-
-                    {/* Retention: Max 3 Days */}
-                    <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2">
-                      <div className="font-sans font-bold text-xs text-[var(--ink)] flex items-center justify-between">
-                        <span>Retention Policy (Max 3 Days)</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline)]">
-                          Max 3 Days Cap
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1">
-                        <div>
-                          <label className="block text-[10px] text-[var(--muted)] mb-1">
-                            Retention Days (1 to 3 max)
-                          </label>
-                          <input
-                            name="delete_after_days"
-                            type="number"
-                            min="1"
-                            max="3"
-                            defaultValue={Math.min(3, Math.max(1, backupSettings?.retention?.delete_after_days ?? 3))}
-                            required
-                            className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-[var(--muted)] mb-1">
-                            Keep Daily Backups (1 - 3)
-                          </label>
-                          <input
-                            name="keep_daily"
-                            type="number"
-                            min="1"
-                            max="3"
-                            defaultValue={Math.min(3, Math.max(1, backupSettings?.retention?.keep_daily ?? 3))}
-                            className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                          />
-                        </div>
-                      </div>
+                      <input type="hidden" name="weekly_timezone" value="IST" />
                     </div>
                   </div>
 
                   <button type="submit" className="btn-primary h-8 px-4 text-xs font-semibold">
-                    Save Backup Policy Configuration
+                    Save Backup Schedules (IST)
                   </button>
                 </form>
               )}
@@ -1151,7 +1116,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
             <div className="flex items-center justify-between pb-2 border-b border-[var(--hairline)]">
               <h3 className="font-sans text-sm font-bold text-[var(--ink)] flex items-center gap-2">
                 <SlidersIcon size={16} className="text-[var(--text-link)]" />
-                <span>Backup Policy &amp; Automated Schedules</span>
+                <span>Automated Backup Schedules (IST)</span>
               </h3>
               <button
                 type="button"
@@ -1177,42 +1142,30 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               <input type="hidden" name="hourly_enabled" value="false" />
               <input type="hidden" name="hourly_hour" value="0" />
               <input type="hidden" name="hourly_minute" value="0" />
-              <input type="hidden" name="hourly_timezone" value="UTC" />
+              <input type="hidden" name="hourly_timezone" value="IST" />
               <input type="hidden" name="monthly_enabled" value="false" />
               <input type="hidden" name="monthly_hour" value="0" />
               <input type="hidden" name="monthly_minute" value="0" />
-              <input type="hidden" name="monthly_timezone" value="UTC" />
+              <input type="hidden" name="monthly_timezone" value="IST" />
               <input type="hidden" name="keep_hourly" value="0" />
               <input type="hidden" name="keep_weekly" value="1" />
               <input type="hidden" name="keep_monthly" value="0" />
 
-              {/* 1. Manual Backup Quota */}
-              <div className="p-3 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2">
-                <div className="font-sans font-bold text-xs text-[var(--ink)] flex items-center justify-between">
-                  <span>Manual User Backups Quota</span>
-                  <span className="text-[10px] text-[var(--muted)]">Excludes automatic backups</span>
+              {/* Policy Rules Notice (Non-editable system rules) */}
+              <div className="p-3 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-1.5 font-sans">
+                <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)]">
+                  <span>Cluster Backup Policy</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                    System Enforced
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                  <div>
-                    <label className="block text-[10px] text-[var(--muted)] mb-1">
-                      Max Manual Backups Limit (1 - 50)
-                    </label>
-                    <input
-                      name="max_manual_backups"
-                      type="number"
-                      min="1"
-                      max="50"
-                      defaultValue={maxManualBackups}
-                      className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                    />
-                  </div>
-                  <div className="text-[11px] text-[var(--body)] font-sans">
-                    Currently <strong>{manualBackups.length}</strong> manual backups taken. Automatic daily &amp; weekly backups do not count towards this limit.
-                  </div>
+                <div className="text-[11px] text-[var(--muted)] space-y-0.5">
+                  <div>• <strong>Manual Backups:</strong> Fixed max 10 snapshots ({manualBackups.length}/10 taken, automated excluded)</div>
+                  <div>• <strong>Retention:</strong> Fixed max 3 days per backup</div>
                 </div>
               </div>
 
-              {/* 2. Automated Daily Backup */}
+              {/* 1. Automated Daily Backup (IST) */}
               <div className="p-3 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
@@ -1225,13 +1178,13 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     <span>Enable Automated Daily Backup</span>
                   </label>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
-                    Daily Schedule
+                    Daily Schedule (IST)
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Hour (0-23 UTC)</label>
+                    <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Hour (0-23 IST)</label>
                     <input
                       name="daily_hour"
                       type="number"
@@ -1253,10 +1206,10 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     />
                   </div>
                 </div>
-                <input type="hidden" name="daily_timezone" value="UTC" />
+                <input type="hidden" name="daily_timezone" value="IST" />
               </div>
 
-              {/* 3. Automated Weekly Backup */}
+              {/* 2. Automated Weekly Backup (IST) */}
               <div className="p-3 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
@@ -1269,7 +1222,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     <span>Enable Automated Weekly Backup</span>
                   </label>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
-                    Weekly Schedule
+                    Weekly Schedule (IST)
                   </span>
                 </div>
 
@@ -1291,7 +1244,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-[var(--muted)] mb-1">Hour (0-23 UTC)</label>
+                    <label className="block text-[10px] text-[var(--muted)] mb-1">Hour (0-23 IST)</label>
                     <input
                       name="weekly_hour"
                       type="number"
@@ -1313,50 +1266,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                     />
                   </div>
                 </div>
-                <input type="hidden" name="weekly_timezone" value="UTC" />
-              </div>
-
-              {/* 4. Strict 3-Day Retention Policy */}
-              <div className="p-3 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2">
-                <div className="font-sans font-bold text-xs text-[var(--ink)] flex items-center justify-between">
-                  <span>Retention Policy (Max 3 Days)</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline)]">
-                    Max 3 Days Cap
-                  </span>
-                </div>
-                <p className="text-[11px] text-[var(--muted)] font-sans">
-                  Each backup has a maximum lifespan of 3 days. Older backups will be marked as expired.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="block text-[10px] text-[var(--muted)] mb-1">
-                      Retention Days (1 to 3 max)
-                    </label>
-                    <input
-                      name="delete_after_days"
-                      type="number"
-                      min="1"
-                      max="3"
-                      defaultValue={Math.min(3, Math.max(1, backupSettings?.retention?.delete_after_days ?? 3))}
-                      required
-                      className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-[var(--muted)] mb-1">
-                      Keep Daily Backups (1 - 3)
-                    </label>
-                    <input
-                      name="keep_daily"
-                      type="number"
-                      min="1"
-                      max="3"
-                      defaultValue={Math.min(3, Math.max(1, backupSettings?.retention?.keep_daily ?? 3))}
-                      className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
-                    />
-                  </div>
-                </div>
+                <input type="hidden" name="weekly_timezone" value="IST" />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -1368,7 +1278,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary h-8 px-3 text-xs font-semibold">
-                  Save Policy &amp; Schedules
+                  Save Schedules (IST)
                 </button>
               </div>
             </form>

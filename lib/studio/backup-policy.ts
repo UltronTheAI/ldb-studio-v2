@@ -1,5 +1,8 @@
 export const DEFAULT_MAX_MANUAL_BACKUPS = 10;
-export const MAX_RETENTION_DAYS = 3; // Strict cap: retention is max 3 days per backup
+export const FIXED_MAX_MANUAL_BACKUPS = 10;
+export const MAX_RETENTION_DAYS = 3; // Strict cap: retention is fixed to max 3 days per backup
+export const FIXED_RETENTION_DAYS = 3;
+export const DEFAULT_BACKUP_TIMEZONE = "IST"; // Indian Standard Time (IST)
 
 export interface BackupExpirationInfo {
   createdAtMs: number;

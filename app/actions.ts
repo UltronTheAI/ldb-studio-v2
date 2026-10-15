@@ -163,7 +163,7 @@ function parseOverrideMap(formData: FormData, key: string): Readonly<Record<stri
 function buildBackupSchedule(formData: FormData, prefix: string, scheduleType: BackupSchedule["schedule_type"]): BackupSchedule {
   return {
     enabled: formBoolean(formData, `${prefix}_enabled`),
-    timezone: formString(formData, `${prefix}_timezone`) || "UTC",
+    timezone: formString(formData, `${prefix}_timezone`) || "IST",
     schedule_type: scheduleType,
     hour: formRequiredNumber(formData, `${prefix}_hour`),
     minute: formRequiredNumber(formData, `${prefix}_minute`),
@@ -438,23 +438,11 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             // Check manual backups count (excluding automatic backups)
             const existingBackups = await client.backups.list();
             const manualBackups = filterManualBackups(existingBackups);
-
-            let maxManual = DEFAULT_MAX_MANUAL_BACKUPS;
-            try {
-              const genericSettings = await client.settings.get();
-              if (genericSettings["studio.backup.max_manual"]) {
-                const parsed = Number(genericSettings["studio.backup.max_manual"]);
-                if (!Number.isNaN(parsed) && parsed > 0) {
-                  maxManual = parsed;
-                }
-              }
-            } catch {
-              // fallback to default
-            }
+            const maxManual = DEFAULT_MAX_MANUAL_BACKUPS; // Fixed to 10
 
             if (manualBackups.length >= maxManual) {
               throw new Error(
-                `Maximum limit of ${maxManual} manual backups reached (currently ${manualBackups.length}/${maxManual}, excluding automatic backups). Please delete an older manual backup or update your backup policy limit.`
+                `Maximum limit of ${maxManual} manual backups reached (currently ${manualBackups.length}/${maxManual}, excluding automatic backups). Please delete an older manual backup.`
               );
             }
 
@@ -577,27 +565,6 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             );
             return;
           case "updateBackupSettingsGui": {
-            const rawDeleteAfterDays = formNullableNumber(formData, "delete_after_days");
-            if (rawDeleteAfterDays !== null && (rawDeleteAfterDays > MAX_RETENTION_DAYS || rawDeleteAfterDays < 1)) {
-              throw new Error(
-                `Backup retention period cannot exceed ${MAX_RETENTION_DAYS} days per policy rule (allowed range: 1 to ${MAX_RETENTION_DAYS} days).`
-              );
-            }
-            const deleteAfterDays = rawDeleteAfterDays !== null ? Math.min(MAX_RETENTION_DAYS, Math.max(1, rawDeleteAfterDays)) : MAX_RETENTION_DAYS;
-
-            const maxManual = formNullableNumber(formData, "max_manual_backups");
-            if (maxManual !== null && maxManual > 0) {
-              try {
-                await client.settings.update({
-                  "studio.backup.max_manual": String(maxManual),
-                });
-              } catch {
-                // Ignore if generic settings update fails
-              }
-            }
-
-            const keepDailyRaw = formRequiredNumber(formData, "keep_daily");
-
             await client.settings.updateBackups({
               compression_level: formRequiredNumber(formData, "compression_level"),
               verify_after_create: formBoolean(formData, "verify_after_create"),
@@ -607,11 +574,11 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
               weekly: buildBackupSchedule(formData, "weekly", "Weekly"),
               monthly: buildBackupSchedule(formData, "monthly", "Monthly"),
               retention: {
-                keep_hourly: formRequiredNumber(formData, "keep_hourly"),
-                keep_daily: Math.min(MAX_RETENTION_DAYS, Math.max(1, keepDailyRaw)),
-                keep_weekly: formRequiredNumber(formData, "keep_weekly"),
-                keep_monthly: formRequiredNumber(formData, "keep_monthly"),
-                delete_after_days: deleteAfterDays,
+                keep_hourly: 0,
+                keep_daily: MAX_RETENTION_DAYS, // Fixed to 3 days max retention
+                keep_weekly: 1,
+                keep_monthly: 0,
+                delete_after_days: MAX_RETENTION_DAYS, // Fixed to 3 days max retention
                 max_total_backup_bytes: formNullableNumber(formData, "max_total_backup_bytes"),
               },
             });
@@ -1098,14 +1065,7 @@ export async function fetchAdminSectionDataAction(
           } catch {
             // Ignore if backup settings endpoint fails
           }
-          try {
-            const genericSettings = await client.settings.get();
-            result.maxManualBackups = genericSettings["studio.backup.max_manual"]
-              ? Number(genericSettings["studio.backup.max_manual"])
-              : DEFAULT_MAX_MANUAL_BACKUPS;
-          } catch {
-            result.maxManualBackups = DEFAULT_MAX_MANUAL_BACKUPS;
-          }
+          result.maxManualBackups = DEFAULT_MAX_MANUAL_BACKUPS;
           if (params?.backupId) {
             try {
               result.selectedBackup = await client.backups.get(params.backupId);
@@ -1119,13 +1079,7 @@ export async function fetchAdminSectionDataAction(
           result.settingsPerformance = await client.settings.getPerformance();
           result.settingsLimits = await client.settings.getLimits();
           result.settingsBackups = await client.settings.getBackups();
-          try {
-            result.maxManualBackups = (result.settingsGeneral as Record<string, string>)?.["studio.backup.max_manual"]
-              ? Number((result.settingsGeneral as Record<string, string>)["studio.backup.max_manual"])
-              : DEFAULT_MAX_MANUAL_BACKUPS;
-          } catch {
-            result.maxManualBackups = DEFAULT_MAX_MANUAL_BACKUPS;
-          }
+          result.maxManualBackups = DEFAULT_MAX_MANUAL_BACKUPS;
         }
 
         return {
