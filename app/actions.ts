@@ -22,7 +22,7 @@ import type {
 
 import { validateConnectionTarget } from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
-import { mapStudioError } from "@/lib/liorandb/errors";
+import { mapStudioError, type StudioErrorDescriptor } from "@/lib/liorandb/errors";
 import { parseJsonValue } from "@/lib/liorandb/json";
 import {
   createStudioSession,
@@ -174,13 +174,15 @@ function buildBackupSchedule(formData: FormData, prefix: string, scheduleType: B
   };
 }
 
-async function runWithSession<T>(callback: (connectionUri: string) => Promise<T>): Promise<T> {
+async function runWithSession<T>(
+  callback: (connectionUri: string, sessionId: string) => Promise<T>,
+): Promise<T> {
   const session = await getStudioSession();
   if (!session) {
     throw new Error("No active Studio session.");
   }
 
-  return callback(session.connectionUri);
+  return callback(session.connectionUri, session.id);
 }
 
 export async function connectAction(formData: FormData): Promise<void> {
@@ -203,13 +205,17 @@ export async function logoutAction(): Promise<void> {
 
   try {
     if (session) {
-      await withLioranClient(session.connectionUri, async (client) => {
-        try {
-          await client.logout();
-        } catch {
-          // Best-effort logout before local session removal.
-        }
-      });
+      await withLioranClient(
+        session.connectionUri,
+        async (client) => {
+          try {
+            await client.logout();
+          } catch {
+            // Best-effort logout before local session removal.
+          }
+        },
+        session.id,
+      );
     }
   } finally {
     await destroyStudioSession(session?.id);
@@ -223,8 +229,10 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
   const returnTo = sanitizeReturnTo(formString(formData, "returnTo") || "/");
 
   try {
-    await runWithSession(async (connectionUri) => {
-      await withLioranClient(connectionUri, async (client) => {
+    await runWithSession(async (connectionUri, sessionId) => {
+      await withLioranClient(
+        connectionUri,
+        async (client) => {
         switch (action) {
           case "logoutAll":
             await client.logoutAll();
@@ -587,7 +595,7 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
           default:
             throw new Error(`Unsupported Studio action: ${action}`);
         }
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
@@ -608,7 +616,64 @@ export interface ActionResult<T> {
   ok: boolean;
   data?: T;
   error?: string;
+  errorDescriptor?: StudioErrorDescriptor;
   durationMs?: number;
+}
+
+function isRetryableReadError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as Record<string, unknown>;
+
+  if (err.retryable === true) return true;
+  const name = String(err.name || "");
+  const message = String(err.message || "");
+  const grpcStatus = String(err.grpcStatus || err.status || "");
+  const code = String(err.code || "");
+
+  if (
+    name === "ServerOverloadedError" ||
+    name === "ServerUnavailableError" ||
+    name === "ServerNotReadyError"
+  ) {
+    return true;
+  }
+  if (code === "OVERLOADED" || code === "RESOURCE_EXHAUSTED" || code === "UNAVAILABLE") {
+    return true;
+  }
+  if (grpcStatus === "RESOURCE_EXHAUSTED" || grpcStatus === "UNAVAILABLE") {
+    return true;
+  }
+  if (
+    message.includes("RESOURCE_EXHAUSTED") ||
+    message.includes("overloaded") ||
+    message.includes("UNAVAILABLE")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function executeWithRetry<T>(
+  operationName: string,
+  fn: () => Promise<T>,
+  maxRetries = 2,
+): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= maxRetries || !isRetryableReadError(error)) {
+        throw error;
+      }
+      attempt++;
+      const baseDelay = 150 * Math.pow(2, attempt - 1);
+      const jitter = Math.floor(Math.random() * 50);
+      const delayMs = Math.min(baseDelay + jitter, 800);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
 }
 
 export async function listExplorerTreeAction(): Promise<
@@ -616,9 +681,9 @@ export async function listExplorerTreeAction(): Promise<
 > {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
-        const databases = await client.listDatabases();
+        const databases = await executeWithRetry("ListDatabases", () => client.listDatabases());
         const collectionsMap: Record<string, string[]> = {};
         for (const dbName of databases) {
           try {
@@ -633,11 +698,16 @@ export async function listExplorerTreeAction(): Promise<
           data: { databases: [...databases], collectionsMap },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -649,6 +719,7 @@ export async function fetchCollectionDocumentsAction(params: {
   sort?: string;
   limit?: number;
   skip?: number;
+  includeIndexes?: boolean;
 }): Promise<
   ActionResult<{
     documents: Document[];
@@ -658,38 +729,88 @@ export async function fetchCollectionDocumentsAction(params: {
 > {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
+        
         let filterObj: Document | undefined = undefined;
         if (params.filter?.trim()) {
-          filterObj = JSON.parse(params.filter.trim()) as Document;
+          try {
+            filterObj = JSON.parse(params.filter.trim()) as Document;
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in filter: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
         }
 
+        let projectionObj: FindOptions<Document>["projection"] | undefined = undefined;
+        if (params.projection?.trim()) {
+          try {
+            projectionObj = JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"];
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in projection: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
+        }
+
+        let sortObj: FindOptions<Document>["sort"] | undefined = undefined;
+        if (params.sort?.trim()) {
+          try {
+            sortObj = JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"];
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in sort: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
+        }
+
+        // Bound limit (1..100) and skip (>= 0)
+        const limit = Math.min(Math.max(1, params.limit ?? 50), 100);
+        const skip = Math.max(0, params.skip ?? 0);
+
         const options: FindOptions<Document> = {
-          limit: params.limit ?? 50,
-          skip: params.skip ?? 0,
-          ...(params.projection?.trim()
-            ? { projection: JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"] }
-            : {}),
-          ...(params.sort?.trim()
-            ? { sort: JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"] }
-            : {}),
+          limit,
+          skip,
+          ...(projectionObj ? { projection: projectionObj } : {}),
+          ...(sortObj ? { sort: sortObj } : {}),
         };
 
-        const documents = [...(await col.find(filterObj, options).toArray())];
+        const documents = await executeWithRetry("Find", async () => {
+          return [...(await col.find(filterObj, options).toArray())];
+        });
+
+        // Optimization: On page 1 (skip === 0) if fewer documents than limit were returned
+        // (including 0 for empty collections), total count is known without running an expensive aggregation!
         let total = documents.length;
-        try {
-          total = await col.countDocuments(filterObj);
-        } catch {
-          // Fallback to returned length if count fails
+        if (skip === 0 && documents.length < limit) {
+          total = documents.length;
+        } else {
+          try {
+            total = await executeWithRetry("Count", async () => {
+              return await col.countDocuments(filterObj);
+            }, 1);
+          } catch {
+            total = skip + documents.length;
+          }
         }
 
         let indexes: CollectionIndexDefinition[] = [];
-        try {
-          indexes = [...(await col.listIndexes())];
-        } catch {
-          // Indexes are optional
+        if (params.includeIndexes) {
+          try {
+            indexes = await executeWithRetry("ListIndexes", async () => {
+              return [...(await col.listIndexes())];
+            }, 1);
+          } catch {
+            // Indexes are optional
+          }
         }
 
         return {
@@ -697,11 +818,46 @@ export async function fetchCollectionDocumentsAction(params: {
           data: { documents, total, indexes },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
+  }
+}
+
+export async function fetchCollectionIndexesAction(params: {
+  database: string;
+  collection: string;
+}): Promise<ActionResult<{ indexes: CollectionIndexDefinition[] }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri, sessionId) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const col = client.db(params.database).collection<Document>(params.collection);
+        const indexes = await executeWithRetry("ListIndexes", async () => {
+          return [...(await col.listIndexes())];
+        });
+        return {
+          ok: true,
+          data: { indexes },
+          durationMs: Date.now() - start,
+        };
+      }, sessionId);
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -716,31 +872,74 @@ export async function executeQueryAction(params: {
 }): Promise<ActionResult<{ documents: Document[]; total: number }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
+        
         let filterObj: Document | undefined = undefined;
         if (params.filter?.trim()) {
-          filterObj = JSON.parse(params.filter.trim()) as Document;
+          try {
+            filterObj = JSON.parse(params.filter.trim()) as Document;
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in filter: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
         }
 
+        let projectionObj: FindOptions<Document>["projection"] | undefined = undefined;
+        if (params.projection?.trim()) {
+          try {
+            projectionObj = JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"];
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in projection: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
+        }
+
+        let sortObj: FindOptions<Document>["sort"] | undefined = undefined;
+        if (params.sort?.trim()) {
+          try {
+            sortObj = JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"];
+          } catch (parseErr) {
+            return {
+              ok: false,
+              error: `Invalid JSON in sort: ${(parseErr as Error).message}`,
+              durationMs: Date.now() - start,
+            };
+          }
+        }
+
+        const limit = Math.min(Math.max(1, params.limit ?? 50), 100);
+        const skip = Math.max(0, params.skip ?? 0);
+
         const options: FindOptions<Document> = {
-          limit: params.limit ?? 50,
-          skip: params.skip ?? 0,
-          ...(params.projection?.trim()
-            ? { projection: JSON.parse(params.projection.trim()) as FindOptions<Document>["projection"] }
-            : {}),
-          ...(params.sort?.trim()
-            ? { sort: JSON.parse(params.sort.trim()) as FindOptions<Document>["sort"] }
-            : {}),
+          limit,
+          skip,
+          ...(projectionObj ? { projection: projectionObj } : {}),
+          ...(sortObj ? { sort: sortObj } : {}),
         };
 
-        const documents = [...(await col.find(filterObj, options).toArray())];
+        const documents = await executeWithRetry("Find", async () => {
+          return [...(await col.find(filterObj, options).toArray())];
+        });
+
         let total = documents.length;
-        try {
-          total = await col.countDocuments(filterObj);
-        } catch {
-          // Ignore count error
+        if (skip === 0 && documents.length < limit) {
+          total = documents.length;
+        } else {
+          try {
+            total = await executeWithRetry("Count", async () => {
+              return await col.countDocuments(filterObj);
+            }, 1);
+          } catch {
+            total = skip + documents.length;
+          }
         }
 
         return {
@@ -748,11 +947,16 @@ export async function executeQueryAction(params: {
           data: { documents, total },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -763,7 +967,7 @@ export async function executeAggregationAction(params: {
 }): Promise<ActionResult<{ documents: Document[] }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const pipeline = JSON.parse(params.pipelineJson.trim()) as Document[];
@@ -777,11 +981,16 @@ export async function executeAggregationAction(params: {
           data: { documents },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -793,7 +1002,7 @@ export async function insertOneDocumentAction(params: {
 }): Promise<ActionResult<{ insertedId: unknown }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const doc = JSON.parse(params.documentJson) as Document;
@@ -803,11 +1012,16 @@ export async function insertOneDocumentAction(params: {
           data: { insertedId: res.insertedId },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -819,7 +1033,7 @@ export async function insertManyDocumentsAction(params: {
 }): Promise<ActionResult<{ insertedCount: number; insertedIds: readonly unknown[] }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const docs = JSON.parse(params.documentsJson) as Document[];
@@ -835,11 +1049,16 @@ export async function insertManyDocumentsAction(params: {
           },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -853,7 +1072,7 @@ export async function updateOneDocumentAction(params: {
 }): Promise<ActionResult<{ matchedCount: number; modifiedCount: number; upsertedId: unknown }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const filter = JSON.parse(params.filterJson) as Document;
@@ -871,11 +1090,16 @@ export async function updateOneDocumentAction(params: {
           },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -887,7 +1111,7 @@ export async function deleteOneDocumentAction(params: {
 }): Promise<ActionResult<{ deletedCount: number }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const filter = JSON.parse(params.filterJson) as Document;
@@ -897,11 +1121,16 @@ export async function deleteOneDocumentAction(params: {
           data: { deletedCount: res.deletedCount },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -913,7 +1142,7 @@ export async function deleteManyDocumentsAction(params: {
 }): Promise<ActionResult<{ deletedCount: number }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const filter = JSON.parse(params.filterJson) as Document;
@@ -923,11 +1152,16 @@ export async function deleteManyDocumentsAction(params: {
           data: { deletedCount: res.deletedCount },
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -943,7 +1177,7 @@ export async function createIndexAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         const fields = JSON.parse(params.fieldsJson) as readonly (
@@ -966,11 +1200,16 @@ export async function createIndexAction(params: {
         );
 
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -982,16 +1221,21 @@ export async function dropIndexAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const col = client.db(params.database).collection<Document>(params.collection);
         await col.dropIndex(params.indexName, { idempotencyKey: params.idempotencyKey });
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -1000,15 +1244,20 @@ export async function createDatabaseAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         await client.createDatabase(params.databaseName.trim());
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -1021,15 +1270,20 @@ export async function dropDatabaseAction(params: {
     if (params.databaseName !== params.confirmation) {
       throw new Error("Confirmation text does not match database name.");
     }
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         await client.dropDatabase(params.databaseName);
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -1039,15 +1293,20 @@ export async function createCollectionAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         await client.db(params.databaseName).createCollection(params.collectionName.trim());
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -1061,15 +1320,20 @@ export async function dropCollectionAction(params: {
     if (params.collectionName !== params.confirmation) {
       throw new Error("Confirmation text does not match collection name.");
     }
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         await client.db(params.databaseName).dropCollection(params.collectionName);
         return { ok: true, durationMs: Date.now() - start };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }
 
@@ -1079,7 +1343,7 @@ export async function fetchAdminSectionDataAction(
 ): Promise<ActionResult<Record<string, unknown>>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri) => {
+    return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client, diagnostics) => {
         const result: Record<string, unknown> = { diagnostics };
 
@@ -1145,10 +1409,15 @@ export async function fetchAdminSectionDataAction(
           data: result,
           durationMs: Date.now() - start,
         };
-      });
+      }, sessionId);
     });
   } catch (error) {
     const mapped = mapStudioError(error);
-    return { ok: false, error: mapped.message, durationMs: Date.now() - start };
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
   }
 }

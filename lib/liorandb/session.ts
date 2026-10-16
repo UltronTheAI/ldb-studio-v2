@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import type { Principal } from "@liorandb/driver";
 import type { SanitizedConnectionMetadata } from "./connection";
+import { evictLioranClient } from "./client";
 
 const COOKIE_NAME = "liorandb_studio_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -211,7 +212,13 @@ export async function refreshStudioSession(sessionId: string): Promise<void> {
 }
 
 export async function destroyStudioSession(sessionId?: string): Promise<void> {
-  void sessionId;
+  if (sessionId) {
+    try {
+      await evictLioranClient(sessionId);
+    } catch {
+      // Ignore client eviction errors
+    }
+  }
   try {
     const cookieStore = await cookies();
     cookieStore.delete(COOKIE_NAME);

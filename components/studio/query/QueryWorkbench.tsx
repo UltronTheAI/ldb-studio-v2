@@ -17,6 +17,7 @@ import {
   deleteOneDocumentAction,
   deleteManyDocumentsAction,
 } from "@/app/actions";
+import type { StudioErrorDescriptor } from "@/lib/liorandb/errors";
 import { DocumentTable } from "../collection/DocumentTable";
 import { DocumentJsonView } from "../collection/DocumentJsonView";
 import { DocumentTreeView } from "../collection/DocumentTreeView";
@@ -139,9 +140,12 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
   // Results & Execution state
   const [isRunning, setIsRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(tab.error || null);
+  const [errorDescriptor, setErrorDescriptor] = useState<StudioErrorDescriptor | null>(null);
   const [mutationSuccessMessage, setMutationSuccessMessage] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState<number | null>(tab.executionDurationMs ?? null);
   const [copiedResults, setCopiedResults] = useState(false);
+
+  const activeQueryIdRef = useRef<number>(0);
 
   // In-Browser search & filter
   const [browserSearch, setBrowserSearch] = useState("");
@@ -287,8 +291,10 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
   // Run Query (Find)
   const handleRunFind = useCallback(
     async (overrideFilter?: string) => {
+      const reqId = ++activeQueryIdRef.current;
       setIsRunning(true);
       setErrorMsg(null);
+      setErrorDescriptor(null);
       setMutationSuccessMessage(null);
 
       const activeFilter = overrideFilter ?? filterCode;
@@ -315,7 +321,10 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
           skip: skipVal,
         });
 
+        if (reqId !== activeQueryIdRef.current) return;
+
         if (res.ok && res.data) {
+          setErrorDescriptor(null);
           setDurationMs(res.durationMs ?? null);
           updateTabState(tab.id, {
             title: queryName,
@@ -353,6 +362,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
         } else {
           const error = res.error || "Query failed";
           setErrorMsg(error);
+          setErrorDescriptor(res.errorDescriptor ?? null);
           addQueryHistory({
             id: `hist-${Date.now()}`,
             timestamp: Date.now(),
@@ -367,7 +377,9 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
           });
         }
       } finally {
-        setIsRunning(false);
+        if (reqId === activeQueryIdRef.current) {
+          setIsRunning(false);
+        }
       }
     },
     [
@@ -1241,12 +1253,24 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
                 message={`Querying ${selectedDb}.${selectedCol}...`}
               />
             ) : errorMsg && state.results === null ? (
-              <div className="p-4 rounded-[8px] border border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444] font-mono text-xs space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <AlertCircleIcon size={14} />
-                  <span>Execution Error</span>
+              <div className="p-4 rounded-[8px] border border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444] font-mono text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <AlertCircleIcon size={14} />
+                    <span>{errorDescriptor?.title || "Execution Error"}</span>
+                  </div>
+                  {errorDescriptor?.grpcStatus && (
+                    <span className="px-1.5 py-0.5 rounded bg-[var(--surface-card)] border border-[#ef4444]/40 text-[10px] uppercase font-bold text-[#ef4444]">
+                      gRPC: {errorDescriptor.grpcStatus}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] leading-relaxed break-all pl-5">{errorMsg}</div>
+                {errorDescriptor?.suggestion && (
+                  <div className="text-[10px] italic opacity-85 pl-5">
+                    Suggestion: {errorDescriptor.suggestion}
+                  </div>
+                )}
               </div>
             ) : state.results === null ? (
               <div className="h-full flex flex-col items-center justify-center text-center text-xs text-[var(--muted)] font-mono space-y-3 p-6">

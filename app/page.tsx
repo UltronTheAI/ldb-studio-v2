@@ -1274,7 +1274,7 @@ export default async function Home({ searchParams }: PageProps) {
         ready,
         clusterSummary,
       };
-    });
+    }, session.id);
   } catch (error) {
     const mapped = mapStudioError(error);
     if (mapped.shouldClearSession) {

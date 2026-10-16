@@ -11,10 +11,12 @@ import type {
 } from "@/lib/studio/workspace-types";
 import {
   fetchCollectionDocumentsAction,
+  fetchCollectionIndexesAction,
   insertOneDocumentAction,
   updateOneDocumentAction,
   deleteOneDocumentAction,
 } from "@/app/actions";
+import type { StudioErrorDescriptor } from "@/lib/liorandb/errors";
 import { DocumentTable } from "./DocumentTable";
 import { DocumentJsonView } from "./DocumentJsonView";
 import { DocumentTreeView } from "./DocumentTreeView";
@@ -37,6 +39,7 @@ import {
   ChevronRightIcon,
   ZapIcon,
   Trash2Icon,
+  AlertCircleIcon,
 } from "lucide-react";
 
 interface CollectionWorkspaceProps {
@@ -72,6 +75,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
   const [sortInput, setSortInput] = useState(state.sort || "");
   const [showOptions, setShowOptions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<StudioErrorDescriptor | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(tab.executionDurationMs ?? null);
 
   // Modal states
@@ -83,6 +87,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const activeRequestIdRef = useRef<number>(0);
   const loadedKeyRef = useRef<string>("");
   const prevRefreshTriggerRef = useRef(refreshTrigger);
 
@@ -95,7 +100,10 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       page?: number;
       pageSize?: number;
     }) => {
+      const reqId = ++activeRequestIdRef.current;
       setIsLoading(true);
+      setErrorInfo(null);
+
       const activeFilter = overrideParams?.filter ?? filterInput;
       const activeProjection = overrideParams?.projection ?? projectionInput;
       const activeSort = overrideParams?.sort ?? sortInput;
@@ -114,7 +122,13 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
           skip,
         });
 
+        // Drop stale responses if a newer request has started
+        if (reqId !== activeRequestIdRef.current) {
+          return;
+        }
+
         if (res.ok && res.data) {
+          setErrorInfo(null);
           updateTabState(tab.id, {
             executionDurationMs: res.durationMs,
             lastExecutedAt: Date.now(),
@@ -129,7 +143,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               skip,
               documents: res.data.documents,
               totalDocuments: res.data.total,
-              indexes: res.data.indexes,
+              indexes: res.data.indexes.length > 0 ? res.data.indexes : state.indexes,
             },
           });
           setExecutionTime(res.durationMs ?? null);
@@ -149,12 +163,29 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             });
           }
         } else {
+          const desc: StudioErrorDescriptor = res.errorDescriptor ?? {
+            code: "QUERY_FAILED",
+            category: "server-overloaded",
+            title: "Query Failed",
+            message: res.error || "Failed to load collection documents",
+          };
+          setErrorInfo(desc);
           setStatusMessage({ text: res.error || "Failed to load collection documents", tone: "error" });
         }
       } catch (err: unknown) {
-        setStatusMessage({ text: (err as Error).message, tone: "error" });
+        if (reqId !== activeRequestIdRef.current) return;
+        const message = (err as Error).message;
+        setErrorInfo({
+          code: "CLIENT_REQUEST_ERROR",
+          category: "network",
+          title: "Client Request Error",
+          message,
+        });
+        setStatusMessage({ text: message, tone: "error" });
       } finally {
-        setIsLoading(false);
+        if (reqId === activeRequestIdRef.current) {
+          setIsLoading(false);
+        }
       }
     },
     [
@@ -171,18 +202,41 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     ],
   );
 
+  // On-demand index loading when switching to Indexes tab
+  const loadIndexes = useCallback(async () => {
+    try {
+      const res = await fetchCollectionIndexesAction({ database, collection });
+      if (res.ok && res.data) {
+        updateTabState(tab.id, {
+          collectionState: {
+            ...state,
+            indexes: res.data.indexes,
+          },
+        });
+      }
+    } catch {
+      // Non-fatal
+    }
+  }, [database, collection, state, tab.id, updateTabState]);
+
+  useEffect(() => {
+    if (state.subTab === "indexes" && state.indexes.length === 0) {
+      void loadIndexes();
+    }
+  }, [state.subTab, state.indexes.length, loadIndexes]);
+
   // Initial load once on mount/collection change, or upon explicit refreshTrigger
   useEffect(() => {
     const currentKey = `${tab.id}:${database}:${collection}`;
     const isNew = loadedKeyRef.current !== currentKey;
     const isRefresh = refreshTrigger > 0 && refreshTrigger !== prevRefreshTriggerRef.current;
 
-    if (isNew || isRefresh) {
+    if (isNew || isRefresh || state.documents.length === 0) {
       loadedKeyRef.current = currentKey;
       prevRefreshTriggerRef.current = refreshTrigger;
       void loadDocuments();
     }
-  }, [tab.id, database, collection, refreshTrigger, loadDocuments]);
+  }, [tab.id, database, collection, refreshTrigger, loadDocuments, state.documents.length]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -470,12 +524,92 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         {state.subTab === "documents" && (
           <div className="flex flex-col h-full">
             <div className="relative flex-1 overflow-hidden">
-              {isLoading && state.documents.length === 0 ? (
+              {errorInfo ? (
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in duration-200">
+                  <div className="max-w-md w-full rounded-[10px] border border-[var(--semantic-error)] bg-[var(--surface-card)] p-6 shadow-sm space-y-4">
+                    <div className="flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-[var(--semantic-error)]/10 flex items-center justify-center text-[var(--semantic-error)]">
+                        <AlertCircleIcon size={22} />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-sans text-sm font-bold text-[var(--semantic-error)]">
+                        {errorInfo.title}
+                      </h4>
+                      <p className="font-mono text-xs text-[var(--body)] leading-relaxed">
+                        {errorInfo.message}
+                      </p>
+                    </div>
+                    {errorInfo.grpcStatus && (
+                      <div className="inline-block px-2.5 py-1 rounded bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] font-mono text-[10px] text-[var(--muted)]">
+                        gRPC: {errorInfo.grpcStatus}
+                      </div>
+                    )}
+                    {errorInfo.suggestion && (
+                      <p className="text-[11px] text-[var(--muted)] italic">
+                        {errorInfo.suggestion}
+                      </p>
+                    )}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => loadDocuments()}
+                        className="btn-primary h-8 px-4 text-xs font-semibold inline-flex items-center gap-1.5"
+                      >
+                        <RefreshCwIcon size={13} />
+                        <span>Try Again</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : isLoading && state.documents.length === 0 ? (
                 <TableSkeletonWidget
                   columns={5}
                   rows={8}
                   message={`Fetching documents from ${collection}...`}
                 />
+              ) : state.documents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in duration-200">
+                  <div className="max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-8 shadow-xs space-y-3">
+                    <div className="h-10 w-10 mx-auto rounded-full bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] flex items-center justify-center text-[var(--muted)]">
+                      <BoxesIcon size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-[var(--ink)]">
+                        {filterInput.trim() && filterInput.trim() !== "{}"
+                          ? "No matching documents"
+                          : "Empty Collection"}
+                      </h4>
+                      <p className="mt-1 text-xs text-[var(--muted)] leading-relaxed">
+                        {filterInput.trim() && filterInput.trim() !== "{}"
+                          ? `No documents matched filter: ${filterInput}`
+                          : `The collection '${collection}' contains zero documents.`}
+                      </p>
+                    </div>
+                    {filterInput.trim() && filterInput.trim() !== "{}" ? (
+                      <button
+                        type="button"
+                        onClick={handleResetFilter}
+                        className="btn-secondary h-7 px-3 text-xs"
+                      >
+                        Reset Filter
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsInserting(true);
+                          setActiveDocForEdit(null);
+                          setIsEditorOpen(true);
+                        }}
+                        className="btn-primary h-7 px-3 text-xs font-semibold inline-flex items-center gap-1.5 mx-auto"
+                      >
+                        <PlusIcon size={12} />
+                        <span>Insert Document</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
                   {state.viewMode === "table" && (
@@ -585,7 +719,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             collection={collection}
             indexes={state.indexes}
             isLoading={isLoading}
-            onRefresh={() => loadDocuments()}
+            onRefresh={() => loadIndexes()}
           />
         )}
 

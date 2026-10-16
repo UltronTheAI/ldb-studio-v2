@@ -53,6 +53,16 @@ export interface StudioErrorDescriptor {
   readonly title: string;
   readonly message: string;
   readonly code: string;
+  readonly category?: string;
+  readonly grpcStatus?: string;
+  readonly grpcStatusCode?: number;
+  readonly requestId?: string;
+  readonly serverCode?: string;
+  readonly retryable?: boolean;
+  readonly retryAfterMs?: number;
+  readonly operation?: string;
+  readonly endpoint?: string;
+  readonly suggestion?: string;
   readonly shouldClearSession?: boolean;
   readonly isAuthorizationError?: boolean;
 }
@@ -216,42 +226,146 @@ export function mapStudioError(error: unknown): StudioErrorDescriptor {
     };
   }
 
-  if (
-    error instanceof ServerUnavailableError ||
-    error instanceof ServerOverloadedError ||
-    error instanceof ServerNotReadyError
-  ) {
+  if (error instanceof ServerOverloadedError) {
     const errorObj = error as unknown as Record<string, unknown>;
     const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined;
+    const suggestion = typeof errorObj.suggestion === "string" ? errorObj.suggestion : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
+    const retryAfterMs = typeof errorObj.retryAfterMS === "number" ? errorObj.retryAfterMS : undefined;
+
+    return {
+      title: "Server overloaded / rate limited",
+      message: grpcDetail
+        ? `${redactMessage(error.message)} (gRPC: ${grpcDetail})`
+        : redactMessage(error.message),
+      code: error.code,
+      category: "server-overloaded",
+      grpcStatus: grpcDetail,
+      grpcStatusCode: grpcCode,
+      requestId,
+      serverCode,
+      retryable: true,
+      retryAfterMs,
+      operation,
+      endpoint,
+      suggestion,
+    };
+  }
+
+  if (error instanceof ServerUnavailableError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined;
+    const suggestion = typeof errorObj.suggestion === "string" ? errorObj.suggestion : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
+
     return {
       title: "Server unavailable",
       message: grpcDetail
         ? `${redactMessage(error.message)} (gRPC: ${grpcDetail})`
         : redactMessage(error.message),
       code: error.code,
+      category: "server-unavailable",
+      grpcStatus: grpcDetail,
+      grpcStatusCode: grpcCode,
+      requestId,
+      serverCode,
+      retryable: true,
+      operation,
+      endpoint,
+      suggestion,
+    };
+  }
+
+  if (error instanceof ServerNotReadyError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined;
+    const suggestion = typeof errorObj.suggestion === "string" ? errorObj.suggestion : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
+
+    return {
+      title: "Server not ready",
+      message: grpcDetail
+        ? `${redactMessage(error.message)} (gRPC: ${grpcDetail})`
+        : redactMessage(error.message),
+      code: error.code,
+      category: "server-not-ready",
+      grpcStatus: grpcDetail,
+      grpcStatusCode: grpcCode,
+      requestId,
+      serverCode,
+      retryable: true,
+      operation,
+      endpoint,
+      suggestion,
     };
   }
 
   if (error instanceof ConnectionError || error instanceof NetworkError) {
     const errorObj = error as unknown as Record<string, unknown>;
     const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined;
+    const suggestion = typeof errorObj.suggestion === "string" ? errorObj.suggestion : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
+
     return {
       title: "Connection failure",
       message: grpcDetail
         ? `${redactMessage(error.message)} (gRPC: ${grpcDetail}, HTTP fallback disabled)`
         : `${redactMessage(error.message)} (gRPC transport, HTTP fallback disabled)`,
       code: error.code,
+      category: "network",
+      grpcStatus: grpcDetail,
+      grpcStatusCode: grpcCode,
+      requestId,
+      serverCode,
+      retryable: error.retryable,
+      operation,
+      endpoint,
+      suggestion,
     };
   }
 
   if (error instanceof ApiError || error instanceof LioranDriverError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcDetail = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = error instanceof ApiError && error.serverCode ? error.serverCode : (typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined);
+    const suggestion = typeof errorObj.suggestion === "string" ? errorObj.suggestion : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
+
     return {
       title: "Driver error",
       message:
-        error instanceof ApiError && error.serverCode
-          ? `${redactMessage(error.message)} (${error.serverCode})`
+        serverCode
+          ? `${redactMessage(error.message)} (${serverCode})`
           : redactMessage(error.message),
-      code: error instanceof ApiError && error.serverCode ? error.serverCode : error.code,
+      code: serverCode ?? error.code,
+      category: typeof errorObj.category === "string" ? errorObj.category : "unknown",
+      grpcStatus: grpcDetail,
+      grpcStatusCode: grpcCode,
+      requestId,
+      serverCode,
+      retryable: error.retryable,
+      operation,
+      endpoint,
+      suggestion,
     };
   }
 
