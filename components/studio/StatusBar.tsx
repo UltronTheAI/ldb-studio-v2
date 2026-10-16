@@ -37,47 +37,48 @@ export function StatusBar() {
     activeTab?.executionDurationMs ?? lastExecutionDurationMs;
 
   return (
-    <footer className="h-6 border-t border-[var(--hairline-strong)] bg-[var(--surface-dark)] text-[#9aa0a6] px-3 flex items-center justify-between text-[11px] font-mono select-none shrink-0 z-20">
+    <footer className="h-6 border-t border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-[var(--muted)] px-3 flex items-center justify-between text-[11px] font-mono select-none shrink-0 z-20">
       {/* Left: Connection State */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center text-white font-medium">
+      <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 text-[var(--ink)] font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] inline-block shrink-0" />
           <span>Connected</span>
         </div>
 
-        <span className="hidden sm:inline text-[#555a64]">•</span>
+        <span className="hidden sm:inline text-[var(--hairline-strong)]">•</span>
 
-        <div className="hidden sm:flex items-center gap-1 text-[#b0b4ba]">
+        <div className="hidden sm:flex items-center gap-1 text-[var(--body)]">
           <span>{initialContext.host}:{initialContext.port}</span>
-          <span className="text-[10px] text-[#717684]">({initialContext.transport})</span>
+          <span className="text-[10px] text-[var(--muted)]">({initialContext.transport})</span>
         </div>
       </div>
 
       {/* Center: Context & Document Counts */}
       <div className="flex items-center gap-3 truncate mx-2">
         {activeTab?.database && (
-          <div className="hidden md:flex items-center gap-1 text-[#b0b4ba]">
-            <DatabaseIcon size={11} className="text-[#3b82f6]" />
-            <span className="font-semibold text-white">{activeTab.database}</span>
+          <div className="hidden md:flex items-center gap-1 text-[var(--body)]">
+            <DatabaseIcon size={11} className="text-[var(--text-link)] shrink-0" />
+            <span className="font-semibold text-[var(--ink)]">{activeTab.database}</span>
             {activeTab.collection && (
               <>
-                <span className="text-[#555a64]">/</span>
-                <span className="text-[#60a5fa]">{activeTab.collection}</span>
+                <span className="text-[var(--muted)]">/</span>
+                <span className="text-[var(--text-link)] font-medium">{activeTab.collection}</span>
               </>
             )}
           </div>
         )}
 
         {totalDocs !== null && (
-          <div className="flex items-center gap-1 text-[#b0b4ba]">
+          <div className="flex items-center gap-1 text-[var(--body)]">
             <span>{totalDocs} total docs</span>
             {loadedDocs !== null && loadedDocs !== totalDocs && (
-              <span className="text-[#717684]">({loadedDocs} loaded)</span>
+              <span className="text-[var(--muted)]">({loadedDocs} loaded)</span>
             )}
           </div>
         )}
 
         {typeof duration === "number" && (
-          <div className="hidden sm:flex items-center gap-1 text-[#fbbf24]">
+          <div className="hidden sm:flex items-center gap-1 text-[var(--accent-warning)]">
             <ZapIcon size={11} />
             <span>{duration} ms</span>
           </div>
@@ -86,12 +87,12 @@ export function StatusBar() {
         {/* Transient Status Message */}
         {statusMessage && (
           <div
-            className={`flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] ${
+            className={`flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] border ${
               statusMessage.tone === "error"
-                ? "bg-[#ef4444]/20 text-[#ef4444]"
+                ? "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20"
                 : statusMessage.tone === "success"
-                ? "bg-[var(--text-link)]/20 text-[#60a5fa]"
-                : "bg-blue-500/20 text-blue-400"
+                ? "bg-[#16a34a]/10 text-[#16a34a] border-[#16a34a]/20"
+                : "bg-[var(--text-link)]/10 text-[var(--text-link)] border-[var(--text-link)]/20"
             }`}
           >
             {statusMessage.tone === "error" ? (
@@ -106,7 +107,7 @@ export function StatusBar() {
 
       {/* Right: Tabs Count & Quick Palette Trigger */}
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-1 text-[#717684]">
+        <div className="hidden md:flex items-center gap-1 text-[var(--muted)]">
           <LayersIcon size={11} />
           <span>{tabs.length} tabs open</span>
         </div>
@@ -114,7 +115,7 @@ export function StatusBar() {
         <button
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
-          className="flex items-center gap-1 hover:text-white transition cursor-pointer"
+          className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] px-1.5 py-0.5 rounded transition cursor-pointer"
           title="Open Command Palette (Ctrl+Shift+P)"
         >
           <CommandIcon size={11} />

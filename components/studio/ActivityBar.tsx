@@ -73,7 +73,7 @@ export function ActivityBar() {
   };
 
   return (
-    <aside className="w-12 border-r border-[var(--hairline-strong)] bg-[var(--surface-dark)] flex flex-col items-center py-2 select-none z-20 shrink-0 justify-between text-[#8a8f98]">
+    <aside className="w-12 border-r border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex flex-col items-center py-2 select-none z-20 shrink-0 justify-between text-[var(--muted)]">
       {/* Top Activities */}
       <div className="flex flex-col items-center gap-1 w-full">
         {ACTIVITIES.map((item) => {
@@ -90,12 +90,12 @@ export function ActivityBar() {
                   ? "Backup Management (Disabled - We will bring it in the future)"
                   : `${item.label} (Click to switch)`
               }
-              className={`relative w-10 h-10 rounded-[6px] flex items-center justify-center transition ${
+              className={`relative w-10 h-10 rounded-[6px] flex items-center justify-center transition cursor-pointer ${
                 item.disabled
                   ? "opacity-35 cursor-not-allowed hover:bg-transparent"
                   : isActive
-                  ? "text-white bg-[#252830]"
-                  : "hover:text-[#e4e7eb] hover:bg-[#1a1d24]"
+                  ? "text-[var(--ink)] bg-[var(--surface-strong)] shadow-xs"
+                  : "hover:text-[var(--ink)] hover:bg-[var(--surface-strong)]"
               }`}
             >
               {isActive && !item.disabled && (
@@ -107,12 +107,12 @@ export function ActivityBar() {
         })}
 
         {/* Quick New Query Action Button */}
-        <div className="w-6 h-[1px] bg-[#2a2d36] my-1" />
+        <div className="w-6 h-[1px] bg-[var(--hairline-strong)] my-1" />
         <button
           type="button"
           onClick={() => openQueryTab()}
           title="New Query Editor Tab"
-          className="w-10 h-10 rounded-[6px] flex items-center justify-center text-[#8a8f98] hover:text-white hover:bg-[#1a1d24] transition"
+          className="w-10 h-10 rounded-[6px] flex items-center justify-center text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition cursor-pointer"
         >
           <PlusIcon size={18} />
         </button>
@@ -126,10 +126,10 @@ export function ActivityBar() {
             openAdminTab("settings");
           }}
           title="Studio Settings"
-          className={`w-10 h-10 rounded-[6px] flex items-center justify-center transition ${
+          className={`w-10 h-10 rounded-[6px] flex items-center justify-center transition cursor-pointer ${
             activeTab?.type === "admin" && activeTab?.adminState?.subSection === "settings"
-              ? "text-white bg-[#252830]"
-              : "hover:text-[#e4e7eb] hover:bg-[#1a1d24]"
+              ? "text-[var(--ink)] bg-[var(--surface-strong)] shadow-xs"
+              : "hover:text-[var(--ink)] hover:bg-[var(--surface-strong)]"
           }`}
         >
           <SettingsIcon size={18} />
@@ -139,7 +139,7 @@ export function ActivityBar() {
           type="button"
           onClick={toggleSidebar}
           title={isSidebarCollapsed ? "Show Sidebar (Ctrl+B)" : "Hide Sidebar (Ctrl+B)"}
-          className="w-10 h-10 rounded-[6px] flex items-center justify-center text-[#8a8f98] hover:text-white hover:bg-[#1a1d24] transition"
+          className="w-10 h-10 rounded-[6px] flex items-center justify-center text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition cursor-pointer"
         >
           {isSidebarCollapsed ? (
             <PanelLeftOpenIcon size={18} />
