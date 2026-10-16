@@ -34,6 +34,8 @@ import {
   MAX_RETENTION_DAYS,
   filterManualBackups,
 } from "@/lib/studio/backup-policy";
+import { isProtectedDatabase } from "@/lib/liorandb/protection";
+
 
 function formString(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -251,6 +253,9 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             return;
           case "dropDatabase": {
             const name = formString(formData, "databaseName");
+            if (isProtectedDatabase(name)) {
+              throw new Error("The 'default' database is protected and cannot be dropped.");
+            }
             if (formString(formData, "confirmation") !== name) {
               throw new Error("Database confirmation text did not match.");
             }
@@ -1267,6 +1272,13 @@ export async function dropDatabaseAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
+    if (isProtectedDatabase(params.databaseName)) {
+      return {
+        ok: false,
+        error: "The 'default' database is protected and cannot be dropped.",
+        durationMs: Date.now() - start,
+      };
+    }
     if (params.databaseName !== params.confirmation) {
       throw new Error("Confirmation text does not match database name.");
     }

@@ -21,6 +21,12 @@ import {
   closeAllPooledClients,
 } from "../lib/liorandb/client";
 
+import {
+  isProtectedDatabase,
+  PROTECTED_DATABASES,
+} from "../lib/liorandb/protection";
+
+
 describe("Document Read Lifecycle & Studio Error Handling", () => {
   beforeEach(async () => {
     await closeAllPooledClients();
@@ -444,6 +450,62 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
       );
     });
   });
+
+  describe("Protected Database Guards", () => {
+    it("identifies 'default' as protected case-insensitively and with whitespace", () => {
+      assert.strictEqual(isProtectedDatabase("default"), true);
+      assert.strictEqual(isProtectedDatabase("Default"), true);
+      assert.strictEqual(isProtectedDatabase("DEFAULT"), true);
+      assert.strictEqual(isProtectedDatabase("  default  "), true);
+      assert.strictEqual(PROTECTED_DATABASES.has("default"), true);
+    });
+
+    it("allows non-system databases to be considered unprotected", () => {
+      assert.strictEqual(isProtectedDatabase("analytics"), false);
+      assert.strictEqual(isProtectedDatabase("users"), false);
+      assert.strictEqual(isProtectedDatabase("production"), false);
+      assert.strictEqual(isProtectedDatabase(""), false);
+      assert.strictEqual(isProtectedDatabase(null), false);
+      assert.strictEqual(isProtectedDatabase(undefined), false);
+    });
+
+    it("simulates dropDatabase guard preventing destruction of the default database", () => {
+      let underlyingDriverDropCalled = false;
+
+      function simulateDropDatabase(dbName: string, confirmation: string) {
+        if (isProtectedDatabase(dbName)) {
+          return {
+            ok: false,
+            error: "The 'default' database is protected and cannot be dropped.",
+          };
+        }
+        if (dbName !== confirmation) {
+          throw new Error("Confirmation text does not match database name.");
+        }
+        underlyingDriverDropCalled = true;
+        return { ok: true };
+      }
+
+      // Attempt to drop default
+      const res = simulateDropDatabase("default", "default");
+      assert.strictEqual(res.ok, false);
+      assert.strictEqual(
+        res.error,
+        "The 'default' database is protected and cannot be dropped.",
+      );
+      assert.strictEqual(
+        underlyingDriverDropCalled,
+        false,
+        "Underlying driver dropDatabase must never be called for 'default'",
+      );
+
+      // Normal database drops succeed
+      const normalRes = simulateDropDatabase("temp_db", "temp_db");
+      assert.strictEqual(normalRes.ok, true);
+      assert.strictEqual(underlyingDriverDropCalled, true);
+    });
+  });
 });
+
 
 

@@ -19,7 +19,10 @@ import {
   SearchIcon,
   BoxesIcon,
   TerminalIcon,
+  LockIcon,
 } from "lucide-react";
+import { isProtectedDatabase } from "@/lib/liorandb/protection";
+
 
 export function DatabaseTree() {
   const {
@@ -120,6 +123,15 @@ export function DatabaseTree() {
 
   const handleConfirmDrop = async () => {
     if (!dropModal) return;
+    if (dropModal.type === "database" && isProtectedDatabase(dropModal.database)) {
+      setStatusMessage({
+        text: "The 'default' database is protected and cannot be dropped.",
+        tone: "error",
+      });
+      setDropModal(null);
+      setDropConfirmText("");
+      return;
+    }
     setIsDropping(true);
     try {
       if (dropModal.type === "database") {
@@ -225,6 +237,11 @@ export function DatabaseTree() {
                     </span>
                     <DatabaseIcon size={13} className="text-[#3b82f6] shrink-0" />
                     <span className="font-mono text-xs truncate">{db}</span>
+                    {isProtectedDatabase(db) && (
+                      <span title="Protected System Database" className="text-[var(--muted)] opacity-60 shrink-0">
+                        <LockIcon size={11} />
+                      </span>
+                    )}
                   </div>
 
                   {/* Actions & Badge */}
@@ -378,17 +395,27 @@ export function DatabaseTree() {
                   <span>New Query Workbench</span>
                 </button>
                 <div className="h-[1px] bg-[var(--hairline)] my-1" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDropModal({ type: "database", database: contextMenu.database });
-                    setContextMenu(null);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-[#ef4444]/10 text-[#ef4444] flex items-center gap-2 font-medium"
-                >
-                  <Trash2Icon size={13} />
-                  <span>Drop Database...</span>
-                </button>
+                {isProtectedDatabase(contextMenu.database) ? (
+                  <div
+                    className="w-full text-left px-3 py-1.5 text-[var(--muted)] flex items-center gap-2 cursor-not-allowed select-none opacity-60"
+                    title="The 'default' database is protected and cannot be dropped."
+                  >
+                    <LockIcon size={13} />
+                    <span>Protected Database</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropModal({ type: "database", database: contextMenu.database });
+                      setContextMenu(null);
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-[#ef4444]/10 text-[#ef4444] flex items-center gap-2 font-medium"
+                  >
+                    <Trash2Icon size={13} />
+                    <span>Drop Database...</span>
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -552,62 +579,90 @@ export function DatabaseTree() {
       {dropModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
-            <div className="flex items-center gap-2 text-[#ef4444]">
-              <Trash2Icon size={18} />
-              <h3 className="font-sans text-sm font-bold">
-                Drop {dropModal.type === "database" ? "Database" : "Collection"}
-              </h3>
-            </div>
-            <p className="text-xs text-[var(--body)] leading-relaxed">
-              This action is <span className="font-bold text-[#ef4444]">permanent</span> and cannot
-              be undone. All documents in{" "}
-              <code className="font-mono text-[#ef4444] bg-[#ef4444]/10 px-1 py-0.5 rounded">
-                {dropModal.type === "database"
-                  ? dropModal.database
-                  : `${dropModal.database}.${dropModal.collection}`}
-              </code>{" "}
-              will be permanently destroyed.
-            </p>
-            <div>
-              <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
-                Type{" "}
-                <span className="font-mono text-[#ef4444]">
-                  {dropModal.type === "database" ? dropModal.database : dropModal.collection}
-                </span>{" "}
-                to confirm:
-              </label>
-              <input
-                type="text"
-                value={dropConfirmText}
-                onChange={(e) => setDropConfirmText(e.target.value)}
-                autoFocus
-                className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none focus:border-[#ef4444]"
-              />
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDropModal(null);
-                  setDropConfirmText("");
-                }}
-                className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDrop}
-                disabled={
-                  isDropping ||
-                  dropConfirmText !==
-                    (dropModal.type === "database" ? dropModal.database : dropModal.collection)
-                }
-                className="px-4 py-1.5 rounded-[6px] bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition"
-              >
-                {isDropping ? "Dropping..." : "Drop Permanently"}
-              </button>
-            </div>
+            {dropModal.type === "database" && isProtectedDatabase(dropModal.database) ? (
+              <>
+                <div className="flex items-center gap-2 text-[var(--muted)]">
+                  <LockIcon size={18} />
+                  <h3 className="font-sans text-sm font-bold text-[var(--ink)]">
+                    Protected Database
+                  </h3>
+                </div>
+                <p className="text-xs text-[var(--body)] leading-relaxed">
+                  The <code className="font-mono text-[#ef4444] bg-[#ef4444]/10 px-1 py-0.5 rounded">{dropModal.database}</code> database is a protected system database and cannot be dropped or deleted.
+                </p>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropModal(null);
+                      setDropConfirmText("");
+                    }}
+                    className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-[#ef4444]">
+                  <Trash2Icon size={18} />
+                  <h3 className="font-sans text-sm font-bold">
+                    Drop {dropModal.type === "database" ? "Database" : "Collection"}
+                  </h3>
+                </div>
+                <p className="text-xs text-[var(--body)] leading-relaxed">
+                  This action is <span className="font-bold text-[#ef4444]">permanent</span> and cannot
+                  be undone. All documents in{" "}
+                  <code className="font-mono text-[#ef4444] bg-[#ef4444]/10 px-1 py-0.5 rounded">
+                    {dropModal.type === "database"
+                      ? dropModal.database
+                      : `${dropModal.database}.${dropModal.collection}`}
+                  </code>{" "}
+                  will be permanently destroyed.
+                </p>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[var(--ink)] mb-1">
+                    Type{" "}
+                    <span className="font-mono text-[#ef4444]">
+                      {dropModal.type === "database" ? dropModal.database : dropModal.collection}
+                    </span>{" "}
+                    to confirm:
+                  </label>
+                  <input
+                    type="text"
+                    value={dropConfirmText}
+                    onChange={(e) => setDropConfirmText(e.target.value)}
+                    autoFocus
+                    className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none focus:border-[#ef4444]"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropModal(null);
+                      setDropConfirmText("");
+                    }}
+                    className="px-3 py-1.5 rounded-[6px] border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs text-[var(--ink)] font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDrop}
+                    disabled={
+                      isDropping ||
+                      dropConfirmText !==
+                        (dropModal.type === "database" ? dropModal.database : dropModal.collection)
+                    }
+                    className="px-4 py-1.5 rounded-[6px] bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition"
+                  >
+                    {isDropping ? "Dropping..." : "Drop Permanently"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

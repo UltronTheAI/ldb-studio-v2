@@ -18,3 +18,6 @@ export async function createDatabaseWithDriver(
  * Database operations strictly communicate over gRPC with zero HTTP fallback.
  */
 export const createDatabaseWithDriverFallback = createDatabaseWithDriver;
+
+export { PROTECTED_DATABASES, isProtectedDatabase } from "./protection";
+
