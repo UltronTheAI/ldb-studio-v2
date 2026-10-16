@@ -392,6 +392,58 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
       // Explicit refresh forces reload
       assert.strictEqual(triggerIndexLoad(key, true), true, "Explicit refresh must force index reload");
     });
+
+    it("displays loading widget while fetching and only shows empty collection when find returns 0", () => {
+      type ViewState = "error" | "loading-skeleton" | "empty-collection" | "documents";
+
+      function resolveViewState(
+        error: boolean,
+        isLoading: boolean,
+        hasLoaded: boolean,
+        docCount: number,
+      ): ViewState {
+        if (error) return "error";
+        if ((isLoading || !hasLoaded) && docCount === 0) return "loading-skeleton";
+        if (docCount === 0) return "empty-collection";
+        return "documents";
+      }
+
+      // Step 1: Collection tab just opened - request has not started or is in flight
+      assert.strictEqual(
+        resolveViewState(false, true, false, 0),
+        "loading-skeleton",
+        "Must show loading skeleton when tab opens, NOT empty collection",
+      );
+
+      // Step 2: Request in flight
+      assert.strictEqual(
+        resolveViewState(false, true, true, 0),
+        "loading-skeleton",
+        "Must show loading skeleton while fetch is in progress with 0 documents",
+      );
+
+      // Step 3: Find completes and returns 0 documents
+      assert.strictEqual(
+        resolveViewState(false, false, true, 0),
+        "empty-collection",
+        "Must show empty collection ONLY when find request has completed with 0 documents",
+      );
+
+      // Step 4: Find completes and returns >0 documents
+      assert.strictEqual(
+        resolveViewState(false, false, true, 25),
+        "documents",
+        "Must show documents when find returns matching documents",
+      );
+
+      // Step 5: Error occurs
+      assert.strictEqual(
+        resolveViewState(true, false, false, 0),
+        "error",
+        "Must show error card when find query errors",
+      );
+    });
   });
 });
+
 

@@ -70,11 +70,13 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     [tab.collectionState],
   );
 
+  const hasLoaded = Boolean(tab.lastExecutedAt);
   const [filterInput, setFilterInput] = useState(state.filter || "{}");
   const [projectionInput, setProjectionInput] = useState(state.projection || "");
   const [sortInput, setSortInput] = useState(state.sort || "");
   const [showOptions, setShowOptions] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!hasLoaded);
+  const [isIndexesLoading, setIsIndexesLoading] = useState(false);
   const [errorInfo, setErrorInfo] = useState<StudioErrorDescriptor | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(tab.executionDurationMs ?? null);
 
@@ -220,6 +222,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         return;
       }
       loadedIndexesKeyRef.current = currentKey;
+      setIsIndexesLoading(true);
 
       try {
         const res = await fetchCollectionIndexesAction({ database, collection });
@@ -233,6 +236,8 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         }
       } catch {
         // Non-fatal
+      } finally {
+        setIsIndexesLoading(false);
       }
     },
     [database, collection, tab.id, updateTabState],
@@ -585,7 +590,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
                     </div>
                   </div>
                 </div>
-              ) : isLoading && state.documents.length === 0 ? (
+              ) : (isLoading || !hasLoaded) && state.documents.length === 0 ? (
                 <TableSkeletonWidget
                   columns={5}
                   rows={8}
@@ -678,7 +683,9 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             {/* Pagination & Status Footer */}
             <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0">
               <div className="flex items-center gap-3">
-                {state.totalDocuments > 0 ? (
+                {isLoading || !hasLoaded ? (
+                  <span className="text-[var(--muted)]">Loading documents...</span>
+                ) : state.totalDocuments > 0 ? (
                   <span>
                     Showing {startItem} - {endItem} of {state.totalDocuments}
                   </span>
@@ -741,7 +748,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             database={database}
             collection={collection}
             indexes={state.indexes}
-            isLoading={isLoading}
+            isLoading={isIndexesLoading}
             onRefresh={() => loadIndexes(true)}
           />
         )}
@@ -751,7 +758,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             documents={state.documents}
             database={database}
             collection={collection}
-            isLoading={isLoading}
+            isLoading={isLoading || !hasLoaded}
           />
         )}
       </div>
