@@ -399,11 +399,11 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
       function resolveViewState(
         error: boolean,
         isLoading: boolean,
-        hasLoaded: boolean,
+        hasFetched: boolean,
         docCount: number,
       ): ViewState {
         if (error) return "error";
-        if ((isLoading || !hasLoaded) && docCount === 0) return "loading-skeleton";
+        if ((!hasFetched || isLoading) && docCount === 0) return "loading-skeleton";
         if (docCount === 0) return "empty-collection";
         return "documents";
       }
@@ -429,11 +429,11 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
         "Must show empty collection ONLY when find request has completed with 0 documents",
       );
 
-      // Step 4: Find completes and returns >0 documents
+      // Step 4: Find completes and returns >0 documents (automatically on start)
       assert.strictEqual(
         resolveViewState(false, false, true, 25),
         "documents",
-        "Must show documents when find returns matching documents",
+        "Must show documents automatically on start when find returns matching documents",
       );
 
       // Step 5: Error occurs

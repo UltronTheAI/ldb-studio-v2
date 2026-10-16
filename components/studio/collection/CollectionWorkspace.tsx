@@ -70,12 +70,12 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     [tab.collectionState],
   );
 
-  const hasLoaded = Boolean(tab.lastExecutedAt);
+  const [hasFetched, setHasFetched] = useState(state.documents.length > 0);
   const [filterInput, setFilterInput] = useState(state.filter || "{}");
   const [projectionInput, setProjectionInput] = useState(state.projection || "");
   const [sortInput, setSortInput] = useState(state.sort || "");
   const [showOptions, setShowOptions] = useState(false);
-  const [isLoading, setIsLoading] = useState(!hasLoaded);
+  const [isLoading, setIsLoading] = useState(!hasFetched);
   const [isIndexesLoading, setIsIndexesLoading] = useState(false);
   const [errorInfo, setErrorInfo] = useState<StudioErrorDescriptor | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(tab.executionDurationMs ?? null);
@@ -145,6 +145,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
 
         if (res.ok && res.data) {
           setErrorInfo(null);
+          setHasFetched(true);
           updateTabState(tab.id, {
             executionDurationMs: res.durationMs,
             lastExecutedAt: Date.now(),
@@ -179,6 +180,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             });
           }
         } else {
+          setHasFetched(true);
           const desc: StudioErrorDescriptor = res.errorDescriptor ?? {
             code: "QUERY_FAILED",
             category: "server-overloaded",
@@ -190,6 +192,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         }
       } catch (err: unknown) {
         if (reqId !== activeRequestIdRef.current) return;
+        setHasFetched(true);
         const message = (err as Error).message;
         setErrorInfo({
           code: "CLIENT_REQUEST_ERROR",
@@ -249,22 +252,18 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     }
   }, [state.subTab, loadIndexes]);
 
-  // Initial load once on mount/collection change, or upon explicit refreshTrigger.
-  // Never re-fetches merely because documents are empty.
+  // Initial load automatically on start/mount or when collection/tab changes, or on explicit refresh
   useEffect(() => {
     const currentKey = `${tab.id}:${database}:${collection}`;
     const isNew = loadedKeyRef.current !== currentKey;
     const isRefresh = refreshTrigger > 0 && refreshTrigger !== prevRefreshTriggerRef.current;
-    const hasAlreadyLoaded = Boolean(tab.lastExecutedAt);
 
-    if (isRefresh || (isNew && !hasAlreadyLoaded)) {
+    if (isNew || isRefresh || !hasFetched) {
       loadedKeyRef.current = currentKey;
       prevRefreshTriggerRef.current = refreshTrigger;
       void loadDocuments();
-    } else if (isNew) {
-      loadedKeyRef.current = currentKey;
     }
-  }, [tab.id, database, collection, tab.lastExecutedAt, refreshTrigger, loadDocuments]);
+  }, [tab.id, database, collection, refreshTrigger, loadDocuments, hasFetched]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,7 +589,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
                     </div>
                   </div>
                 </div>
-              ) : (isLoading || !hasLoaded) && state.documents.length === 0 ? (
+              ) : (!hasFetched || isLoading) && state.documents.length === 0 ? (
                 <TableSkeletonWidget
                   columns={5}
                   rows={8}
@@ -683,7 +682,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             {/* Pagination & Status Footer */}
             <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0">
               <div className="flex items-center gap-3">
-                {isLoading || !hasLoaded ? (
+                {!hasFetched || isLoading ? (
                   <span className="text-[var(--muted)]">Loading documents...</span>
                 ) : state.totalDocuments > 0 ? (
                   <span>
@@ -758,7 +757,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             documents={state.documents}
             database={database}
             collection={collection}
-            isLoading={isLoading || !hasLoaded}
+            isLoading={!hasFetched || isLoading}
           />
         )}
       </div>

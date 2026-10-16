@@ -22,8 +22,8 @@ function sanitizeTabForStorage(tab: StudioTab): StudioTab {
     database: tab.database,
     collection: tab.collection,
     isDirty: tab.isDirty,
-    executionDurationMs: tab.executionDurationMs,
-    lastExecutedAt: tab.lastExecutedAt,
+    executionDurationMs: undefined,
+    lastExecutedAt: undefined,
     collectionState: tab.collectionState
       ? {
           subTab: tab.collectionState.subTab,
@@ -35,7 +35,7 @@ function sanitizeTabForStorage(tab: StudioTab): StudioTab {
           skip: tab.collectionState.skip,
           page: tab.collectionState.page,
           pageSize: tab.collectionState.pageSize,
-          totalDocuments: tab.collectionState.totalDocuments,
+          totalDocuments: 0,
           documents: [], // Don't persist large document buffers
           indexes: [],
         }
@@ -64,7 +64,27 @@ export function loadSavedTabs(): StudioTab[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as StudioTab[];
     if (Array.isArray(parsed)) {
-      return parsed;
+      // Clear stale lastExecutedAt and totalDocuments if documents array is empty
+      return parsed.map((tab) => {
+        if (
+          tab.type === "collection" &&
+          (!tab.collectionState?.documents || tab.collectionState.documents.length === 0)
+        ) {
+          return {
+            ...tab,
+            lastExecutedAt: undefined,
+            executionDurationMs: undefined,
+            collectionState: tab.collectionState
+              ? {
+                  ...tab.collectionState,
+                  totalDocuments: 0,
+                  documents: [],
+                }
+              : undefined,
+          };
+        }
+        return tab;
+      });
     }
   } catch {
     // Ignore corrupt storage
