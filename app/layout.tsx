@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { DesktopOnlyGuard } from "@/components/studio/DesktopOnlyGuard";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://studio.liorandb.com"),
@@ -64,7 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+        <DesktopOnlyGuard>{children}</DesktopOnlyGuard>
       </body>
     </html>
   );

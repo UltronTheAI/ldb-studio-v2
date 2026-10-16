@@ -695,3 +695,22 @@ code:not(pre code) {
   border-radius: 6px;
   border: 1px solid var(--hairline);
 }
+
+/* Responsive Desktop-Only Guard for Phones */
+.phone-only-guard {
+  display: none;
+}
+
+.desktop-only-content {
+  display: flex;
+}
+
+@media (max-width: 768px), ((max-height: 520px) and (max-width: 1024px)) {
+  .phone-only-guard {
+    display: flex !important;
+  }
+  .desktop-only-content {
+    display: none !important;
+  }
+}
+
