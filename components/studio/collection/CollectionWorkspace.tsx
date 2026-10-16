@@ -87,8 +87,21 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const stateRef = useRef(state);
+  const filterInputRef = useRef(filterInput);
+  const projectionInputRef = useRef(projectionInput);
+  const sortInputRef = useRef(sortInput);
+
+  useEffect(() => {
+    stateRef.current = state;
+    filterInputRef.current = filterInput;
+    projectionInputRef.current = projectionInput;
+    sortInputRef.current = sortInput;
+  }, [state, filterInput, projectionInput, sortInput]);
+
   const activeRequestIdRef = useRef<number>(0);
   const loadedKeyRef = useRef<string>("");
+  const loadedIndexesKeyRef = useRef<string>("");
   const prevRefreshTriggerRef = useRef(refreshTrigger);
 
   // Load documents
@@ -100,16 +113,17 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       page?: number;
       pageSize?: number;
     }) => {
+      const currentState = stateRef.current;
+      const activeFilter = overrideParams?.filter ?? filterInputRef.current;
+      const activeProjection = overrideParams?.projection ?? projectionInputRef.current;
+      const activeSort = overrideParams?.sort ?? sortInputRef.current;
+      const activePage = overrideParams?.page ?? currentState.page;
+      const activePageSize = overrideParams?.pageSize ?? currentState.pageSize;
+      const skip = (activePage - 1) * activePageSize;
+
       const reqId = ++activeRequestIdRef.current;
       setIsLoading(true);
       setErrorInfo(null);
-
-      const activeFilter = overrideParams?.filter ?? filterInput;
-      const activeProjection = overrideParams?.projection ?? projectionInput;
-      const activeSort = overrideParams?.sort ?? sortInput;
-      const activePage = overrideParams?.page ?? state.page;
-      const activePageSize = overrideParams?.pageSize ?? state.pageSize;
-      const skip = (activePage - 1) * activePageSize;
 
       try {
         const res = await fetchCollectionDocumentsAction({
@@ -133,7 +147,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             executionDurationMs: res.durationMs,
             lastExecutedAt: Date.now(),
             collectionState: {
-              ...state,
+              ...currentState,
               filter: activeFilter,
               projection: activeProjection,
               sort: activeSort,
@@ -143,7 +157,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               skip,
               documents: res.data.documents,
               totalDocuments: res.data.total,
-              indexes: res.data.indexes.length > 0 ? res.data.indexes : state.indexes,
+              indexes: res.data.indexes.length > 0 ? res.data.indexes : currentState.indexes,
             },
           });
           setExecutionTime(res.durationMs ?? null);
@@ -191,10 +205,6 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     [
       database,
       collection,
-      filterInput,
-      projectionInput,
-      sortInput,
-      state,
       tab.id,
       updateTabState,
       addQueryHistory,
@@ -202,41 +212,54 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     ],
   );
 
-  // On-demand index loading when switching to Indexes tab
-  const loadIndexes = useCallback(async () => {
-    try {
-      const res = await fetchCollectionIndexesAction({ database, collection });
-      if (res.ok && res.data) {
-        updateTabState(tab.id, {
-          collectionState: {
-            ...state,
-            indexes: res.data.indexes,
-          },
-        });
+  // On-demand index loading when switching to Indexes tab (loaded once per collection view)
+  const loadIndexes = useCallback(
+    async (force = false) => {
+      const currentKey = `${tab.id}:${database}:${collection}`;
+      if (!force && loadedIndexesKeyRef.current === currentKey) {
+        return;
       }
-    } catch {
-      // Non-fatal
-    }
-  }, [database, collection, state, tab.id, updateTabState]);
+      loadedIndexesKeyRef.current = currentKey;
+
+      try {
+        const res = await fetchCollectionIndexesAction({ database, collection });
+        if (res.ok && res.data) {
+          updateTabState(tab.id, {
+            collectionState: {
+              ...stateRef.current,
+              indexes: res.data.indexes,
+            },
+          });
+        }
+      } catch {
+        // Non-fatal
+      }
+    },
+    [database, collection, tab.id, updateTabState],
+  );
 
   useEffect(() => {
-    if (state.subTab === "indexes" && state.indexes.length === 0) {
+    if (state.subTab === "indexes") {
       void loadIndexes();
     }
-  }, [state.subTab, state.indexes.length, loadIndexes]);
+  }, [state.subTab, loadIndexes]);
 
-  // Initial load once on mount/collection change, or upon explicit refreshTrigger
+  // Initial load once on mount/collection change, or upon explicit refreshTrigger.
+  // Never re-fetches merely because documents are empty.
   useEffect(() => {
     const currentKey = `${tab.id}:${database}:${collection}`;
     const isNew = loadedKeyRef.current !== currentKey;
     const isRefresh = refreshTrigger > 0 && refreshTrigger !== prevRefreshTriggerRef.current;
+    const hasAlreadyLoaded = Boolean(tab.lastExecutedAt);
 
-    if (isNew || isRefresh || state.documents.length === 0) {
+    if (isRefresh || (isNew && !hasAlreadyLoaded)) {
       loadedKeyRef.current = currentKey;
       prevRefreshTriggerRef.current = refreshTrigger;
       void loadDocuments();
+    } else if (isNew) {
+      loadedKeyRef.current = currentKey;
     }
-  }, [tab.id, database, collection, refreshTrigger, loadDocuments, state.documents.length]);
+  }, [tab.id, database, collection, tab.lastExecutedAt, refreshTrigger, loadDocuments]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -719,7 +742,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             collection={collection}
             indexes={state.indexes}
             isLoading={isLoading}
-            onRefresh={() => loadIndexes()}
+            onRefresh={() => loadIndexes(true)}
           />
         )}
 

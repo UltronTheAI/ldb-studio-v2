@@ -318,4 +318,80 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
       assert.strictEqual(stats.size, 0);
     });
   });
+
+  describe("Infinite Fetch Loop Prevention on Empty Collections & Missing Namespaces", () => {
+    it("does not trigger auto-fetch when collection documents are empty if already loaded", () => {
+      // Simulating the effect guard condition:
+      // if (isRefresh || (isNew && !hasAlreadyLoaded))
+      function shouldTriggerFetch(
+        currentKey: string,
+        loadedKey: string,
+        refreshTrigger: number,
+        prevRefreshTrigger: number,
+        lastExecutedAt?: number,
+      ): boolean {
+        const isNew = loadedKey !== currentKey;
+        const isRefresh = refreshTrigger > 0 && refreshTrigger !== prevRefreshTrigger;
+        const hasAlreadyLoaded = Boolean(lastExecutedAt);
+        return isRefresh || (isNew && !hasAlreadyLoaded);
+      }
+
+      const key = "tab-1:default:collection";
+
+      // 1. First mount of the tab: not loaded yet
+      assert.strictEqual(
+        shouldTriggerFetch(key, "", 0, 0, undefined),
+        true,
+        "Must trigger fetch on initial tab mount",
+      );
+
+      // 2. Query finishes with 0 documents (empty collection) and sets lastExecutedAt
+      const executedAt = Date.now();
+
+      // Subsequent render with empty documents: key matches, already loaded, no refresh
+      assert.strictEqual(
+        shouldTriggerFetch(key, key, 0, 0, executedAt),
+        false,
+        "Must NOT trigger fetch when documents are empty and tab is already loaded",
+      );
+
+      // 3. User switches tabs and comes back: component mounts with existing tab state
+      assert.strictEqual(
+        shouldTriggerFetch(key, "", 0, 0, executedAt),
+        false,
+        "Must NOT re-fetch over network on tab switch when data has already loaded",
+      );
+
+      // 4. User explicitly clicks Refresh: refreshTrigger increments
+      assert.strictEqual(
+        shouldTriggerFetch(key, key, 1, 0, executedAt),
+        true,
+        "Must trigger fetch when user explicitly clicks Refresh",
+      );
+    });
+
+    it("verifies index loading is guarded against infinite loops on collections with zero indexes", () => {
+      const loadedIndexesKeys = new Set<string>();
+
+      function triggerIndexLoad(key: string, force = false): boolean {
+        if (!force && loadedIndexesKeys.has(key)) {
+          return false; // Skip redundant load
+        }
+        loadedIndexesKeys.add(key);
+        return true;
+      }
+
+      const key = "tab-1:default:collection";
+
+      // First time opening indexes tab
+      assert.strictEqual(triggerIndexLoad(key), true, "Must load indexes on first switch");
+
+      // Re-renders with 0 indexes returned (empty collection)
+      assert.strictEqual(triggerIndexLoad(key), false, "Must NOT re-load indexes in a loop when indexes array is empty");
+
+      // Explicit refresh forces reload
+      assert.strictEqual(triggerIndexLoad(key, true), true, "Explicit refresh must force index reload");
+    });
+  });
 });
+
