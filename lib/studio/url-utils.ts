@@ -9,12 +9,25 @@
  */
 export function decodeConnectionParam(raw: string): string {
   let current = raw.trim();
+  // Strip enclosing quotes if user passed "?uri=\"liorandb://...\"" or single quotes
+  if (
+    (current.startsWith('"') && current.endsWith('"')) ||
+    (current.startsWith("'") && current.endsWith("'"))
+  ) {
+    current = current.slice(1, -1).trim();
+  }
   for (let i = 0; i < 2; i++) {
     if (current.includes("%")) {
       try {
         const next = decodeURIComponent(current);
         if (next === current) break;
-        current = next;
+        current = next.trim();
+        if (
+          (current.startsWith('"') && current.endsWith('"')) ||
+          (current.startsWith("'") && current.endsWith("'"))
+        ) {
+          current = current.slice(1, -1).trim();
+        }
         if (/^[a-zA-Z0-9+.-]+:\/\//.test(current) && !current.includes("%3A") && !current.includes("%2F")) {
           break;
         }
