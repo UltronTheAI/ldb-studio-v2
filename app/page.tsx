@@ -30,6 +30,7 @@ import { ConnectionPortal } from "./connection-portal";
 import { StudioClientEffects } from "./studio-client-effects";
 import { ThemeToggle } from "./theme-toggle";
 import { StudioShell } from "@/components/studio/StudioShell";
+import { UriConnectionScene } from "@/components/studio/UriConnectionScene";
 import type { InitialStudioContext } from "@/lib/studio/workspace-types";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
@@ -835,7 +836,16 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
 
 export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
-  const connectionParam = firstParam(params.connection);
+  const connectionParam =
+    firstParam(params.uri) ||
+    firstParam(params.connection) ||
+    firstParam(params.url);
+
+  // If a connection parameter is provided in the URL argument, immediately render dedicated Loading Scene
+  if (connectionParam) {
+    return <UriConnectionScene initialUri={connectionParam} />;
+  }
+
   const section = (firstParam(params.section, "overview") as Section) || "overview";
   const dataPane = (firstParam(params.pane, "all") as DataPane) || "all";
   const errorMessage = firstParam(params.error);
@@ -856,16 +866,18 @@ export default async function Home({ searchParams }: PageProps) {
     skip: Number.parseInt(firstParam(params.skip, "0"), 10) || 0,
   };
 
-  const session = connectionParam ? null : await getStudioSession();
+  const session = await getStudioSession();
   if (!session) {
     return (
       <div className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
         {/* Early script to sanitize address bar before React hydration */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var u=new URL(window.location.href);var c=u.searchParams.get("connection");if(c){window.__liorandb_auto_conn=c;u.searchParams.delete("connection");window.history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash);}}catch(e){}})();`,
+            __html: `(function(){try{var u=new URL(window.location.href);var c=u.searchParams.get("uri")||u.searchParams.get("connection")||u.searchParams.get("url");if(c){window.__liorandb_auto_conn=c;u.searchParams.delete("uri");u.searchParams.delete("connection");u.searchParams.delete("url");window.history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash);}}catch(e){}})();`,
           }}
         />
+        {/* Client-side URI connection scene detector */}
+        <UriConnectionScene />
         {/* Top Navigation Bar: 64px height, Expo Wordmark left, menu center, CTA right */}
         <header className="sticky top-0 z-50 border-b border-[var(--hairline)] bg-[var(--canvas)]/90 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
@@ -946,7 +958,6 @@ export default async function Home({ searchParams }: PageProps) {
             <ConnectionPortal
               connectAction={connectAction}
               errorMessage={errorMessage}
-              autoConnectParam={connectionParam || undefined}
             />
           </div>
         </section>
