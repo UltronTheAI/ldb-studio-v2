@@ -89,7 +89,20 @@ function getServerConnectionsSnapshot(): string {
 
 function maskConnectionString(uri: string): string {
   try {
-    return uri.replace(/:\/\/([^:]+):([^@]+)@/, "://$1:••••••••@");
+    const schemeMatch = uri.match(/^([a-zA-Z0-9+.-]+:\/\/)/);
+    if (!schemeMatch) return uri;
+    const afterScheme = uri.slice(schemeMatch[0].length);
+    const pathIdx = afterScheme.search(/[\/?#]/);
+    const authority = pathIdx >= 0 ? afterScheme.slice(0, pathIdx) : afterScheme;
+    const pathPart = pathIdx >= 0 ? afterScheme.slice(pathIdx) : "";
+    const atIdx = authority.lastIndexOf("@");
+    if (atIdx < 0) return uri;
+    const userinfo = authority.slice(0, atIdx);
+    const hostport = authority.slice(atIdx + 1);
+    const colonIdx = userinfo.indexOf(":");
+    const username = colonIdx >= 0 ? userinfo.slice(0, colonIdx) : userinfo;
+    const maskedUserinfo = username ? `${username}:••••••••` : "••••••••";
+    return `${schemeMatch[1]}${maskedUserinfo}@${hostport}${pathPart}`;
   } catch {
     return uri;
   }
@@ -97,15 +110,20 @@ function maskConnectionString(uri: string): string {
 
 function parseHostAndDb(uri: string): { host: string; port: string; db: string } {
   try {
-    const match = uri.match(/^[a-zA-Z0-9+.-]+:\/\/(?:[^@]+@)?([^/:?#]+)(?::(\d+))?(?:\/([^?#]*))?/);
-    if (!match) {
-      return { host: "unknown", port: "443", db: "default" };
-    }
-    return {
-      host: match[1] || "unknown",
-      port: match[2] || "443",
-      db: match[3] || "default",
-    };
+    const schemeMatch = uri.match(/^([a-zA-Z0-9+.-]+):\/\//);
+    if (!schemeMatch) return { host: "unknown", port: "443", db: "default" };
+    const afterScheme = uri.slice(schemeMatch[0].length);
+    const pathIdx = afterScheme.search(/[\/?#]/);
+    const authority = pathIdx >= 0 ? afterScheme.slice(0, pathIdx) : afterScheme;
+    const pathPart = pathIdx >= 0 ? afterScheme.slice(pathIdx) : "";
+    const atIdx = authority.lastIndexOf("@");
+    const hostport = atIdx >= 0 ? authority.slice(atIdx + 1) : authority;
+    const portMatch = hostport.match(/:(\d+)$/);
+    const port = portMatch ? portMatch[1] : "443";
+    const host = portMatch ? hostport.slice(0, portMatch.index) : hostport;
+    const dbMatch = pathPart.match(/^\/([^?#]*)/);
+    const db = dbMatch && dbMatch[1] ? dbMatch[1] : "default";
+    return { host: host || "unknown", port, db };
   } catch {
     return { host: "unknown", port: "443", db: "default" };
   }

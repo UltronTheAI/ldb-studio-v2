@@ -32,10 +32,8 @@ interface ParsedTarget {
 
 function parseUriForDisplay(uri: string): ParsedTarget {
   try {
-    const match = uri.match(
-      /^([a-zA-Z0-9+.-]+:\/\/)(?:([^:]+)(?::([^@]*))?@)?([^/:?#]+)(?::(\d+))?(?:\/([^?#]*))?/
-    );
-    if (!match) {
+    const schemeMatch = uri.match(/^([a-zA-Z0-9+.-]+):\/\//);
+    if (!schemeMatch) {
       return {
         scheme: "liorandb://",
         host: "cluster-endpoint",
@@ -45,21 +43,41 @@ function parseUriForDisplay(uri: string): ParsedTarget {
         maskedUri: uri,
       };
     }
-    const scheme = match[1] || "liorandb://";
-    const username = match[2] || "";
-    const hasPassword = Boolean(match[3]);
-    const host = match[4] || "cluster-endpoint";
-    const port = match[5] || "443";
-    const database = match[6] || "default";
+
+    const scheme = schemeMatch[1];
+    const afterScheme = uri.slice(schemeMatch[0].length);
+    const pathIdx = afterScheme.search(/[\/?#]/);
+    const authority = pathIdx >= 0 ? afterScheme.slice(0, pathIdx) : afterScheme;
+    const pathPart = pathIdx >= 0 ? afterScheme.slice(pathIdx) : "";
+
+    // The credentials and host are separated by the LAST '@' in the authority
+    const atIdx = authority.lastIndexOf("@");
+    let userinfo = "";
+    let hostport = authority;
+    if (atIdx >= 0) {
+      userinfo = authority.slice(0, atIdx);
+      hostport = authority.slice(atIdx + 1);
+    }
+
+    const colonIdx = userinfo.indexOf(":");
+    const username = colonIdx >= 0 ? userinfo.slice(0, colonIdx) : userinfo;
+    const hasPassword = colonIdx >= 0;
+
+    const portMatch = hostport.match(/:(\d+)$/);
+    const port = portMatch ? portMatch[1] : "443";
+    const host = portMatch ? hostport.slice(0, portMatch.index) : hostport;
+
+    const dbMatch = pathPart.match(/^\/([^?#]*)/);
+    const database = dbMatch && dbMatch[1] ? dbMatch[1] : "default";
 
     const userPart = username
       ? `${username}${hasPassword ? ":••••••••" : ""}@`
       : "";
-    const maskedUri = `${scheme}${userPart}${host}${match[5] ? `:${port}` : ""}/${database}`;
+    const maskedUri = `${scheme}://${userPart}${host}${port ? `:${port}` : ""}/${database}`;
 
     return {
-      scheme,
-      host,
+      scheme: `${scheme}://`,
+      host: host || "cluster-endpoint",
       port,
       database,
       username,
