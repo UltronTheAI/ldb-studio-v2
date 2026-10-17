@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -15,6 +15,11 @@ import {
   Trash2Icon,
   XIcon,
 } from "@/lib/lucide";
+import { autoConnectAction } from "./actions";
+import { clearWorkspaceState } from "@/lib/studio/workspace-storage";
+import { decodeConnectionParam } from "@/lib/studio/url-utils";
+
+export { decodeConnectionParam };
 
 export interface SavedConnection {
   id: string;
@@ -149,14 +154,57 @@ function renderColoredUri(uri: string, isRevealed: boolean) {
   );
 }
 
+export function persistAndActivateConnection(uri: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    let currentList: SavedConnection[] = INITIAL_DEFAULT_CONNECTIONS;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) currentList = parsed;
+      } catch {}
+    }
+
+    const existingIndex = currentList.findIndex((c) => c.uri === uri);
+    let updated: SavedConnection[];
+    if (existingIndex >= 0) {
+      updated = currentList.map((c, i) =>
+        i === existingIndex ? { ...c, lastUsedAt: Date.now() } : c
+      );
+    } else {
+      const parsed = parseHostAndDb(uri);
+      const newEntry: SavedConnection = {
+        id: `conn_auto_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        name: `Connection (${parsed.host})`,
+        uri,
+        createdAt: Date.now(),
+        lastUsedAt: Date.now(),
+      };
+      updated = [newEntry, ...currentList];
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    LEGACY_STORAGE_KEYS.forEach((k) => {
+      try {
+        window.localStorage.removeItem(k);
+      } catch {}
+    });
+    window.dispatchEvent(new Event("liorandb_connections_update"));
+  } catch (e) {
+    console.error("Failed to persist auto-connection:", e);
+  }
+}
+
 interface ConnectionPortalProps {
   connectAction: (formData: FormData) => Promise<void>;
   errorMessage?: string;
+  autoConnectParam?: string;
 }
 
 export function ConnectionPortal({
   connectAction,
   errorMessage,
+  autoConnectParam,
 }: ConnectionPortalProps) {
   const storedJson = useSyncExternalStore(
     subscribeConnections,
@@ -206,9 +254,100 @@ export function ConnectionPortal({
   // Copied indicator: { [id]: boolean }
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Auto-connect lifecycle states
+  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
+  const [autoConnectStatus, setAutoConnectStatus] = useState<string | null>(null);
+  const [autoConnectError, setAutoConnectError] = useState<string | null>(null);
+  const [lastAttemptedUri, setLastAttemptedUri] = useState<string | null>(null);
+  const hasHandledAutoConnectRef = useRef<boolean>(false);
+
   // Hidden form submission ref for instant connect
   const submitFormRef = useRef<HTMLFormElement | null>(null);
   const hiddenUriInputRef = useRef<HTMLInputElement | null>(null);
+
+  const performAutoConnect = async (rawTarget: string) => {
+    const decodedUri = decodeConnectionParam(rawTarget);
+    setLastAttemptedUri(decodedUri);
+    setIsAutoConnecting(true);
+    setAutoConnectStatus("Sanitizing address bar and clearing old workspace state...");
+    setAutoConnectError(null);
+
+    // 1. Immediately clean address bar if not already cleaned
+    try {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.has("connection")) {
+        currentUrl.searchParams.delete("connection");
+        window.history.replaceState(
+          null,
+          "",
+          currentUrl.pathname + (currentUrl.search ? currentUrl.search : "") + currentUrl.hash,
+        );
+      }
+    } catch {}
+
+    // 2. Clear client-side workspace state (tabs, cached metadata)
+    clearWorkspaceState();
+
+    setAutoConnectStatus("Connecting to cluster and establishing session...");
+
+    try {
+      const res = await autoConnectAction({ connectionUri: decodedUri });
+      if (!res.ok) {
+        setIsAutoConnecting(false);
+        setAutoConnectStatus(null);
+        setAutoConnectError(res.error || "Failed to establish database connection.");
+        return;
+      }
+
+      // 3. Persist to saved connections and mark active
+      persistAndActivateConnection(decodedUri);
+      setAutoConnectStatus("Connected! Initializing Studio...");
+
+      // 4. Navigate cleanly to "/"
+      window.location.replace("/");
+    } catch (err: unknown) {
+      setIsAutoConnecting(false);
+      setAutoConnectStatus(null);
+      const msg = err instanceof Error ? err.message : String(err);
+      setAutoConnectError(msg || "An unexpected error occurred during connection.");
+    }
+  };
+
+  useEffect(() => {
+    if (hasHandledAutoConnectRef.current) return;
+
+    let targetRaw: string | null = null;
+    if (typeof window !== "undefined") {
+      const windowObj = window as Window & { __liorandb_auto_conn?: string };
+      if (windowObj.__liorandb_auto_conn) {
+        targetRaw = windowObj.__liorandb_auto_conn;
+        delete windowObj.__liorandb_auto_conn;
+      }
+
+      try {
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.has("connection")) {
+          const p = currentUrl.searchParams.get("connection");
+          if (p) targetRaw = p;
+          currentUrl.searchParams.delete("connection");
+          window.history.replaceState(
+            null,
+            "",
+            currentUrl.pathname + (currentUrl.search ? currentUrl.search : "") + currentUrl.hash,
+          );
+        }
+      } catch {}
+    }
+
+    if (!targetRaw && autoConnectParam) {
+      targetRaw = autoConnectParam;
+    }
+
+    if (targetRaw && targetRaw.trim()) {
+      hasHandledAutoConnectRef.current = true;
+      void performAutoConnect(targetRaw);
+    }
+  }, [autoConnectParam]);
 
   const directUriInputId = useId();
   const directProfileNameId = useId();
@@ -398,8 +537,58 @@ export function ConnectionPortal({
           value=""
         />
       </form>
+      {isAutoConnecting ? (
+        <div className="py-16 flex flex-col items-center justify-center text-center">
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent mb-4" />
+          <h3 className="text-base font-semibold text-[var(--ink)]">
+            Connecting to LioranDB...
+          </h3>
+          <p className="mt-2 text-xs text-[var(--body)] font-mono">
+            {autoConnectStatus || "Validating credentials and establishing cluster session..."}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Automatic Connection Error Notice */}
+          {autoConnectError && (
+            <div className="mb-6 rounded-[8px] border border-[var(--semantic-error)] bg-[var(--semantic-error)]/10 p-4">
+              <div className="flex items-start gap-3">
+                <span className="font-bold text-[var(--semantic-error)] text-base leading-none mt-0.5">[!]</span>
+                <div className="flex-1 text-xs">
+                  <div className="font-semibold text-[var(--semantic-error)] mb-1">
+                    Automatic Connection Failed
+                  </div>
+                  <div className="text-[var(--ink)] font-mono mb-3 break-all">
+                    {autoConnectError}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {lastAttemptedUri && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (lastAttemptedUri) {
+                            void performAutoConnect(lastAttemptedUri);
+                          }
+                        }}
+                        className="btn-primary text-xs h-7 px-3"
+                      >
+                        Retry Auto-Connection
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAutoConnectError(null)}
+                      className="btn-secondary text-xs h-7 px-3"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-      {/* Card Header & Controls */}
+          {/* Card Header & Controls */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--hairline)] pb-5">
         <div>
           <h2 className="font-sans text-[24px] sm:text-[28px] font-semibold tracking-[-0.84px] text-[var(--ink)]">
@@ -852,6 +1041,8 @@ export function ConnectionPortal({
           </button>
         </form>
       )}
+    </>
+  )}
 
       {/* Default URI Format Help Guide */}
       <div className="mt-6 rounded-[8px] border border-[var(--hairline)] bg-[var(--canvas-soft)] p-3.5 text-xs text-[var(--body)]">

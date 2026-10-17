@@ -210,3 +210,5 @@ export function validateConnectionTarget(
 
   return metadata;
 }
+
+export { decodeConnectionParam } from "../studio/url-utils";

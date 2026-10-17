@@ -194,3 +194,19 @@ export function removeQueryDraftFromStorage(id: string): void {
     // Ignore
   }
 }
+
+/**
+ * Clears connection-specific cached state (tabs, metadata) when switching
+ * database connections, ensuring stale tabs or queries from a previous database
+ * are not restored into a newly connected database.
+ */
+export function clearWorkspaceState(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(TABS_STORAGE_KEY);
+    localStorage.removeItem(METADATA_STORAGE_KEY);
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+

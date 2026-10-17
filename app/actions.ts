@@ -191,6 +191,26 @@ export async function connectAction(formData: FormData): Promise<void> {
   const connectionUri = formString(formData, "connectionUri");
 
   try {
+    const existingSession = await getStudioSession();
+    if (existingSession) {
+      try {
+        await withLioranClient(
+          existingSession.connectionUri,
+          async (client) => {
+            try {
+              await client.logout();
+            } catch {
+              // Best-effort logout
+            }
+          },
+          existingSession.id,
+        );
+      } catch {
+        // Ignore
+      }
+      await destroyStudioSession(existingSession.id);
+    }
+
     const metadata = validateConnectionTarget(connectionUri);
     const principal = await withLioranClient(connectionUri, async (client) => client.me());
     await createStudioSession({ connectionUri, principal, metadata });
@@ -200,6 +220,79 @@ export async function connectAction(formData: FormData): Promise<void> {
   }
 
   redirect("/");
+}
+
+export async function autoConnectAction(params: {
+  connectionUri: string;
+}): Promise<ActionResult<{ success: true; host: string; database: string | null }>> {
+  const start = Date.now();
+  try {
+    const rawUri = params.connectionUri?.trim();
+    if (!rawUri) {
+      throw new Error("Connection URI cannot be empty.");
+    }
+
+    // 1. Disconnect and evict any currently active session
+    const existingSession = await getStudioSession();
+    if (existingSession) {
+      try {
+        await withLioranClient(
+          existingSession.connectionUri,
+          async (client) => {
+            try {
+              await client.logout();
+            } catch {
+              // Best-effort logout
+            }
+          },
+          existingSession.id,
+        );
+      } catch {
+        // Ignore errors from disconnecting old session
+      }
+      await destroyStudioSession(existingSession.id);
+    }
+
+    // 2. Validate connection target using driver and security rules
+    const metadata = validateConnectionTarget(rawUri);
+
+    // 3. Connect to LioranDB cluster over gRPC and authenticate
+    const principal = await withLioranClient(rawUri, async (client) => {
+      return await client.me();
+    });
+
+    // 4. Create encrypted HTTP-only session
+    await createStudioSession({
+      connectionUri: rawUri,
+      principal,
+      metadata,
+    });
+
+    return {
+      ok: true,
+      data: {
+        success: true,
+        host: metadata.host,
+        database: metadata.database,
+      },
+      durationMs: Date.now() - start,
+    };
+  } catch (error) {
+    // Ensure clean state if connection failed
+    try {
+      await destroyStudioSession();
+    } catch {
+      // Ignore
+    }
+
+    const mapped = mapStudioError(error);
+    return {
+      ok: false,
+      error: `${mapped.title}: ${mapped.message}`,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
+  }
 }
 
 export async function logoutAction(): Promise<void> {

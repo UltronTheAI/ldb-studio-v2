@@ -4,6 +4,7 @@ import { DesktopOnlyGuard } from "@/components/studio/DesktopOnlyGuard";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://studio.liorandb.com"),
+  referrer: "strict-origin-when-cross-origin",
   title: {
     default: "LioranDB Studio — Developer Control Plane",
     template: "%s | LioranDB Studio",

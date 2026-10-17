@@ -26,6 +26,9 @@ import {
   PROTECTED_DATABASES,
 } from "../lib/liorandb/protection";
 
+import { decodeConnectionParam } from "../lib/studio/url-utils";
+import { clearWorkspaceState } from "../lib/studio/workspace-storage";
+
 
 describe("Document Read Lifecycle & Studio Error Handling", () => {
   beforeEach(async () => {
@@ -503,6 +506,84 @@ describe("Document Read Lifecycle & Studio Error Handling", () => {
       const normalRes = simulateDropDatabase("temp_db", "temp_db");
       assert.strictEqual(normalRes.ok, true);
       assert.strictEqual(underlyingDriverDropCalled, true);
+    });
+  });
+
+  describe("Automatic Database Connection Lifecycle", () => {
+    it("decodes unencoded, single-URL-encoded, and double-URL-encoded connection strings accurately", () => {
+      const rawUri = "liorandb://admin:password@swaraj.db.liorandb.com:443/default";
+      const singleEncoded = encodeURIComponent(rawUri);
+      const doubleEncoded = encodeURIComponent(singleEncoded);
+
+      assert.strictEqual(decodeConnectionParam(rawUri), rawUri);
+      assert.strictEqual(decodeConnectionParam(singleEncoded), rawUri);
+      assert.strictEqual(decodeConnectionParam(doubleEncoded), rawUri);
+    });
+
+    it("cleans address bar and strips sensitive credentials from URLSearchParams without leaving credentials in path", () => {
+      const sensitiveUri = "liorandb://admin:superSecret123@swaraj.db.liorandb.com:443/default";
+      const rawUrl = `https://studio.liorandb.com/?connection=${encodeURIComponent(sensitiveUri)}`;
+
+      const parsed = new URL(rawUrl);
+      assert.strictEqual(parsed.searchParams.has("connection"), true);
+
+      const extracted = parsed.searchParams.get("connection");
+      assert.strictEqual(extracted, sensitiveUri);
+
+      // Sanitize URL
+      parsed.searchParams.delete("connection");
+      const cleanPathAndSearch = parsed.pathname + (parsed.search ? parsed.search : "") + parsed.hash;
+      const cleanUrl = `${parsed.origin}${cleanPathAndSearch}`;
+
+      assert.strictEqual(cleanUrl, "https://studio.liorandb.com/");
+      assert.strictEqual(cleanUrl.includes("superSecret123"), false);
+      assert.strictEqual(cleanUrl.includes("connection="), false);
+    });
+
+    it("clears cached workspace state while preserving unrelated storage", () => {
+      const mockStorage: Record<string, string> = {
+        liorandb_studio_tabs_v1: JSON.stringify([{ id: "tab_old", title: "old query" }]),
+        liorandb_studio_metadata_v1: JSON.stringify({ database: "old_db" }),
+        liorandb_studio_saved_connections_v2: JSON.stringify([{ id: "conn_1", name: "Cluster 1" }]),
+        unrelated_user_pref: "dark",
+      };
+
+      const originalLocalStorage = globalThis.localStorage;
+      globalThis.localStorage = {
+        getItem: (k: string) => mockStorage[k] ?? null,
+        setItem: (k: string, v: string) => {
+          mockStorage[k] = v;
+        },
+        removeItem: (k: string) => {
+          delete mockStorage[k];
+        },
+        clear: () => {
+          Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
+        },
+        key: (i: number) => Object.keys(mockStorage)[i] ?? null,
+        length: Object.keys(mockStorage).length,
+      };
+
+      try {
+        clearWorkspaceState();
+        assert.strictEqual(mockStorage.liorandb_studio_tabs_v1, undefined);
+        assert.strictEqual(mockStorage.liorandb_studio_metadata_v1, undefined);
+        assert.notStrictEqual(mockStorage.liorandb_studio_saved_connections_v2, undefined);
+        assert.strictEqual(mockStorage.unrelated_user_pref, "dark");
+      } finally {
+        if (originalLocalStorage) {
+          globalThis.localStorage = originalLocalStorage;
+        } else {
+          delete (globalThis as Record<string, unknown>).localStorage;
+        }
+      }
+    });
+
+    it("never leaks raw passwords or credentials in error messages", () => {
+      const errorMsg = "Authentication failed for liorandb://admin:secretPassword99@cluster.db.liorandb.com:443/default";
+      const redacted = redactMessage(errorMsg);
+      assert.strictEqual(redacted.includes("secretPassword99"), false);
+      assert.strictEqual(redacted.includes("••••••••"), true);
     });
   });
 });
