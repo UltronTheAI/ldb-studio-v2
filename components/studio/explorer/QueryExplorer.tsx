@@ -22,7 +22,7 @@ export function QueryExplorer() {
   };
 
   return (
-    <div className="flex flex-col h-full select-none text-xs p-2 space-y-4 overflow-y-auto sidebar-scroll">
+    <div className="flex flex-col h-full min-h-0 select-none text-xs p-2 space-y-4 overflow-y-auto overscroll-contain sidebar-scroll">
       <div>
         <button
           type="button"

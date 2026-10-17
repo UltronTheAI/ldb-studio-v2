@@ -751,9 +751,9 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
   }, [handleExecute]);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Controls Toolbar */}
-      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2.5 shrink-0 select-none">
+      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2.5 shrink-0 sticky top-0 z-10 select-none">
         {/* Left: Query Name & Target DB / Collection */}
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <input
@@ -861,9 +861,9 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
       </div>
 
       {/* Editor & Results Split */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-[var(--hairline-strong)]">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-[var(--hairline-strong)]">
         {/* Left: Query Specification & Operations */}
-        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full bg-[var(--surface-card)] overflow-hidden">
+        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full min-h-0 bg-[var(--surface-card)] overflow-hidden">
           {/* Operation Selector Pills */}
           <div className="p-2 bg-[var(--canvas-soft)] border-b border-[var(--hairline)] flex items-center justify-between gap-2 select-none overflow-x-auto">
             <div className="flex items-center gap-1 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-0.5">
@@ -919,7 +919,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
           )}
 
           {/* Operation Form Area */}
-          <div className="flex-1 p-3 overflow-y-auto editor-scroll space-y-3 font-mono text-xs">
+          <div className="flex-1 min-h-0 p-3 overflow-y-auto overscroll-contain editor-scroll space-y-3 font-mono text-xs">
             {/* 1. FIND MODE */}
             {operationMode === "find" && (
               <>
@@ -1122,9 +1122,9 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
         </div>
 
         {/* Right: Document Browser & Results */}
-        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full bg-[var(--canvas)] overflow-hidden">
+        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full min-h-0 bg-[var(--canvas)] overflow-hidden">
           {/* Document Browser Toolbar */}
-          <div className="min-h-10 px-3 py-1.5 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 select-none shrink-0">
+          <div className="min-h-10 px-3 py-1.5 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 select-none shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
               <span className="font-sans text-xs font-bold uppercase tracking-wider text-[var(--ink)]">
                 Document Browser
@@ -1245,7 +1245,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
           </div>
 
           {/* Results Body / Document Browser Content */}
-          <div className="flex-1 overflow-hidden p-3">
+          <div className="flex-1 min-h-0 overflow-hidden p-3">
             {isRunning ? (
               <TableSkeletonWidget
                 columns={4}

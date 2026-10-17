@@ -20,12 +20,12 @@ function StudioWorkspaceMain() {
   const { activeTab } = useWorkspace();
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[var(--canvas)]">
+    <div className="flex-1 min-h-0 min-w-0 flex flex-col h-full overflow-hidden bg-[var(--canvas)]">
       {/* Chrome / VS Code style Workspace Tabs */}
       <WorkspaceTabs />
 
       {/* Active Tab View Surface */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden relative">
         {activeTab ? (
           <>
             {activeTab.type === "collection" && (
@@ -80,12 +80,12 @@ function StudioWorkspaceMain() {
 export function StudioShell({ initialContext }: { initialContext: InitialStudioContext }) {
   return (
     <WorkspaceProvider initialContext={initialContext}>
-      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--canvas)] text-[var(--ink)] antialiased select-none font-sans">
+      <div className="fixed inset-0 flex flex-col h-dvh w-full overflow-hidden bg-[var(--canvas)] text-[var(--ink)] antialiased select-none font-sans">
         {/* Top Application Bar */}
         <TopAppBar />
 
         {/* Center IDE Workspace (Activity Bar + Explorer Sidebar + Main Tabs & Content) */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 min-h-0 min-w-0 flex overflow-hidden">
           <ActivityBar />
           <ExplorerSidebar />
           <StudioWorkspaceMain />

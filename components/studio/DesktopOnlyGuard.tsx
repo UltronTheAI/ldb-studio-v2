@@ -152,7 +152,7 @@ export function DesktopOnlyGuard({ children }: DesktopOnlyGuardProps) {
       </div>
 
       {/* Desktop View Surface (active for screens > 768px and height > 520px) */}
-      <div className="desktop-only-content min-h-full flex-col flex-1">
+      <div className="desktop-only-content h-full min-h-0 flex-col flex-1 overflow-hidden">
         {children}
       </div>
     </>

@@ -36,7 +36,7 @@ export function TopAppBar() {
   };
 
   return (
-    <header className="h-11 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] px-3 flex items-center justify-between select-none z-30 shrink-0">
+    <header className="h-11 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] px-3 flex items-center justify-between select-none z-30 shrink-0 sticky top-0 w-full">
       {/* Left: Brand & Breadcrumb */}
       <div className="flex items-center gap-3">
         <div

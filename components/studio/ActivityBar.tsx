@@ -73,7 +73,7 @@ export function ActivityBar() {
   };
 
   return (
-    <aside className="w-12 border-r border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex flex-col items-center py-2 select-none z-20 shrink-0 justify-between text-[var(--muted)]">
+    <aside className="w-12 h-full min-h-0 border-r border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex flex-col items-center py-2 select-none z-20 shrink-0 justify-between text-[var(--muted)] sticky top-0 left-0">
       {/* Top Activities */}
       <div className="flex flex-col items-center gap-1 w-full">
         {ACTIVITIES.map((item) => {

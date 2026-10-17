@@ -344,9 +344,9 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
       </div>
 
       {/* Split: Pipeline Editor Half and Results Half */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-[var(--hairline-strong)]">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-[var(--hairline-strong)]">
         {/* Stages Editor Half */}
-        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full bg-[var(--surface-card)] overflow-hidden">
+        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full min-h-0 bg-[var(--surface-card)] overflow-hidden">
           <div className="p-2.5 bg-[var(--canvas-soft)] border-b border-[var(--hairline)] flex items-center justify-between text-xs font-semibold text-[var(--muted)] select-none">
             <span>PIPELINE STAGES ({stages.filter((s) => s.enabled).length} ACTIVE)</span>
             {mode === "visual" && (
@@ -361,7 +361,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
             )}
           </div>
 
-          <div className="flex-1 p-3 overflow-y-auto editor-scroll">
+          <div className="flex-1 min-h-0 p-3 overflow-y-auto overscroll-contain editor-scroll">
             {mode === "visual" ? (
               <div className="space-y-3">
                 {stages.map((stage, idx) => (
@@ -462,8 +462,8 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
         </div>
 
         {/* Pipeline Results Half */}
-        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full bg-[var(--canvas)] overflow-hidden">
-          <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0">
+        <div className="w-full md:w-1/2 flex flex-col h-1/2 md:h-full min-h-0 bg-[var(--canvas)] overflow-hidden">
+          <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <span className="font-sans text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
                 PIPELINE OUTPUT
@@ -541,7 +541,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden p-3">
+          <div className="flex-1 min-h-0 overflow-hidden p-3">
             {isRunning ? (
               <TableSkeletonWidget
                 columns={4}

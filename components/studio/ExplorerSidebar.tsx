@@ -81,10 +81,10 @@ export function ExplorerSidebar() {
   return (
     <div
       style={{ width: `${sidebarWidth}px` }}
-      className="relative flex flex-col h-full border-r border-[var(--hairline-strong)] bg-[var(--surface-card)] select-none shrink-0 overflow-hidden"
+      className="relative flex flex-col h-full min-h-0 border-r border-[var(--hairline-strong)] bg-[var(--surface-card)] select-none shrink-0 overflow-hidden sticky top-0 left-0"
     >
       {/* Sidebar Header */}
-      <div className="h-9 px-3 border-b border-[var(--hairline)] flex items-center justify-between shrink-0 bg-[var(--surface-card)]">
+      <div className="h-9 px-3 border-b border-[var(--hairline)] flex items-center justify-between shrink-0 bg-[var(--surface-card)] sticky top-0 z-10 select-none">
         <span className="font-sans text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] truncate">
           {titles[activeActivity] || "EXPLORER"}
         </span>
@@ -112,7 +112,7 @@ export function ExplorerSidebar() {
       </div>
 
       {/* Main View Area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {activeActivity === "explorer" && <DatabaseTree />}
         {activeActivity === "query" && <QueryExplorer />}
         {activeActivity === "history" && <HistoryExplorer />}

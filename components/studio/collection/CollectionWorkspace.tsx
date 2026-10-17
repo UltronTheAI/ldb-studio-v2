@@ -360,9 +360,9 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
   const endItem = Math.min(state.page * state.pageSize, state.totalDocuments);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Fast Query Filter Bar */}
-      <div className="border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] p-3 space-y-2 shrink-0">
+      <div className="border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] p-3 space-y-2 shrink-0 sticky top-0 z-20">
         <form onSubmit={handleFilterSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-[var(--text-link)] select-none">
@@ -444,7 +444,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       </div>
 
       {/* Sub-Tabs Bar: Documents | Query | Aggregations | Indexes | Schema */}
-      <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0">
+      <div className="h-9 px-3 border-b border-[var(--hairline)] bg-[var(--surface-card)] flex items-center justify-between select-none shrink-0 sticky top-0 z-10">
         <div className="flex items-center gap-1 h-full">
           {[
             { id: "documents", label: "Documents", icon: Table2Icon },
@@ -547,10 +547,10 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       </div>
 
       {/* Main Sub-Tab Content */}
-      <div className="flex-1 overflow-hidden p-3">
+      <div className="flex-1 min-h-0 overflow-hidden p-3">
         {state.subTab === "documents" && (
-          <div className="flex flex-col h-full">
-            <div className="relative flex-1 overflow-hidden">
+          <div className="flex flex-col h-full min-h-0">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
               {errorInfo ? (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in duration-200">
                   <div className="max-w-md w-full rounded-[10px] border border-[var(--semantic-error)] bg-[var(--surface-card)] p-6 shadow-sm space-y-4">
@@ -680,7 +680,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
             </div>
 
             {/* Pagination & Status Footer */}
-            <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0">
+            <div className="h-10 pt-2 border-t border-[var(--hairline)] flex items-center justify-between text-xs font-mono text-[var(--body)] select-none shrink-0 sticky bottom-0 z-10 bg-[var(--canvas)]">
               <div className="flex items-center gap-3">
                 {!hasFetched || isLoading ? (
                   <span className="text-[var(--muted)]">Loading documents...</span>

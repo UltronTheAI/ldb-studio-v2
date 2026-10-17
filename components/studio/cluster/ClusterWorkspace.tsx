@@ -84,9 +84,9 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
   const currentNodeId = initialContext.live?.node_id ?? clusterSummary?.node_id ?? 0;
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
+    <div className="w-full h-full min-h-0 flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Header */}
-      <div className="h-11 px-4 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center justify-between shrink-0 select-none">
+      <div className="h-11 px-4 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center justify-between shrink-0 select-none sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <NetworkIcon size={16} className="text-[var(--text-link)]" />
           <h2 className="font-sans text-sm font-bold text-[var(--ink)]">
@@ -120,7 +120,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
       </div>
 
       {/* Main Body */}
-      <div className="flex-1 overflow-y-auto editor-scroll p-6 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain editor-scroll p-6 space-y-6">
         {error && (
           <div className="p-3 rounded-[6px] text-xs font-mono bg-[#ef4444]/15 border border-[#ef4444]/30 text-[#ef4444] flex items-center gap-2">
             <span>{error}</span>

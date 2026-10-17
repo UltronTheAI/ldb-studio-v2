@@ -29,7 +29,7 @@ export function DocumentJsonView({ documents, onEdit, onDelete }: DocumentJsonVi
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto editor-scroll space-y-3 p-1">
+    <div className="w-full h-full min-h-0 overflow-y-auto overscroll-contain editor-scroll space-y-3 p-1">
       {documents.map((doc, idx) => {
         const idStr = doc._id !== undefined ? String(doc._id) : `row-${idx}`;
         const jsonStr = JSON.stringify(doc, null, 2);

@@ -284,7 +284,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Command Items List */}
-        <div className="flex-1 overflow-y-auto sidebar-scroll p-1.5">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain sidebar-scroll p-1.5">
           {filteredCommands.length === 0 ? (
             <div className="p-6 text-center text-xs text-[var(--muted)]">
               No matching commands or collections.

@@ -65,7 +65,7 @@ export function OverviewWorkspace() {
   const nodeId = (data.live as { node_id?: number } | null)?.node_id ?? 1;
 
   return (
-    <div className="w-full h-full p-6 overflow-y-auto editor-scroll space-y-6">
+    <div className="w-full h-full min-h-0 p-6 overflow-y-auto overscroll-contain editor-scroll space-y-6">
       {/* Overview Top Hero */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs">
         <div className="space-y-1">

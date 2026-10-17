@@ -14,7 +14,7 @@ export function HistoryExplorer() {
   };
 
   return (
-    <div className="flex flex-col h-full select-none text-xs p-2 space-y-3 overflow-y-auto sidebar-scroll">
+    <div className="flex flex-col h-full min-h-0 select-none text-xs p-2 space-y-3 overflow-y-auto overscroll-contain sidebar-scroll">
       <div className="flex items-center justify-between px-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
           Past Executions ({history.length})

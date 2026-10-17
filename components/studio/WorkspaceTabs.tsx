@@ -76,12 +76,12 @@ export function WorkspaceTabs() {
   };
 
   return (
-    <div className="h-9 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center select-none z-10 shrink-0">
+    <div className="h-9 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center select-none z-20 shrink-0 sticky top-0 w-full">
       {/* Scrollable Tabs List */}
       <div
         ref={scrollRef}
         onWheel={handleWheel}
-        className="flex-1 flex items-center overflow-x-auto tabs-scroll h-full"
+        className="flex-1 flex items-center overflow-x-auto overscroll-contain tabs-scroll h-full"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;

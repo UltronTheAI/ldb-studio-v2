@@ -109,9 +109,9 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   const isLimitReached = manualBackups.length >= maxManualBackups;
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
+    <div className="w-full h-full min-h-0 flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
       {/* Top Section Header */}
-      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
+      <div className="min-h-11 px-3 py-1.5 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex flex-wrap items-center justify-between gap-2 shrink-0 sticky top-0 z-10 select-none">
         <div className="flex items-center gap-2 min-w-0">
           {subSection === "users" && <UsersIcon size={16} className="text-[var(--text-link)] shrink-0" />}
           {subSection === "roles" && <ShieldIcon size={16} className="text-[#a855f7] shrink-0" />}
@@ -180,7 +180,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
       </div>
 
       {/* Main Admin Content Body */}
-      <div className="flex-1 overflow-y-auto editor-scroll p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain editor-scroll p-6">
         {message && (
           <div
             className={`mb-4 p-3 rounded-[6px] text-xs font-mono flex items-center gap-2 ${

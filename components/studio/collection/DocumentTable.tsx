@@ -58,7 +58,7 @@ export function DocumentTable({ documents, onEdit, onDelete }: DocumentTableProp
   }
 
   return (
-    <div className="w-full h-full overflow-auto editor-scroll border border-[var(--hairline-strong)] rounded-[8px] bg-[var(--surface-card)]">
+    <div className="w-full h-full overflow-auto overscroll-contain editor-scroll border border-[var(--hairline-strong)] rounded-[8px] bg-[var(--surface-card)]">
       <table className="w-full border-collapse text-left text-xs font-mono select-text">
         {/* Sticky Header */}
         <thead className="sticky top-0 z-10 bg-[var(--canvas-soft)] border-b border-[var(--hairline-strong)] shadow-xs">

@@ -94,7 +94,7 @@ export function CollectionSchema({
   }
 
   return (
-    <div className="w-full h-full p-4 overflow-y-auto editor-scroll space-y-4">
+    <div className="w-full h-full min-h-0 p-4 overflow-y-auto overscroll-contain editor-scroll space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

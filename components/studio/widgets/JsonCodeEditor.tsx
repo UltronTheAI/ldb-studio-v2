@@ -354,7 +354,7 @@ export function JsonCodeEditor({
             autoCapitalize="off"
             autoComplete="off"
             autoCorrect="off"
-            className="relative block w-full h-full m-0 py-2.5 px-3 font-mono text-xs leading-5 whitespace-pre-wrap break-all bg-transparent text-transparent caret-white selection:bg-[var(--text-link)]/35 focus:outline-none resize-none editor-scroll placeholder:text-[var(--muted)]/40"
+            className="relative block w-full h-full m-0 py-2.5 px-3 font-mono text-xs leading-5 whitespace-pre-wrap break-all bg-transparent text-transparent caret-white selection:bg-[var(--text-link)]/35 focus:outline-none resize-none overscroll-contain editor-scroll placeholder:text-[var(--muted)]/40"
             style={{
               fontFamily: "var(--font-mono), monospace",
               fontSize: "12px",

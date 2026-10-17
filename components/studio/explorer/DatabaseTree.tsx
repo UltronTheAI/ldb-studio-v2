@@ -171,9 +171,9 @@ export function DatabaseTree() {
   };
 
   return (
-    <div className="flex flex-col h-full select-none text-xs">
+    <div className="flex flex-col h-full min-h-0 select-none text-xs">
       {/* Search Bar & Create DB Action */}
-      <div className="p-2 border-b border-[var(--hairline)] flex items-center gap-1.5">
+      <div className="p-2 border-b border-[var(--hairline)] flex items-center gap-1.5 shrink-0 sticky top-0 z-10 bg-[var(--surface-card)]">
         <div className="relative flex-1">
           <SearchIcon
             size={12}
@@ -198,7 +198,7 @@ export function DatabaseTree() {
       </div>
 
       {/* Tree Content */}
-      <div className="flex-1 overflow-y-auto sidebar-scroll py-1.5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain sidebar-scroll py-1.5">
         {filteredDatabases.length === 0 ? (
           <div className="p-4 text-center text-xs text-[var(--muted)]">
             {searchExplorerQuery ? "No matching databases or collections." : "No databases found."}
