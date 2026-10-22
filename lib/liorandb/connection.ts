@@ -105,7 +105,28 @@ export function classifyConnectionTarget(host: string): ConnectionTargetType {
   return "remote";
 }
 
+export function isLocalAllowedByEnv(): boolean {
+  const localVal = (process.env.LOCAL ?? process.env.NEXT_PUBLIC_LOCAL)
+    ?.replace(/^["']|["']$/g, "")
+    .trim()
+    .toLowerCase();
+  if (localVal === "true" || localVal === "1" || localVal === "yes") {
+    return true;
+  }
+  const allowLocalVal = process.env.STUDIO_ALLOW_LOCAL_CONNECTION
+    ?.replace(/^["']|["']$/g, "")
+    .trim()
+    .toLowerCase();
+  if (allowLocalVal === "true" || allowLocalVal === "1" || allowLocalVal === "yes") {
+    return true;
+  }
+  return false;
+}
+
 export function isRemoteHostedEnvironment(): boolean {
+  if (isLocalAllowedByEnv()) {
+    return false;
+  }
   if (process.env.STUDIO_HOSTED === "1" || process.env.STUDIO_HOSTED === "true") {
     return true;
   }
@@ -119,10 +140,7 @@ export function isRemoteHostedEnvironment(): boolean {
 }
 
 export function shouldBlockLocalhostInCurrentEnvironment(): boolean {
-  if (
-    process.env.STUDIO_ALLOW_LOCAL_CONNECTION === "1" ||
-    process.env.STUDIO_ALLOW_LOCAL_CONNECTION === "true"
-  ) {
+  if (isLocalAllowedByEnv()) {
     return false;
   }
   return isRemoteHostedEnvironment();
