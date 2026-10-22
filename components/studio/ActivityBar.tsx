@@ -23,20 +23,6 @@ interface ActivityItem {
   disabled?: boolean;
 }
 
-const ACTIVITIES: ActivityItem[] = [
-  { id: "explorer", label: "Database Explorer", icon: DatabaseIcon },
-  { id: "query", label: "Query Workbench", icon: TerminalIcon },
-  { id: "history", label: "Execution History", icon: HistoryIcon },
-  { id: "admin", label: "Governance & RBAC", icon: ShieldIcon },
-  { id: "cluster", label: "Cluster Topology", icon: NetworkIcon },
-  {
-    id: "backups",
-    label: "Backup Management (Disabled)",
-    icon: ArchiveIcon,
-    disabled: true,
-  },
-];
-
 export function ActivityBar() {
   const {
     activeActivity,
@@ -47,7 +33,26 @@ export function ActivityBar() {
     openAdminTab,
     openClusterTab,
     activeTab,
+    isLocalMode,
   } = useWorkspace();
+
+  const activities = React.useMemo(() => {
+    const list: ActivityItem[] = [
+      { id: "explorer", label: "Database Explorer", icon: DatabaseIcon },
+      { id: "query", label: "Query Workbench", icon: TerminalIcon },
+      { id: "history", label: "Execution History", icon: HistoryIcon },
+      { id: "admin", label: "Governance & RBAC", icon: ShieldIcon },
+      { id: "cluster", label: "Cluster Topology", icon: NetworkIcon },
+    ];
+    if (isLocalMode) {
+      list.push({
+        id: "backups",
+        label: "Backup Management",
+        icon: ArchiveIcon,
+      });
+    }
+    return list;
+  }, [isLocalMode]);
 
   const handleActivityClick = (item: ActivityItem) => {
     if (item.disabled) return;
@@ -76,7 +81,7 @@ export function ActivityBar() {
     <aside className="w-12 h-full min-h-0 border-r border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex flex-col items-center py-2 select-none z-20 shrink-0 justify-between text-[var(--muted)] sticky top-0 left-0">
       {/* Top Activities */}
       <div className="flex flex-col items-center gap-1 w-full">
-        {ACTIVITIES.map((item) => {
+        {activities.map((item) => {
           const isActive = activeActivity === item.id && !isSidebarCollapsed;
           const Icon = item.icon;
           return (

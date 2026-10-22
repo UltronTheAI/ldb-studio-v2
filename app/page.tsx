@@ -34,6 +34,7 @@ import { UriConnectionScene } from "@/components/studio/UriConnectionScene";
 import type { InitialStudioContext } from "@/lib/studio/workspace-types";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
+import { isLocalModeActive } from "@/lib/liorandb/connection";
 import { mapStudioError } from "@/lib/liorandb/errors";
 import {
   prettyJson,
@@ -1303,6 +1304,7 @@ export default async function Home({ searchParams }: PageProps) {
         live,
         ready,
         clusterSummary,
+        isLocalMode: isLocalModeActive(),
       };
     }, session.id);
   } catch (error) {

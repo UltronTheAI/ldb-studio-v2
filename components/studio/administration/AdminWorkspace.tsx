@@ -21,20 +21,27 @@ import { TableSkeletonWidget } from "../widgets/LoadingWidget";
 import {
   DEFAULT_MAX_MANUAL_BACKUPS,
   filterManualBackups,
+  filterAutomaticBackups,
+  getBackupExpirationInfo,
 } from "@/lib/studio/backup-policy";
+
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface AdminWorkspaceProps {
   tab: StudioTab;
 }
 
 export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
-  const { updateTabState } = useWorkspace();
+  const { updateTabState, isLocalMode } = useWorkspace();
   const subSection = tab.adminState?.subSection || "users";
   const [settingsPane, setSettingsPane] = useState<
     "general" | "cors" | "performance" | "limits" | "backups"
   >(() => {
     const pane = tab.adminState?.settingsPane;
-    if (pane === "performance" || pane === "limits" || pane === "backups") {
+    if (pane === "performance" || pane === "limits") {
+      return "general";
+    }
+    if (pane === "backups" && !isLocalMode) {
       return "general";
     }
     return pane || "general";
@@ -106,7 +113,13 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   const maxManualBackups = (data.maxManualBackups as number) || DEFAULT_MAX_MANUAL_BACKUPS;
 
   const manualBackups = filterManualBackups(backups);
+  const automaticBackups = filterAutomaticBackups(backups);
   const isLimitReached = manualBackups.length >= maxManualBackups;
+  const expiredBackups = backups.filter((b) => {
+    const created = (b as { created_at_ms?: number }).created_at_ms || b.created_at_utc_ms;
+    const exp = getBackupExpirationInfo(created, backupSettings?.retention?.delete_after_days ?? 3);
+    return exp.isExpired;
+  });
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
@@ -161,9 +174,40 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
           )}
 
           {subSection === "backups" && (
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-[5px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] text-[var(--muted)]">
-              Feature Disabled (Coming in future)
-            </span>
+            isLocalMode ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowBackupPolicyModal(true)}
+                  title="Configure automated backup schedules (IST)"
+                  className="h-7 px-2.5 rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <SlidersIcon size={12} />
+                  <span className="hidden sm:inline">Schedules (IST)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateBackupModal(true)}
+                  disabled={isLimitReached}
+                  title={
+                    isLimitReached
+                      ? `Capacity full (${manualBackups.length}/${maxManualBackups} manual backups taken)`
+                      : "Take manual backup"
+                  }
+                  className="btn-primary h-7 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <PlusIcon size={12} />
+                  <span>Take Backup</span>
+                  <span className="hidden xs:inline-block font-mono text-[10px] opacity-80">
+                    ({manualBackups.length}/{maxManualBackups})
+                  </span>
+                </button>
+              </>
+            ) : (
+              <span className="text-[11px] font-mono px-2.5 py-1 rounded-[5px] border border-[var(--hairline-strong)] bg-[var(--surface-strong)] text-[var(--muted)]">
+                Feature Disabled (Coming in future)
+              </span>
+            )
           )}
 
           <button
@@ -346,22 +390,253 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
           )
         )}
 
-        {/* 3. BACKUPS SUBSECTION (DISABLED) */}
+        {/* 3. BACKUPS SUBSECTION */}
         {subSection === "backups" && (
-          <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-12 text-center flex flex-col items-center justify-center space-y-3 font-sans shadow-xs">
-            <div className="w-12 h-12 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex items-center justify-center text-[var(--muted)]">
-              <ArchiveIcon size={24} />
+          !isLocalMode ? (
+            <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-12 text-center flex flex-col items-center justify-center space-y-3 font-sans shadow-xs">
+              <div className="w-12 h-12 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] flex items-center justify-center text-[var(--muted)]">
+                <ArchiveIcon size={24} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-[var(--ink)]">Backup Management Disabled</h3>
+                <p className="text-xs text-[var(--muted)] max-w-md">
+                  The backup tab and options are temporarily disabled. We will bring this feature back in a future update!
+                </p>
+              </div>
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                Coming in future
+              </span>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-[var(--ink)]">Backup Management Disabled</h3>
-              <p className="text-xs text-[var(--muted)] max-w-md">
-                The backup tab and options are temporarily disabled. We will bring this feature back in a future update!
-              </p>
+          ) : isLoading && backups.length === 0 ? (
+            <TableSkeletonWidget
+              columns={6}
+              rows={4}
+              message="Loading backup repository and snapshots..."
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Policy & Capacity KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* 1. Manual Capacity KPI */}
+                <div className="p-3.5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                    <span>Manual Capacity</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                        isLimitReached
+                          ? "bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30"
+                          : "bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline)]"
+                      }`}
+                    >
+                      {manualBackups.length} / {maxManualBackups}
+                    </span>
+                  </div>
+                  <div className="text-lg font-bold font-mono text-[var(--ink)] flex items-center justify-between">
+                    <span>
+                      {isLimitReached
+                        ? "Capacity Full"
+                        : `${maxManualBackups - manualBackups.length} slots left`}
+                    </span>
+                  </div>
+                  <div className="w-full bg-[var(--canvas-soft)] h-1.5 rounded-full overflow-hidden border border-[var(--hairline)]">
+                    <div
+                      className={`h-full transition-all ${
+                        isLimitReached ? "bg-[#ef4444]" : "bg-[var(--text-link)]"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, (manualBackups.length / maxManualBackups) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-[var(--muted)]">
+                    Fixed limit: max 10 manual snapshots (automated excluded)
+                  </div>
+                </div>
+
+                {/* 2. Automated Schedules KPI */}
+                <div className="p-3.5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                    <span>Automated Schedules (IST)</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowBackupPolicyModal(true)}
+                      className="text-[10px] text-[var(--text-link)] hover:underline font-mono normal-case font-medium cursor-pointer"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                  <div className="space-y-1 text-xs font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[var(--muted)]">Daily Backup:</span>
+                      <span
+                        className={`font-semibold ${
+                          backupSettings?.daily?.enabled
+                            ? "text-[var(--ink)]"
+                            : "text-[var(--muted)]"
+                        }`}
+                      >
+                        {backupSettings?.daily?.enabled
+                          ? `Active (${String(backupSettings.daily.hour ?? 2).padStart(2, "0")}:${String(backupSettings.daily.minute ?? 0).padStart(2, "0")} IST)`
+                          : "Disabled"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[var(--muted)]">Weekly Backup:</span>
+                      <span
+                        className={`font-semibold ${
+                          backupSettings?.weekly?.enabled
+                            ? "text-[var(--ink)]"
+                            : "text-[var(--muted)]"
+                        }`}
+                      >
+                        {backupSettings?.weekly?.enabled
+                          ? `Active (${WEEKDAY_SHORT[backupSettings.weekly.weekday ?? 0] || "Sun"} ${String(backupSettings.weekly.hour ?? 3).padStart(2, "0")}:${String(backupSettings.weekly.minute ?? 0).padStart(2, "0")} IST)`
+                          : "Disabled"}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-[var(--muted)] pt-0.5">
+                      {automaticBackups.length} automated snapshot{automaticBackups.length === 1 ? "" : "s"} preserved
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Retention Policy KPI */}
+                <div className="p-3.5 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                    <span>Retention Policy</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded font-bold uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline)]">
+                      Fixed 3 Days
+                    </span>
+                  </div>
+                  <div className="text-xs text-[var(--body)] font-mono">
+                    Retention fixed at 3 days per snapshot.
+                  </div>
+                  <div className="pt-1 flex items-center justify-between">
+                    <span className="text-[10px] text-[var(--muted)] font-mono">
+                      {expiredBackups.length} expired snapshot{expiredBackups.length === 1 ? "" : "s"}
+                    </span>
+                    {expiredBackups.length > 0 && (
+                      <form action={studioMutationAction} className="inline-block">
+                        <input type="hidden" name="action" value="pruneExpiredBackups" />
+                        <button
+                          type="submit"
+                          className="text-[10px] font-semibold text-[#ef4444] hover:underline cursor-pointer"
+                        >
+                          Prune Expired
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Backups Inventory Table */}
+              <div className="rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] overflow-x-auto editor-scroll shadow-xs">
+                <table className="w-full min-w-[620px] border-collapse text-left text-xs font-mono">
+                  <thead className="bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
+                    <tr>
+                      <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Backup Label / ID
+                      </th>
+                      <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Type
+                      </th>
+                      <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Created Timestamp
+                      </th>
+                      <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Retention &amp; Expiry
+                      </th>
+                      <th className="px-4 py-2.5 font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Status
+                      </th>
+                      <th className="px-4 py-2.5 text-center font-bold text-[var(--ink)] uppercase tracking-wider text-[11px]">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--hairline)]">
+                    {backups.length === 0 ? (
+                      <tr key="empty-backups">
+                        <td colSpan={6} className="px-4 py-8 text-center text-[var(--muted)]">
+                          No backups found. Take a manual backup or enable automated daily/weekly backups.
+                        </td>
+                      </tr>
+                    ) : (
+                      backups.map((b, idx) => {
+                        const backupId = b.backup_id || (b as { id?: string }).id || `backup-${idx}`;
+                        const createdAt = (b as { created_at_ms?: number }).created_at_ms || b.created_at_utc_ms;
+                        const isManual =
+                          !b.backup_type || b.backup_type.toLowerCase() === "manual";
+                        const typeLabel = isManual ? "Manual" : b.backup_type;
+                        const expiry = getBackupExpirationInfo(
+                          createdAt,
+                          backupSettings?.retention?.delete_after_days ?? 3,
+                        );
+
+                        return (
+                          <tr
+                            key={backupId}
+                            className="hover:bg-[var(--surface-strong)] transition"
+                          >
+                            <td className="px-4 py-3 font-bold text-[var(--ink)] flex items-center gap-2">
+                              <ArchiveIcon size={13} className="text-[#f59e0b] shrink-0" />
+                              <span className="truncate max-w-[180px]">
+                                {b.label || backupId}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase border ${
+                                  isManual
+                                    ? "bg-[var(--surface-strong)] text-[var(--ink)] border-[var(--hairline-strong)]"
+                                    : "bg-[#a855f7]/15 text-[#a855f7] border-[#a855f7]/30"
+                                }`}
+                              >
+                                {typeLabel}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[var(--body)]">
+                              {createdAt ? new Date(createdAt).toLocaleString() : "Unknown"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  expiry.isExpired
+                                    ? "bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30"
+                                    : "bg-[var(--canvas-soft)] text-[var(--muted)] border border-[var(--hairline)]"
+                                }`}
+                              >
+                                {expiry.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-[var(--surface-strong)] text-[var(--ink)] border border-[var(--hairline-strong)]">
+                                {b.status || "Complete"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <form action={studioMutationAction} className="inline-block">
+                                <input type="hidden" name="action" value="deleteBackup" />
+                                <input type="hidden" name="backupId" value={backupId} />
+                                <button
+                                  type="submit"
+                                  title="Delete Backup"
+                                  className="p-1 rounded text-[var(--muted)] hover:text-[#ef4444] transition cursor-pointer"
+                                >
+                                  <Trash2Icon size={13} />
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
-              Coming in future
-            </span>
-          </div>
+          )
         )}
 
         {/* 4. SETTINGS SUBSECTION */}
@@ -373,7 +648,9 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
                 { id: "cors", label: "CORS Rules" },
                 { id: "performance", label: "Performance (Disabled)", disabled: true },
                 { id: "limits", label: "Limits & Caps (Disabled)", disabled: true },
-                { id: "backups", label: "Backup Policy (Disabled)", disabled: true },
+                isLocalMode
+                  ? { id: "backups", label: "Backup Policy", disabled: false }
+                  : { id: "backups", label: "Backup Policy (Disabled)", disabled: true },
               ].map((p) => (
                 <button
                   key={p.id}
@@ -484,15 +761,161 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               )}
 
               {settingsPane === "backups" && (
-                <div className="p-8 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] text-center space-y-2 font-sans">
-                  <div className="text-xs font-bold text-[var(--ink)]">Backup Configuration Disabled</div>
-                  <p className="text-[11px] text-[var(--muted)] max-w-sm mx-auto">
-                    The backup option is currently disabled. We will bring this feature back in a future update!
-                  </p>
-                  <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
-                    Coming in future
-                  </span>
-                </div>
+                !isLocalMode ? (
+                  <div className="p-8 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] text-center space-y-2 font-sans">
+                    <div className="text-xs font-bold text-[var(--ink)]">Backup Configuration Disabled</div>
+                    <p className="text-[11px] text-[var(--muted)] max-w-sm mx-auto">
+                      The backup option is currently disabled. We will bring this feature back in a future update!
+                    </p>
+                    <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                      Coming in future
+                    </span>
+                  </div>
+                ) : (
+                  <form action={studioMutationAction} className="space-y-4">
+                    <input type="hidden" name="action" value="updateBackupSettingsGui" />
+                    <input type="hidden" name="compression_level" value="6" />
+                    <input type="hidden" name="verify_after_create" value="true" />
+                    <input type="hidden" name="require_cluster_complete" value="false" />
+                    <input type="hidden" name="hourly_enabled" value="false" />
+                    <input type="hidden" name="hourly_hour" value="0" />
+                    <input type="hidden" name="hourly_minute" value="0" />
+                    <input type="hidden" name="hourly_timezone" value="IST" />
+                    <input type="hidden" name="monthly_enabled" value="false" />
+                    <input type="hidden" name="monthly_hour" value="0" />
+                    <input type="hidden" name="monthly_minute" value="0" />
+                    <input type="hidden" name="monthly_timezone" value="IST" />
+                    <input type="hidden" name="keep_hourly" value="0" />
+                    <input type="hidden" name="keep_weekly" value="1" />
+                    <input type="hidden" name="keep_monthly" value="0" />
+
+                    <div className="space-y-4 text-xs font-mono">
+                      {/* Fixed Policy Notice */}
+                      <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-1.5 font-sans">
+                        <div className="font-bold text-xs text-[var(--ink)] flex items-center justify-between">
+                          <span>Cluster Backup Policy</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                            System Enforced
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[var(--muted)] pt-1">
+                          <div>
+                            • <strong>Manual Capacity:</strong> Fixed max 10 snapshots ({manualBackups.length}/10 used, automated excluded)
+                          </div>
+                          <div>
+                            • <strong>Retention Lifespan:</strong> Fixed max 3 days per snapshot
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Daily Schedule */}
+                      <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
+                            <input
+                              type="checkbox"
+                              name="daily_enabled"
+                              defaultChecked={backupSettings?.daily?.enabled ?? false}
+                              className="rounded accent-black"
+                            />
+                            <span>Enable Automated Daily Backup</span>
+                          </label>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                            Daily Schedule (IST)
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Hour (0-23 IST)</label>
+                            <input
+                              name="daily_hour"
+                              type="number"
+                              min="0"
+                              max="23"
+                              defaultValue={backupSettings?.daily?.hour ?? 2}
+                              className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-[var(--muted)] mb-1">Execution Minute (0-59)</label>
+                            <input
+                              name="daily_minute"
+                              type="number"
+                              min="0"
+                              max="59"
+                              defaultValue={backupSettings?.daily?.minute ?? 0}
+                              className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <input type="hidden" name="daily_timezone" value="IST" />
+                      </div>
+
+                      {/* Weekly Schedule */}
+                      <div className="p-3.5 rounded-[8px] bg-[var(--canvas-soft)] border border-[var(--hairline)] space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center gap-2 cursor-pointer font-sans font-bold text-xs text-[var(--ink)]">
+                            <input
+                              type="checkbox"
+                              name="weekly_enabled"
+                              defaultChecked={backupSettings?.weekly?.enabled ?? false}
+                              className="rounded accent-black"
+                            />
+                            <span>Enable Automated Weekly Backup</span>
+                          </label>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--surface-strong)] text-[var(--muted)] border border-[var(--hairline)]">
+                            Weekly Schedule (IST)
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                          <div>
+                            <label className="block text-[10px] text-[var(--muted)] mb-1">Day of Week</label>
+                            <select
+                              name="weekly_weekday"
+                              defaultValue={backupSettings?.weekly?.weekday ?? 0}
+                              className="w-full h-8 px-2 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
+                            >
+                              <option value="0">Sunday</option>
+                              <option value="1">Monday</option>
+                              <option value="2">Tuesday</option>
+                              <option value="3">Wednesday</option>
+                              <option value="4">Thursday</option>
+                              <option value="5">Friday</option>
+                              <option value="6">Saturday</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-[var(--muted)] mb-1">Hour (0-23 IST)</label>
+                            <input
+                              name="weekly_hour"
+                              type="number"
+                              min="0"
+                              max="23"
+                              defaultValue={backupSettings?.weekly?.hour ?? 3}
+                              className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-[var(--muted)] mb-1">Minute (0-59)</label>
+                            <input
+                              name="weekly_minute"
+                              type="number"
+                              min="0"
+                              max="59"
+                              defaultValue={backupSettings?.weekly?.minute ?? 0}
+                              className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-xs text-[var(--ink)] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <input type="hidden" name="weekly_timezone" value="IST" />
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn-primary h-8 px-4 text-xs font-semibold cursor-pointer">
+                      Save Backup Schedules (IST)
+                    </button>
+                  </form>
+                )
               )}
             </div>
           </div>

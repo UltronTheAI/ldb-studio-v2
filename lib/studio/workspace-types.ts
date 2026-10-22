@@ -173,4 +173,5 @@ export interface InitialStudioContext {
   live?: { state: string; node_id: number } | null;
   ready?: ReadyStatus | null;
   clusterSummary?: ClusterSummary | null;
+  isLocalMode?: boolean;
 }

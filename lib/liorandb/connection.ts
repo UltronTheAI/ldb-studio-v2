@@ -105,12 +105,16 @@ export function classifyConnectionTarget(host: string): ConnectionTargetType {
   return "remote";
 }
 
-export function isLocalAllowedByEnv(): boolean {
+export function isLocalModeActive(): boolean {
   const localVal = (process.env.LOCAL ?? process.env.NEXT_PUBLIC_LOCAL)
     ?.replace(/^["']|["']$/g, "")
     .trim()
     .toLowerCase();
-  if (localVal === "true" || localVal === "1" || localVal === "yes") {
+  return localVal === "true" || localVal === "1" || localVal === "yes";
+}
+
+export function isLocalAllowedByEnv(): boolean {
+  if (isLocalModeActive()) {
     return true;
   }
   const allowLocalVal = process.env.STUDIO_ALLOW_LOCAL_CONNECTION

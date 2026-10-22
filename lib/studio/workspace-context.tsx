@@ -32,6 +32,7 @@ import { listExplorerTreeAction } from "@/app/actions";
 
 export interface WorkspaceContextValue {
   initialContext: InitialStudioContext;
+  isLocalMode: boolean;
   tabs: StudioTab[];
   activeTab: StudioTab | undefined;
   activeTabId: string;
@@ -137,6 +138,12 @@ export function WorkspaceProvider({
   const isRestoredRef = useRef(false);
   const [isRestored, setIsRestored] = useState(false);
 
+  const isLocalMode = Boolean(
+    initialContext.isLocalMode ??
+      (typeof process !== "undefined" &&
+        (process.env.NEXT_PUBLIC_LOCAL === "true" || process.env.NEXT_PUBLIC_LOCAL === "1")),
+  );
+
   // Deterministic initial state to match SSR exactly and eliminate hydration mismatches
   const [tabs, setTabs] = useState<StudioTab[]>(() => getDefaultTabs(initialContext));
   const [activeTabId, setActiveTabId] = useState<string>("tab-overview");
@@ -202,7 +209,11 @@ export function WorkspaceProvider({
       }
 
       if (meta.activeActivity && (meta.activeActivity as string) !== "settings") {
-        setActiveActivity(meta.activeActivity);
+        if (meta.activeActivity === "backups" && !isLocalMode) {
+          setActiveActivity("explorer");
+        } else {
+          setActiveActivity(meta.activeActivity);
+        }
       }
       if (typeof meta.sidebarWidth === "number") {
         setSidebarWidthState(meta.sidebarWidth);
@@ -228,7 +239,7 @@ export function WorkspaceProvider({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [isLocalMode]);
 
   // Save tabs on change (only after client restoration to avoid wiping localStorage with initial default)
   useEffect(() => {
@@ -690,6 +701,7 @@ export function WorkspaceProvider({
     <WorkspaceContext.Provider
       value={{
         initialContext,
+        isLocalMode,
         tabs,
         activeTab,
         activeTabId,

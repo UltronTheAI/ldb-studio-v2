@@ -13,6 +13,9 @@ if (process.env.NODE_ENV === "production" && (!sessionSecret || sessionSecret.le
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@liorandb/driver"],
+  env: {
+    NEXT_PUBLIC_LOCAL: process.env.LOCAL || process.env.NEXT_PUBLIC_LOCAL || "",
+  },
   async headers() {
     return [
       {

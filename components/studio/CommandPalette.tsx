@@ -12,6 +12,7 @@ import {
   ShieldIcon,
   UsersIcon,
   NetworkIcon,
+  ArchiveIcon,
   SettingsIcon,
   XIcon,
   MoonIcon,
@@ -52,6 +53,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
     toggleSidebar,
     refreshExplorer,
     refreshActiveTab,
+    isLocalMode,
   } = useWorkspace();
 
   const [query, setQuery] = useState("");
@@ -151,6 +153,17 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         icon: ShieldIcon,
         action: () => openAdminTab("roles"),
       },
+      ...(isLocalMode
+        ? [
+            {
+              id: "nav-backups",
+              title: "Go to Backups Repository",
+              category: "Navigation" as const,
+              icon: ArchiveIcon,
+              action: () => openAdminTab("backups"),
+            },
+          ]
+        : []),
       {
         id: "nav-settings",
         title: "Go to Studio Settings",
@@ -216,6 +229,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
     toggleSidebar,
     refreshExplorer,
     refreshActiveTab,
+    isLocalMode,
   ]);
 
   // Filter commands by query
