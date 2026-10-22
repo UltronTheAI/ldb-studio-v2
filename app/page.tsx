@@ -54,7 +54,7 @@ import {
   Trash2Icon,
   UsersIcon,
 } from "@/lib/lucide";
-import { destroyStudioSession, getStudioSession } from "@/lib/liorandb/session";
+import { getStudioSession } from "@/lib/liorandb/session";
 import {
   LioranDBLogo,
   InteractiveQueryStage,
@@ -867,13 +867,24 @@ export default async function Home({ searchParams }: PageProps) {
   };
 
   const session = await getStudioSession();
+
+  const isAuthErrorParam =
+    Boolean(errorMessage) &&
+    (errorMessage.toLowerCase().includes("authentication") ||
+      errorMessage.toLowerCase().includes("rejected by the server") ||
+      errorMessage.toLowerCase().includes("session expired"));
+
+  if (session && isAuthErrorParam) {
+    redirect("/api/auth/logout");
+  }
+
   if (!session) {
     return (
       <div className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
-        {/* Early script to sanitize address bar before React hydration */}
+        {/* Early script to sanitize address bar and reset auth state before React hydration */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var u=new URL(window.location.href);var c=u.searchParams.get("uri")||u.searchParams.get("connection")||u.searchParams.get("url");if(c){window.__liorandb_auto_conn=c;u.searchParams.delete("uri");u.searchParams.delete("connection");u.searchParams.delete("url");window.history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash);}}catch(e){}})();`,
+            __html: `(function(){try{var u=new URL(window.location.href);var err=u.searchParams.get("error");if(err&&(err.toLowerCase().indexOf("authentication")!==-1||err.toLowerCase().indexOf("rejected by the server")!==-1||err.toLowerCase().indexOf("session expired")!==-1)){u.searchParams.delete("error");window.history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash);try{localStorage.removeItem("liorandb_studio_tabs_v1");localStorage.removeItem("liorandb_studio_metadata_v1");}catch(e){}}var c=u.searchParams.get("uri")||u.searchParams.get("connection")||u.searchParams.get("url");if(c){window.__liorandb_auto_conn=c;u.searchParams.delete("uri");u.searchParams.delete("connection");u.searchParams.delete("url");window.history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash);}}catch(e){}})();`,
           }}
         />
         {/* Client-side URI connection scene detector */}
@@ -1296,9 +1307,15 @@ export default async function Home({ searchParams }: PageProps) {
     }, session.id);
   } catch (error) {
     const mapped = mapStudioError(error);
-    if (mapped.shouldClearSession) {
-      await destroyStudioSession(session.id);
-      redirect(`/?error=${encodeURIComponent(`${mapped.title}: ${mapped.message}`)}`);
+    const isAuth =
+      mapped.shouldClearSession ||
+      mapped.code === "AUTHENTICATION_FAILED" ||
+      mapped.code === "SESSION_EXPIRED" ||
+      mapped.title.toLowerCase().includes("authentication") ||
+      mapped.message.toLowerCase().includes("rejected by the server");
+
+    if (isAuth) {
+      redirect("/api/auth/logout");
     }
     loadErrorMessage = `${mapped.title}: ${mapped.message}`;
     return renderDisconnectedState(session, loadErrorMessage);

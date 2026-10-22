@@ -17,6 +17,7 @@ import type {
   StudioTab,
 } from "./workspace-types";
 import {
+  clearWorkspaceState,
   loadQueryHistory,
   loadSavedQueryDrafts,
   loadSavedTabs,
@@ -151,10 +152,28 @@ export function WorkspaceProvider({
     return map;
   });
   const [searchExplorerQuery, setSearchExplorerQuery] = useState<string>("");
-  const [statusMessage, setStatusMessage] = useState<{
+  const [statusMessage, setStatusMessageState] = useState<{
     text: string;
     tone: "info" | "success" | "error";
   } | null>(null);
+
+  const setStatusMessage = useCallback(
+    (msg: { text: string; tone: "info" | "success" | "error" } | null) => {
+      setStatusMessageState(msg);
+      if (
+        msg &&
+        msg.tone === "error" &&
+        (msg.text.toLowerCase().includes("authentication failure") ||
+          msg.text.toLowerCase().includes("rejected by the server") ||
+          msg.text.toLowerCase().includes("session expired") ||
+          msg.text.toLowerCase().includes("no active studio session"))
+      ) {
+        clearWorkspaceState();
+        window.location.replace("/api/auth/logout");
+      }
+    },
+    [],
+  );
   const [lastExecutionDurationMs, setLastExecutionDurationMs] = useState<number | null>(null);
   const [history, setHistory] = useState<QueryHistoryItem[]>([]);
   const [savedDrafts, setSavedDrafts] = useState<SavedQueryDraft[]>([]);
@@ -589,6 +608,17 @@ export function WorkspaceProvider({
     if (res.ok && res.data) {
       setDatabases(res.data.databases);
       setCollectionsMap(res.data.collectionsMap);
+    } else if (res && !res.ok) {
+      if (
+        res.errorDescriptor?.shouldClearSession ||
+        res.error?.toLowerCase().includes("authentication") ||
+        res.error?.toLowerCase().includes("rejected by the server") ||
+        res.error?.toLowerCase().includes("session expired") ||
+        res.error?.toLowerCase().includes("no active studio session")
+      ) {
+        clearWorkspaceState();
+        window.location.replace("/api/auth/logout");
+      }
     }
   }, []);
 

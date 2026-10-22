@@ -184,7 +184,21 @@ async function runWithSession<T>(
     throw new Error("No active Studio session.");
   }
 
-  return callback(session.connectionUri, session.id);
+  try {
+    return await callback(session.connectionUri, session.id);
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    if (
+      mapped.shouldClearSession ||
+      mapped.code === "AUTHENTICATION_FAILED" ||
+      mapped.code === "SESSION_EXPIRED" ||
+      mapped.title.toLowerCase().includes("authentication") ||
+      mapped.message.toLowerCase().includes("rejected by the server")
+    ) {
+      await destroyStudioSession(session.id).catch(() => {});
+    }
+    throw error;
+  }
 }
 
 export async function connectAction(formData: FormData): Promise<void> {

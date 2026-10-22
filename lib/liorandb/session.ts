@@ -5,7 +5,7 @@ import type { Principal } from "@liorandb/driver";
 import type { SanitizedConnectionMetadata } from "./connection";
 import { evictLioranClient } from "./client";
 
-const COOKIE_NAME = "liorandb_studio_session";
+export const COOKIE_NAME = "liorandb_studio_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const KEY_SALT = "liorandb-studio-session";
 const MAX_COOKIE_VALUE_BYTES = 3_800;
