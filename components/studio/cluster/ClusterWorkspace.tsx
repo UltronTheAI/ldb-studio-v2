@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { StudioTab } from "@/lib/studio/workspace-types";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import { fetchAdminSectionDataAction } from "@/app/actions";
 import type {
   NodeConfigView,
   ClusterPartitionPlacement,
@@ -30,12 +29,15 @@ interface ClusterWorkspaceProps {
 }
 
 export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
-  const { initialContext, openQueryTab } = useWorkspace();
+  const { initialContext, openQueryTab, dataClient } = useWorkspace();
   const [nodes, setNodes] = useState<readonly NodeConfigView[]>([]);
   const [partitions, setPartitions] = useState<readonly ClusterPartitionPlacement[]>([]);
   const [healthSnapshots, setHealthSnapshots] = useState<readonly PartitionHealthView[]>([]);
   const [readiness, setReadiness] = useState<ReadyStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadedClusterSummary, setLoadedClusterSummary] = useState<ClusterSummary | null>(
+    (initialContext.clusterSummary as ClusterSummary | null) ?? null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
 
@@ -43,8 +45,11 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetchAdminSectionDataAction("cluster");
+      const res = await dataClient.fetchAdmin("cluster", undefined, true);
       if (res.ok && res.data) {
+        if (res.data.clusterSummary) {
+          setLoadedClusterSummary(res.data.clusterSummary as ClusterSummary);
+        }
         if (Array.isArray(res.data.clusterNodes)) {
           setNodes(res.data.clusterNodes as readonly NodeConfigView[]);
         }
@@ -65,7 +70,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dataClient]);
 
   useEffect(() => {
     let ignore = false;
@@ -79,7 +84,7 @@ export function ClusterWorkspace({ tab }: ClusterWorkspaceProps) {
   }, [loadClusterData]);
 
   // Fallback to initialContext.clusterSummary if available and nodes list is empty
-  const clusterSummary = initialContext.clusterSummary as ClusterSummary | null;
+  const clusterSummary = loadedClusterSummary;
   const activeNodes = nodes.length > 0 ? nodes : (clusterSummary?.nodes || []);
   const currentNodeId = initialContext.live?.node_id ?? clusterSummary?.node_id ?? 0;
 

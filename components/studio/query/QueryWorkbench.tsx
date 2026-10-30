@@ -10,7 +10,6 @@ import type {
   QueryOperationMode,
 } from "@/lib/studio/workspace-types";
 import {
-  executeQueryAction,
   insertOneDocumentAction,
   insertManyDocumentsAction,
   updateOneDocumentAction,
@@ -85,6 +84,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     addQueryHistory,
     saveDraft,
     setStatusMessage,
+    dataClient,
   } = useWorkspace();
 
   const state = useMemo(
@@ -311,7 +311,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
       }
 
       try {
-        const res = await executeQueryAction({
+        const res = await dataClient.executeQuery({
           database: selectedDb,
           collection: selectedCol,
           filter: activeFilter,
@@ -395,6 +395,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
       state,
       updateTabState,
       addQueryHistory,
+      dataClient,
     ],
   );
 
@@ -446,6 +447,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
             success: true,
           });
           // Refresh browser
+          dataClient.invalidateCollection(selectedDb, selectedCol);
           await handleRunFind();
         } else {
           setErrorMsg(res.error || "Failed to insert document");
@@ -502,6 +504,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
             success: true,
           });
           // Refresh browser
+          dataClient.invalidateCollection(selectedDb, selectedCol);
           await handleRunFind();
         } else {
           setErrorMsg(res.error || "Failed to insert documents");
@@ -547,6 +550,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
             success: true,
           });
           // Refresh browser
+          dataClient.invalidateCollection(selectedDb, selectedCol);
           await handleRunFind();
         } else {
           setErrorMsg(res.error || "Failed to delete document");
@@ -592,6 +596,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
             success: true,
           });
           // Refresh browser
+          dataClient.invalidateCollection(selectedDb, selectedCol);
           await handleRunFind();
         } else {
           setErrorMsg(res.error || "Failed to delete documents");
@@ -611,6 +616,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
     insertManyDocsCode,
     deleteOneFilterCode,
     deleteManyFilterCode,
+    dataClient,
   ]);
 
   // Edit document handler (opens modal)
@@ -632,6 +638,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
           text: `Document inserted (ID: ${String(res.data.insertedId)})`,
           tone: "success",
         });
+        dataClient.invalidateCollection(selectedDb, selectedCol);
         handleRunFind();
         return true;
       }
@@ -653,6 +660,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
 
     if (res.ok) {
       setStatusMessage({ text: "Document updated successfully", tone: "success" });
+      dataClient.invalidateCollection(selectedDb, selectedCol);
       // Update local state directly for responsive feedback
       const updatedDocs = (state.results || []).map((d) =>
         d._id === activeDocForEdit._id ? { ...parsedUpdate, _id: activeDocForEdit._id } : d,
@@ -687,6 +695,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
 
       if (res.ok) {
         setStatusMessage({ text: "Document deleted successfully", tone: "success" });
+        dataClient.invalidateCollection(selectedDb, selectedCol);
         const updatedDocs = (state.results || []).filter((d) => d._id !== deleteTarget._id);
         updateTabState(tab.id, {
           queryState: {
@@ -1364,6 +1373,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
         database={selectedDb}
         collection={selectedCol}
         onSuccess={() => {
+          dataClient.invalidateCollection(selectedDb, selectedCol);
           handleRunFind();
         }}
       />

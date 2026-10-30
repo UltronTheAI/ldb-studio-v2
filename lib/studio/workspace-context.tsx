@@ -28,7 +28,7 @@ import {
   saveTabsToStorage,
   saveWorkspaceMetadata,
 } from "./workspace-storage";
-import { listExplorerTreeAction } from "@/app/actions";
+import { StudioDataClient } from "./data-client";
 
 export interface WorkspaceContextValue {
   initialContext: InitialStudioContext;
@@ -48,6 +48,9 @@ export interface WorkspaceContextValue {
   isCommandPaletteOpen: boolean;
   databases: string[];
   collectionsMap: Record<string, string[]>;
+  collectionsLoading: Record<string, boolean>;
+  isExplorerLoading: boolean;
+  dataClient: StudioDataClient;
 
   // Actions
   openCollectionTab: (database: string, collection: string) => void;
@@ -72,6 +75,8 @@ export interface WorkspaceContextValue {
   setSidebarWidth: (width: number) => void;
   setActiveActivity: (activity: ActivitySection) => void;
   toggleDatabaseExpanded: (db: string) => void;
+  loadDatabases: (force?: boolean) => Promise<void>;
+  loadDatabaseCollections: (db: string, force?: boolean) => Promise<void>;
   setSearchExplorerQuery: (query: string) => void;
   setStatusMessage: (msg: { text: string; tone: "info" | "success" | "error" } | null) => void;
   setLastExecutionDurationMs: (ms: number | null) => void;
@@ -113,10 +118,10 @@ function getDefaultTabs(initialContext: InitialStudioContext): StudioTab[] {
         filter: "{}",
         projection: "",
         sort: "",
-        limit: 50,
+        limit: 25,
         skip: 0,
         page: 1,
-        pageSize: 50,
+        pageSize: 25,
         totalDocuments: 0,
         documents: [],
         indexes: [],
@@ -151,13 +156,7 @@ export function WorkspaceProvider({
   const [activeActivity, setActiveActivity] = useState<ActivitySection>("explorer");
   const [sidebarWidth, setSidebarWidthState] = useState<number>(280);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
-  const [expandedDatabases, setExpandedDatabases] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    for (const db of initialContext.databases) {
-      map[db] = true;
-    }
-    return map;
-  });
+  const [expandedDatabases, setExpandedDatabases] = useState<Record<string, boolean>>({});
   const [searchExplorerQuery, setSearchExplorerQuery] = useState<string>("");
   const [statusMessage, setStatusMessageState] = useState<{
     text: string;
@@ -189,7 +188,19 @@ export function WorkspaceProvider({
   const [collectionsMap, setCollectionsMap] = useState<Record<string, string[]>>(
     initialContext.collectionsMap,
   );
+  const [collectionsLoading, setCollectionsLoading] = useState<Record<string, boolean>>({});
+  const [isExplorerLoading, setIsExplorerLoading] = useState(initialContext.databases.length === 0);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const dataClientRef = useRef<StudioDataClient | null>(null);
+  if (!dataClientRef.current) {
+    dataClientRef.current = new StudioDataClient({
+      principalId: initialContext.principal.user_id,
+      host: initialContext.host,
+      port: initialContext.port,
+      database: initialContext.scopedDatabase,
+    });
+  }
+  const dataClient = dataClientRef.current!;
 
   // Restore client-side persisted state from localStorage after mount
   useEffect(() => {
@@ -309,10 +320,10 @@ export function WorkspaceProvider({
           filter: "{}",
           projection: "",
           sort: "",
-          limit: 50,
+          limit: 25,
           skip: 0,
           page: 1,
-          pageSize: 50,
+          pageSize: 25,
           totalDocuments: 0,
           documents: [],
           indexes: [],
@@ -599,6 +610,45 @@ export function WorkspaceProvider({
     }));
   }, []);
 
+  const loadDatabases = useCallback(async (force = false) => {
+    setIsExplorerLoading(true);
+    try {
+      const res = await dataClient.listDatabases(force);
+      if (res.ok && res.data) {
+        setDatabases(res.data.databases);
+      } else if (!res.ok) {
+        setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
+      }
+    } catch (error) {
+      setStatusMessage({ text: error instanceof Error ? error.message : "Failed to load databases", tone: "error" });
+    } finally {
+      setIsExplorerLoading(false);
+    }
+  }, [dataClient, setStatusMessage]);
+
+  const loadDatabaseCollections = useCallback(async (db: string, force = false) => {
+    if (!force && Object.prototype.hasOwnProperty.call(collectionsMap, db)) return;
+    setCollectionsLoading((prev) => ({ ...prev, [db]: true }));
+    try {
+      const res = await dataClient.listCollections(db, force);
+      if (res.ok && res.data) {
+        setCollectionsMap((prev) => ({ ...prev, [db]: res.data?.collections ?? [] }));
+      } else if (!res.ok) {
+        setStatusMessage({ text: res.error || `Failed to load collections for ${db}`, tone: "error" });
+      }
+    } catch (error) {
+      setStatusMessage({ text: error instanceof Error ? error.message : `Failed to load collections for ${db}`, tone: "error" });
+    } finally {
+      setCollectionsLoading((prev) => ({ ...prev, [db]: false }));
+    }
+  }, [collectionsMap, dataClient, setStatusMessage]);
+
+  useEffect(() => {
+    if (isRestored && activeActivity === "explorer" && databases.length === 0) {
+      void loadDatabases();
+    }
+  }, [activeActivity, databases.length, isRestored, loadDatabases]);
+
   const addQueryHistory = useCallback((item: QueryHistoryItem) => {
     setHistory((prev) => [item, ...prev.filter((i) => i.id !== item.id)].slice(0, 50));
     saveQueryHistoryItem(item);
@@ -615,23 +665,10 @@ export function WorkspaceProvider({
   }, []);
 
   const refreshExplorer = useCallback(async () => {
-    const res = await listExplorerTreeAction();
-    if (res.ok && res.data) {
-      setDatabases(res.data.databases);
-      setCollectionsMap(res.data.collectionsMap);
-    } else if (res && !res.ok) {
-      if (
-        res.errorDescriptor?.shouldClearSession ||
-        res.error?.toLowerCase().includes("authentication") ||
-        res.error?.toLowerCase().includes("rejected by the server") ||
-        res.error?.toLowerCase().includes("session expired") ||
-        res.error?.toLowerCase().includes("no active studio session")
-      ) {
-        clearWorkspaceState();
-        window.location.replace("/api/auth/logout");
-      }
-    }
-  }, []);
+    await loadDatabases(true);
+    const expanded = Object.keys(expandedDatabases).filter((db) => expandedDatabases[db]);
+    await Promise.all(expanded.map((db) => loadDatabaseCollections(db, true)));
+  }, [expandedDatabases, loadDatabaseCollections, loadDatabases]);
 
   const refreshActiveTab = useCallback(() => {
     setRefreshTrigger((prev) => prev + 1);
@@ -717,6 +754,9 @@ export function WorkspaceProvider({
         isCommandPaletteOpen,
         databases,
         collectionsMap,
+        collectionsLoading,
+        isExplorerLoading,
+        dataClient,
         openCollectionTab,
         openQueryTab,
         openAggregationTab,
@@ -736,6 +776,8 @@ export function WorkspaceProvider({
         setSidebarWidth,
         setActiveActivity,
         toggleDatabaseExpanded,
+        loadDatabases,
+        loadDatabaseCollections,
         setSearchExplorerQuery,
         setStatusMessage,
         setLastExecutionDurationMs,

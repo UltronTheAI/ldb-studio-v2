@@ -28,6 +28,8 @@ export function DatabaseTree() {
   const {
     databases,
     collectionsMap,
+    collectionsLoading,
+    isExplorerLoading,
     expandedDatabases,
     toggleDatabaseExpanded,
     searchExplorerQuery,
@@ -37,6 +39,7 @@ export function DatabaseTree() {
     openIndexesTab,
     activeTab,
     refreshExplorer,
+    loadDatabaseCollections,
     setStatusMessage,
   } = useWorkspace();
 
@@ -72,6 +75,14 @@ export function DatabaseTree() {
     const cols = collectionsMap[db] || [];
     return cols.some((col) => col.toLowerCase().includes(query));
   });
+
+  const handleDatabaseToggle = (db: string) => {
+    const willExpand = !(expandedDatabases[db] ?? false);
+    toggleDatabaseExpanded(db);
+    if (willExpand && !Object.prototype.hasOwnProperty.call(collectionsMap, db)) {
+      void loadDatabaseCollections(db);
+    }
+  };
 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,13 +210,19 @@ export function DatabaseTree() {
 
       {/* Tree Content */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain sidebar-scroll py-1.5">
-        {filteredDatabases.length === 0 ? (
+        {isExplorerLoading && databases.length === 0 ? (
+          <div className="space-y-2 p-3" aria-label="Loading databases">
+            {[1, 2, 3, 4].map((row) => (
+              <div key={row} className="h-7 rounded-[5px] bg-[var(--surface-strong)] animate-pulse" />
+            ))}
+          </div>
+        ) : filteredDatabases.length === 0 ? (
           <div className="p-4 text-center text-xs text-[var(--muted)]">
             {searchExplorerQuery ? "No matching databases or collections." : "No databases found."}
           </div>
         ) : (
           filteredDatabases.map((db) => {
-            const isExpanded = expandedDatabases[db] ?? true;
+            const isExpanded = expandedDatabases[db] ?? false;
             const cols = (collectionsMap[db] || []).filter((c) =>
               query ? c.toLowerCase().includes(query) || db.toLowerCase().includes(query) : true,
             );
@@ -220,7 +237,7 @@ export function DatabaseTree() {
                       ? "bg-[var(--surface-strong)] text-[var(--ink)] font-semibold"
                       : "text-[var(--body-strong)] hover:bg-[var(--surface-strong)]"
                   }`}
-                  onClick={() => toggleDatabaseExpanded(db)}
+                  onClick={() => handleDatabaseToggle(db)}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setContextMenu({
@@ -246,9 +263,11 @@ export function DatabaseTree() {
 
                   {/* Actions & Badge */}
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] font-mono text-[var(--muted)] px-1 py-0.5 rounded bg-[var(--surface-card)] border border-[var(--hairline)]">
-                      {cols.length}
-                    </span>
+                    {Object.prototype.hasOwnProperty.call(collectionsMap, db) && (
+                      <span className="text-[10px] font-mono text-[var(--muted)] px-1 py-0.5 rounded bg-[var(--surface-card)] border border-[var(--hairline)]">
+                        {cols.length}
+                      </span>
+                    )}
                     <button
                       type="button"
                       title="Add Collection"
@@ -282,7 +301,9 @@ export function DatabaseTree() {
                 {/* Collections Children */}
                 {isExpanded && (
                   <div className="ml-5 pl-2 border-l border-[var(--hairline)] py-0.5 space-y-0.5">
-                    {cols.length === 0 ? (
+                    {collectionsLoading[db] ? (
+                      <div className="px-2 py-2 text-[11px] text-[var(--muted)]">Loading collections…</div>
+                    ) : cols.length === 0 ? (
                       <div className="py-1 px-2 text-[11px] text-[var(--muted)] italic">
                         Empty database
                       </div>

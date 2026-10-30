@@ -10,8 +10,6 @@ import type {
   CollectionTabState,
 } from "@/lib/studio/workspace-types";
 import {
-  fetchCollectionDocumentsAction,
-  fetchCollectionIndexesAction,
   insertOneDocumentAction,
   updateOneDocumentAction,
   deleteOneDocumentAction,
@@ -47,7 +45,7 @@ interface CollectionWorkspaceProps {
 }
 
 export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
-  const { updateTabState, addQueryHistory, setStatusMessage, refreshTrigger } = useWorkspace();
+  const { updateTabState, addQueryHistory, setStatusMessage, refreshTrigger, dataClient } = useWorkspace();
 
   const database = tab.database || "default";
   const collection = tab.collection || "collection";
@@ -59,10 +57,10 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         filter: "{}",
         projection: "",
         sort: "",
-        limit: 50,
+        limit: 25,
         skip: 0,
         page: 1,
-        pageSize: 50,
+        pageSize: 25,
         totalDocuments: 0,
         documents: [],
         indexes: [],
@@ -114,7 +112,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       sort?: string;
       page?: number;
       pageSize?: number;
-    }) => {
+    }, force = false) => {
       const currentState = stateRef.current;
       const activeFilter = overrideParams?.filter ?? filterInputRef.current;
       const activeProjection = overrideParams?.projection ?? projectionInputRef.current;
@@ -128,7 +126,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       setErrorInfo(null);
 
       try {
-        const res = await fetchCollectionDocumentsAction({
+        const res = await dataClient.fetchDocuments({
           database,
           collection,
           filter: activeFilter,
@@ -136,7 +134,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
           sort: activeSort,
           limit: activePageSize,
           skip,
-        });
+        }, force);
 
         // Drop stale responses if a newer request has started
         if (reqId !== activeRequestIdRef.current) {
@@ -160,6 +158,8 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               skip,
               documents: res.data.documents,
               totalDocuments: res.data.total,
+              hasNextPage: res.data.hasNextPage,
+              totalIsExact: res.data.totalIsExact,
               indexes: res.data.indexes.length > 0 ? res.data.indexes : currentState.indexes,
             },
           });
@@ -214,6 +214,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       updateTabState,
       addQueryHistory,
       setStatusMessage,
+      dataClient,
     ],
   );
 
@@ -228,7 +229,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       setIsIndexesLoading(true);
 
       try {
-        const res = await fetchCollectionIndexesAction({ database, collection });
+        const res = await dataClient.fetchIndexes(database, collection, force);
         if (res.ok && res.data) {
           updateTabState(tab.id, {
             collectionState: {
@@ -243,7 +244,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
         setIsIndexesLoading(false);
       }
     },
-    [database, collection, tab.id, updateTabState],
+    [database, collection, tab.id, updateTabState, dataClient],
   );
 
   useEffect(() => {
@@ -306,7 +307,8 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       });
       if (res.ok) {
         setStatusMessage({ text: "Document inserted successfully", tone: "success" });
-        loadDocuments();
+        dataClient.invalidateCollection(database, collection);
+        loadDocuments(undefined, true);
         return true;
       }
       setStatusMessage({ text: res.error || "Failed to insert document", tone: "error" });
@@ -326,7 +328,8 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
 
       if (res.ok) {
         setStatusMessage({ text: "Document updated successfully", tone: "success" });
-        loadDocuments();
+        dataClient.invalidateCollection(database, collection);
+        loadDocuments(undefined, true);
         return true;
       }
       setStatusMessage({ text: res.error || "Failed to update document", tone: "error" });
@@ -346,7 +349,8 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
       if (res.ok) {
         setStatusMessage({ text: "Document deleted", tone: "success" });
         setDeleteTarget(null);
-        loadDocuments();
+        dataClient.invalidateCollection(database, collection);
+        loadDocuments(undefined, true);
       } else {
         setStatusMessage({ text: res.error || "Failed to delete document", tone: "error" });
       }
@@ -355,9 +359,9 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
     }
   };
 
-  const totalPages = Math.ceil(state.totalDocuments / state.pageSize) || 1;
+  const totalPages = state.hasNextPage ? state.page + 1 : Math.max(1, state.page);
   const startItem = (state.page - 1) * state.pageSize + 1;
-  const endItem = Math.min(state.page * state.pageSize, state.totalDocuments);
+  const endItem = (state.page - 1) * state.pageSize + state.documents.length;
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-[var(--canvas)] text-[var(--ink)] overflow-hidden">
@@ -684,9 +688,9 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               <div className="flex items-center gap-3">
                 {!hasFetched || isLoading ? (
                   <span className="text-[var(--muted)]">Loading documents...</span>
-                ) : state.totalDocuments > 0 ? (
+                ) : state.documents.length > 0 ? (
                   <span>
-                    Showing {startItem} - {endItem} of {state.totalDocuments}
+                    Showing {startItem} - {endItem}{state.totalIsExact ? ` of ${state.totalDocuments}` : ""}
                   </span>
                 ) : (
                   <span>0 documents</span>
@@ -730,7 +734,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
                   </span>
                   <button
                     type="button"
-                    disabled={state.page >= totalPages || isLoading}
+                    disabled={!state.hasNextPage || isLoading}
                     onClick={() => handlePageChange(state.page + 1)}
                     className="p-1 rounded border border-[var(--hairline-strong)] hover:bg-[var(--surface-strong)] disabled:opacity-30 disabled:pointer-events-none text-[var(--ink)]"
                   >

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import { fetchAdminSectionDataAction } from "@/app/actions";
 import {
   ServerIcon,
   TerminalIcon,
@@ -13,19 +12,19 @@ import {
 import { CardSkeletonWidget } from "../widgets/LoadingWidget";
 
 export function OverviewWorkspace() {
-  const { initialContext, openQueryTab, openAdminTab, databases, collectionsMap, isLocalMode } = useWorkspace();
+  const { initialContext, openQueryTab, openAdminTab, databases, collectionsMap, isLocalMode, dataClient, loadDatabases } = useWorkspace();
   const [data, setData] = useState<Record<string, unknown>>({
     serverInfo: initialContext.serverInfo,
     live: initialContext.live,
     ready: initialContext.ready,
     clusterSummary: initialContext.clusterSummary,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchAdminSectionDataAction("overview");
+      const res = await dataClient.fetchAdmin("overview", undefined, true);
       if (res.ok && res.data) {
         setData(res.data);
       }
@@ -40,7 +39,7 @@ export function OverviewWorkspace() {
       if (ignore) return;
       setIsLoading(true);
       try {
-        const res = await fetchAdminSectionDataAction("overview");
+        const res = await dataClient.fetchAdmin("overview");
         if (!ignore && res.ok && res.data) {
           setData(res.data);
         }
@@ -53,7 +52,11 @@ export function OverviewWorkspace() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [dataClient]);
+
+  useEffect(() => {
+    if (databases.length === 0) void loadDatabases();
+  }, [databases.length, loadDatabases]);
 
   const totalCollections = Object.values(collectionsMap).reduce(
     (sum, cols) => sum + cols.length,
@@ -137,7 +140,7 @@ export function OverviewWorkspace() {
 
           <div className="p-4 rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xs space-y-1">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-              Total Collections
+              Loaded Collections
             </div>
             <div className="text-xl font-bold font-mono text-[var(--ink)]">
               {totalCollections}

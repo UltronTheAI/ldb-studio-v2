@@ -788,26 +788,44 @@ async function executeWithRetry<T>(
   }
 }
 
-export async function listExplorerTreeAction(): Promise<
-  ActionResult<{ databases: string[]; collectionsMap: Record<string, string[]> }>
-> {
+export async function listDatabasesAction(): Promise<ActionResult<{ databases: string[] }>> {
   const start = Date.now();
   try {
     return await runWithSession(async (connectionUri, sessionId) => {
       return await withLioranClient(connectionUri, async (client) => {
         const databases = await executeWithRetry("ListDatabases", () => client.listDatabases());
-        const collectionsMap: Record<string, string[]> = {};
-        for (const dbName of databases) {
-          try {
-            const cols = await client.db(dbName).listCollections();
-            collectionsMap[dbName] = [...cols];
-          } catch {
-            collectionsMap[dbName] = [];
-          }
-        }
         return {
           ok: true,
-          data: { databases: [...databases], collectionsMap },
+          data: { databases: [...databases] },
+          durationMs: Date.now() - start,
+        };
+      }, sessionId);
+    });
+  } catch (error) {
+    const mapped = mapStudioError(error);
+    return {
+      ok: false,
+      error: mapped.message,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
+  }
+}
+
+export async function listDatabaseCollectionsAction(params: {
+  database: string;
+}): Promise<ActionResult<{ database: string; collections: string[] }>> {
+  const start = Date.now();
+  try {
+    return await runWithSession(async (connectionUri, sessionId) => {
+      return await withLioranClient(connectionUri, async (client) => {
+        const collections = await executeWithRetry(
+          "ListCollections",
+          () => client.db(params.database).listCollections(),
+        );
+        return {
+          ok: true,
+          data: { database: params.database, collections: [...collections] },
           durationMs: Date.now() - start,
         };
       }, sessionId);
@@ -837,6 +855,8 @@ export async function fetchCollectionDocumentsAction(params: {
     documents: Document[];
     total: number;
     indexes: CollectionIndexDefinition[];
+    hasNextPage: boolean;
+    totalIsExact: boolean;
   }>
 > {
   const start = Date.now();
@@ -899,35 +919,17 @@ export async function fetchCollectionDocumentsAction(params: {
           return [...(await col.find(filterObj, options).toArray())];
         });
 
-        // Optimization: On page 1 (skip === 0) if fewer documents than limit were returned
-        // (including 0 for empty collections), total count is known without running an expensive aggregation!
-        let total = documents.length;
-        if (skip === 0 && documents.length < limit) {
-          total = documents.length;
-        } else {
-          try {
-            total = await executeWithRetry("Count", async () => {
-              return await col.countDocuments(filterObj);
-            }, 1);
-          } catch {
-            total = skip + documents.length;
-          }
-        }
-
-        let indexes: CollectionIndexDefinition[] = [];
-        if (params.includeIndexes) {
-          try {
-            indexes = await executeWithRetry("ListIndexes", async () => {
-              return [...(await col.listIndexes())];
-            }, 1);
-          } catch {
-            // Indexes are optional
-          }
-        }
-
         return {
           ok: true,
-          data: { documents, total, indexes },
+          data: {
+            documents,
+            // A page read is enough to determine whether another page exists.
+            // Exact counts remain an explicit operation rather than a hidden scan.
+            total: skip + documents.length,
+            hasNextPage: documents.length === limit,
+            totalIsExact: documents.length < limit,
+            indexes: [],
+          },
           durationMs: Date.now() - start,
         };
       }, sessionId);
@@ -1458,7 +1460,7 @@ export async function dropCollectionAction(params: {
 
 export async function fetchAdminSectionDataAction(
   section: string,
-  params?: { userId?: string; roleId?: string; backupId?: string },
+  params?: { userId?: string; roleId?: string; backupId?: string; settingsPane?: string },
 ): Promise<ActionResult<Record<string, unknown>>> {
   const start = Date.now();
   try {
@@ -1469,11 +1471,13 @@ export async function fetchAdminSectionDataAction(
         if (section === "overview") {
           try {
             result.live = await client.live();
-            result.ready = await client.ready();
-            result.serverInfo = await client.serverInfo();
-            result.clusterSummary = await client.cluster.summary();
           } catch {
-            // Ignore partial errors in overview
+            // Keep the overview shell usable when liveness is unavailable.
+          }
+          try {
+            result.ready = await client.ready();
+          } catch {
+            // Keep readiness independent from liveness.
           }
         } else if (section === "users") {
           result.users = await client.users.list();
@@ -1486,7 +1490,6 @@ export async function fetchAdminSectionDataAction(
           }
         } else if (section === "roles") {
           result.roles = await client.roles.listRoles();
-          result.permissions = await client.roles.listPermissions();
           if (params?.roleId) {
             try {
               result.selectedRole = await client.roles.getRole(params.roleId);
@@ -1495,6 +1498,7 @@ export async function fetchAdminSectionDataAction(
             }
           }
         } else if (section === "cluster") {
+          result.clusterSummary = await client.cluster.summary();
           result.clusterNodes = await client.cluster.nodes();
           result.clusterPartitions = await client.cluster.partitions();
           result.clusterHealth = await client.cluster.health();
@@ -1515,12 +1519,12 @@ export async function fetchAdminSectionDataAction(
             }
           }
         } else if (section === "settings") {
-          result.settingsGeneral = await client.settings.get();
-          result.settingsCors = await client.settings.getCors();
-          result.settingsPerformance = await client.settings.getPerformance();
-          result.settingsLimits = await client.settings.getLimits();
-          result.settingsBackups = await client.settings.getBackups();
-          result.maxManualBackups = DEFAULT_MAX_MANUAL_BACKUPS;
+          const pane = params?.settingsPane ?? "general";
+          if (pane === "cors") result.settingsCors = await client.settings.getCors();
+          else if (pane === "performance") result.settingsPerformance = await client.settings.getPerformance();
+          else if (pane === "limits") result.settingsLimits = await client.settings.getLimits();
+          else if (pane === "backups") result.settingsBackups = await client.settings.getBackups();
+          else result.settingsGeneral = await client.settings.get();
         }
 
         return {

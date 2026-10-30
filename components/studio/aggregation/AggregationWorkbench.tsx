@@ -8,7 +8,6 @@ import type {
   DocumentViewMode,
   AggregationTabState,
 } from "@/lib/studio/workspace-types";
-import { executeAggregationAction } from "@/app/actions";
 import { DocumentTable } from "../collection/DocumentTable";
 import { DocumentJsonView } from "../collection/DocumentJsonView";
 import { DocumentTreeView } from "../collection/DocumentTreeView";
@@ -48,7 +47,7 @@ const SUPPORTED_OPERATORS = [
 ];
 
 export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
-  const { databases, collectionsMap, updateTabState, addQueryHistory } =
+  const { databases, collectionsMap, updateTabState, addQueryHistory, dataClient } =
     useWorkspace();
 
   const state = useMemo(
@@ -85,6 +84,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(tab.error || null);
   const [durationMs, setDurationMs] = useState<number | null>(tab.executionDurationMs ?? null);
   const [copiedResults, setCopiedResults] = useState(false);
+  const activeRunIdRef = useRef(0);
 
   const availableCollections = collectionsMap[selectedDb] || [];
 
@@ -180,6 +180,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
   };
 
   const handleRunPipeline = async () => {
+    const runId = ++activeRunIdRef.current;
     setIsRunning(true);
     setErrorMsg(null);
 
@@ -194,11 +195,13 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
     }
 
     try {
-      const res = await executeAggregationAction({
+      const res = await dataClient.executeAggregation({
         database: selectedDb,
         collection: selectedCol,
         pipelineJson: pipelinePayload,
       });
+
+      if (runId !== activeRunIdRef.current) return;
 
       if (res.ok && res.data) {
         setDurationMs(res.durationMs ?? null);
@@ -237,7 +240,7 @@ export function AggregationWorkbench({ tab }: AggregationWorkbenchProps) {
         setErrorMsg(error);
       }
     } finally {
-      setIsRunning(false);
+      if (runId === activeRunIdRef.current) setIsRunning(false);
     }
   };
 

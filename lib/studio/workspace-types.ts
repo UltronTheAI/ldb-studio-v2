@@ -48,6 +48,8 @@ export interface CollectionTabState {
   page: number;
   pageSize: number;
   totalDocuments: number;
+  hasNextPage?: boolean;
+  totalIsExact?: boolean;
   documents: Document[];
   indexes: CollectionIndexDefinition[];
   schemaFields?: SchemaFieldSummary[];

@@ -24,10 +24,12 @@ export function StatusBar() {
   // Extract document counts from active tab if collection or query
   let totalDocs: number | null = null;
   let loadedDocs: number | null = null;
+  let hasMoreDocs = false;
 
   if (activeTab?.type === "collection" && activeTab.collectionState) {
-    totalDocs = activeTab.collectionState.totalDocuments;
+    totalDocs = activeTab.collectionState.totalIsExact ? activeTab.collectionState.totalDocuments : null;
     loadedDocs = activeTab.collectionState.documents.length;
+    hasMoreDocs = Boolean(activeTab.collectionState.hasNextPage);
   } else if (activeTab?.type === "query" && activeTab.queryState) {
     totalDocs = activeTab.queryState.resultCount;
     loadedDocs = activeTab.queryState.results?.length ?? null;
@@ -74,6 +76,11 @@ export function StatusBar() {
             {loadedDocs !== null && loadedDocs !== totalDocs && (
               <span className="text-[var(--muted)]">({loadedDocs} loaded)</span>
             )}
+          </div>
+        )}
+        {totalDocs === null && hasMoreDocs && loadedDocs !== null && (
+          <div className="flex items-center gap-1 text-[var(--body)]">
+            <span>{loadedDocs}+ docs loaded</span>
           </div>
         )}
 

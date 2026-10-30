@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import type { StudioTab } from "@/lib/studio/workspace-types";
-import { fetchAdminSectionDataAction, studioMutationAction } from "@/app/actions";
+import { studioMutationAction } from "@/app/actions";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { UserRecord, RoleRecord, BackupJobRecord, BackupSettings } from "@liorandb/driver";
 import {
@@ -32,7 +32,7 @@ interface AdminWorkspaceProps {
 }
 
 export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
-  const { updateTabState, isLocalMode } = useWorkspace();
+  const { updateTabState, isLocalMode, dataClient } = useWorkspace();
   const subSection = tab.adminState?.subSection || "users";
   const [settingsPane, setSettingsPane] = useState<
     "general" | "cors" | "performance" | "limits" | "backups"
@@ -48,7 +48,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
   });
 
   const [data, setData] = useState<Record<string, unknown>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
   // User modal
@@ -65,7 +65,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
     setIsLoading(true);
     setMessage(null);
     try {
-      const res = await fetchAdminSectionDataAction(subSection);
+      const res = await dataClient.fetchAdmin(subSection, subSection === "settings" ? { settingsPane } : undefined, true);
       if (res.ok && res.data) {
         setData(res.data);
       } else {
@@ -83,7 +83,10 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
       setIsLoading(true);
       setMessage(null);
       try {
-        const res = await fetchAdminSectionDataAction(subSection);
+        const res = await dataClient.fetchAdmin(
+          subSection,
+          subSection === "settings" ? { settingsPane } : undefined,
+        );
         if (!ignore) {
           if (res.ok && res.data) {
             setData(res.data);
@@ -100,7 +103,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
     return () => {
       ignore = true;
     };
-  }, [subSection]);
+  }, [dataClient, settingsPane, subSection]);
 
   const users = (data.users as readonly UserRecord[]) || [];
   const roles = (data.roles as readonly RoleRecord[]) || [];

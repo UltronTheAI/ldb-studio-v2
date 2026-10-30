@@ -1254,41 +1254,6 @@ export default async function Home({ searchParams }: PageProps) {
   try {
     initialContext = await withLioranClient(session.connectionUri, async (client) => {
       const principal = await client.me();
-      let live = null;
-      let ready = null;
-      let serverInfo = null;
-      let clusterSummary = null;
-
-      try {
-        live = await client.live();
-        ready = await client.ready();
-        serverInfo = await client.serverInfo();
-      } catch {
-        // Optional
-      }
-
-      try {
-        clusterSummary = await client.cluster.summary();
-      } catch {
-        // Optional
-      }
-
-      let databases: string[] = [];
-      try {
-        databases = [...(await client.listDatabases())];
-      } catch {
-        databases = session.metadata.database ? [session.metadata.database] : ["default"];
-      }
-
-      const collectionsMap: Record<string, string[]> = {};
-      for (const db of databases) {
-        try {
-          const cols = await client.db(db).listCollections();
-          collectionsMap[db] = [...cols];
-        } catch {
-          collectionsMap[db] = [];
-        }
-      }
 
       return {
         principal,
@@ -1298,12 +1263,12 @@ export default async function Home({ searchParams }: PageProps) {
         transport: session.metadata.transport,
         tls: session.metadata.tls,
         scopedDatabase: session.metadata.database ?? undefined,
-        databases,
-        collectionsMap,
-        serverInfo,
-        live,
-        ready,
-        clusterSummary,
+        databases: [],
+        collectionsMap: {},
+        serverInfo: null,
+        live: null,
+        ready: null,
+        clusterSummary: null,
         isLocalMode: isLocalModeActive(),
       };
     }, session.id);

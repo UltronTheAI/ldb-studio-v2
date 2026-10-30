@@ -35,7 +35,10 @@ interface PooledClient {
 // Session-isolated connection pool to avoid gRPC channel churn and connection storms.
 // Each active user session gets its own dedicated client instance with complete credential separation.
 const clientPool = new Map<string, PooledClient>();
-const MAX_POOLED_CLIENTS = 20;
+const clientInitialization = new Map<string, Promise<PooledClient>>();
+// Keep the process-wide pool small for shared hosting. Each entry is isolated
+// by session/tenant and owns a gRPC channel, so an oversized pool wastes RAM.
+const MAX_POOLED_CLIENTS = 8;
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 function isFatalConnectionError(error: unknown): boolean {
@@ -54,6 +57,72 @@ function sweepIdleClients(): void {
       clientPool.delete(sessionId);
       void entry.client.close().catch(() => {});
     }
+  }
+}
+
+async function initializePooledClient(
+  sessionId: string,
+  connectionUri: string,
+  options?: { readonly allowLocal?: boolean },
+): Promise<PooledClient> {
+  if (clientPool.size >= MAX_POOLED_CLIENTS) {
+    let oldestKey: string | null = null;
+    let oldestTime = Number.POSITIVE_INFINITY;
+    for (const [key, item] of clientPool.entries()) {
+      if (item.inFlight === 0 && item.lastUsedAt < oldestTime) {
+        oldestTime = item.lastUsedAt;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey) {
+      const evicted = clientPool.get(oldestKey);
+      clientPool.delete(oldestKey);
+      void evicted?.client.close().catch(() => {});
+    }
+  }
+
+  validateConnectionTarget(connectionUri, options);
+  const client = new LioranDBClient(connectionUri, {
+    logoutOnClose: false,
+    transport: "grpc",
+    allowHttpFallback: false,
+    grpcChannels: 1,
+  });
+
+  if (client.options.transport !== "grpc" || client.options.allowHttpFallback !== false) {
+    throw new ConfigurationError(
+      "LioranDB Studio enforces exclusive gRPC transport with HTTP fallback disabled.",
+    );
+  }
+
+  const activeDiagnostics = new Set<DiagnosticEvent[]>();
+  client.setResponseObserver((event: TransportResponseDiagnostics) => {
+    const diag: DiagnosticEvent = {
+      durationMs: event.durationMS,
+      transport: event.transport,
+      operation: event.operation,
+      ok: event.ok,
+      statusCode: event.grpcStatusCode ?? event.httpStatus ?? null,
+      requestId: event.requestId ?? null,
+    };
+    for (const diagList of activeDiagnostics) diagList.push(diag);
+  });
+
+  try {
+    await client.connect();
+    const entry: PooledClient = {
+      client,
+      sessionId,
+      connectionUri,
+      lastUsedAt: Date.now(),
+      inFlight: 0,
+      activeDiagnostics,
+    };
+    clientPool.set(sessionId, entry);
+    return entry;
+  } catch (error) {
+    await client.close().catch(() => {});
+    throw error;
   }
 }
 
@@ -108,7 +177,7 @@ export async function createLioranClient(
     logoutOnClose: false,
     transport: "grpc",
     allowHttpFallback: false,
-    grpcChannels: 2, // Bounded channels per client to prevent channel storms on the container
+    grpcChannels: 1, // One channel is sufficient for Studio's bounded request scheduler
   });
 
   if (client.options.transport !== "grpc" || client.options.allowHttpFallback !== false) {
@@ -167,65 +236,18 @@ export async function withLioranClient<T>(
   }
 
   if (!entry) {
-    // Evict oldest idle client if pool is full
-    if (clientPool.size >= MAX_POOLED_CLIENTS) {
-      let oldestKey: string | null = null;
-      let oldestTime = Number.POSITIVE_INFINITY;
-      for (const [key, item] of clientPool.entries()) {
-        if (item.inFlight === 0 && item.lastUsedAt < oldestTime) {
-          oldestTime = item.lastUsedAt;
-          oldestKey = key;
-        }
-      }
-      if (oldestKey) {
-        const evicted = clientPool.get(oldestKey);
-        clientPool.delete(oldestKey);
-        void evicted?.client.close().catch(() => {});
+    let pending = clientInitialization.get(sessionId);
+    if (!pending) {
+      pending = initializePooledClient(sessionId, connectionUri, executionOptions);
+      clientInitialization.set(sessionId, pending);
+    }
+    try {
+      entry = await pending;
+    } finally {
+      if (clientInitialization.get(sessionId) === pending) {
+        clientInitialization.delete(sessionId);
       }
     }
-
-    validateConnectionTarget(connectionUri, executionOptions);
-
-    const client = new LioranDBClient(connectionUri, {
-      logoutOnClose: false,
-      transport: "grpc",
-      allowHttpFallback: false,
-      grpcChannels: 2, // Bounded channels per client to prevent channel storms on the container
-    });
-
-    if (client.options.transport !== "grpc" || client.options.allowHttpFallback !== false) {
-      throw new ConfigurationError(
-        "LioranDB Studio enforces exclusive gRPC transport with HTTP fallback disabled.",
-      );
-    }
-
-    const activeDiagnostics = new Set<DiagnosticEvent[]>();
-
-    client.setResponseObserver((event: TransportResponseDiagnostics) => {
-      const diag: DiagnosticEvent = {
-        durationMs: event.durationMS,
-        transport: event.transport,
-        operation: event.operation,
-        ok: event.ok,
-        statusCode: event.grpcStatusCode ?? event.httpStatus ?? null,
-        requestId: event.requestId ?? null,
-      };
-      for (const diagList of activeDiagnostics) {
-        diagList.push(diag);
-      }
-    });
-
-    await client.connect();
-
-    entry = {
-      client,
-      sessionId,
-      connectionUri,
-      lastUsedAt: Date.now(),
-      inFlight: 0,
-      activeDiagnostics,
-    };
-    clientPool.set(sessionId, entry);
   }
 
   entry.lastUsedAt = Date.now();
