@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import type { StudioTab } from "@/lib/studio/workspace-types";
 import {
@@ -75,8 +76,71 @@ export function WorkspaceTabs() {
     }
   };
 
+  // Render outside the tab bar's stacking context so the menu cannot be
+  // covered by the app header, workbench, or another overflow container.
+  const contextMenuPortal =
+    contextMenu && typeof document !== "undefined"
+      ? createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={() => setContextMenu(null)}
+            />
+            <div
+              style={{ top: contextMenu.y, left: contextMenu.x }}
+              className="fixed z-[9999] min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  closeTab(contextMenu.tabId);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)] flex items-center justify-between"
+              >
+                <span>Close Tab</span>
+                <kbd className="text-[10px] text-[var(--muted)] font-mono">Ctrl+W</kbd>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  closeOtherTabs(contextMenu.tabId);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)]"
+              >
+                Close Others
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  closeTabsToRight(contextMenu.tabId);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)]"
+              >
+                Close to the Right
+              </button>
+              <div className="h-[1px] bg-[var(--hairline)] my-1" />
+              <button
+                type="button"
+                onClick={() => {
+                  closeAllTabs();
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[#ef4444]"
+              >
+                Close All Tabs
+              </button>
+            </div>
+          </>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div className="h-9 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center select-none z-20 shrink-0 sticky top-0 w-full">
+    <>
+      <div className="h-9 border-b border-[var(--hairline-strong)] bg-[var(--surface-card)] flex items-center select-none z-20 shrink-0 sticky top-0 w-full">
       {/* Scrollable Tabs List */}
       <div
         ref={scrollRef}
@@ -169,62 +233,8 @@ export function WorkspaceTabs() {
         </button>
       </div>
 
-      {/* Tab Context Menu */}
-      {contextMenu && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setContextMenu(null)}
-          />
-          <div
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-            className="fixed z-50 min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                closeTab(contextMenu.tabId);
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)] flex items-center justify-between"
-            >
-              <span>Close Tab</span>
-              <kbd className="text-[10px] text-[var(--muted)] font-mono">Ctrl+W</kbd>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                closeOtherTabs(contextMenu.tabId);
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)]"
-            >
-              Close Others
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                closeTabsToRight(contextMenu.tabId);
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[var(--ink)]"
-            >
-              Close to the Right
-            </button>
-            <div className="h-[1px] bg-[var(--hairline)] my-1" />
-            <button
-              type="button"
-              onClick={() => {
-                closeAllTabs();
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-1.5 hover:bg-[var(--surface-strong)] text-[#ef4444]"
-            >
-              Close All Tabs
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+      </div>
+      {contextMenuPortal}
+    </>
   );
 }
