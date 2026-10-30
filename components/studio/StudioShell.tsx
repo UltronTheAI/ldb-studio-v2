@@ -15,9 +15,33 @@ import { AggregationWorkbench } from "./aggregation/AggregationWorkbench";
 import { OverviewWorkspace } from "./administration/OverviewWorkspace";
 import { AdminWorkspace } from "./administration/AdminWorkspace";
 import { ClusterWorkspace } from "./cluster/ClusterWorkspace";
+import { ActivityIcon } from "lucide-react";
+
+function EmptyWorkspace({ onOpenOverview }: { onOpenOverview: () => void }) {
+  return (
+    <div className="flex h-full min-h-0 items-center justify-center bg-[var(--canvas)] p-6">
+      <div className="max-w-sm space-y-3 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] text-[var(--text-link)] shadow-xs">
+          <ActivityIcon size={22} />
+        </div>
+        <h2 className="text-base font-semibold text-[var(--ink)]">No tabs open</h2>
+        <p className="text-xs leading-5 text-[var(--muted)]">
+          Open a workspace tab from the explorer, or return to the overview.
+        </p>
+        <button
+          type="button"
+          onClick={onOpenOverview}
+          className="text-xs font-semibold text-[var(--text-link)] hover:underline"
+        >
+          Open Overview
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function StudioWorkspaceMain() {
-  const { activeTab } = useWorkspace();
+  const { activeTab, openOverviewTab } = useWorkspace();
 
   return (
     <div className="flex-1 min-h-0 min-w-0 flex flex-col h-full overflow-hidden bg-[var(--canvas)]">
@@ -70,7 +94,7 @@ function StudioWorkspaceMain() {
             )}
           </>
         ) : (
-          <OverviewWorkspace />
+          <EmptyWorkspace onOpenOverview={openOverviewTab} />
         )}
       </div>
     </div>

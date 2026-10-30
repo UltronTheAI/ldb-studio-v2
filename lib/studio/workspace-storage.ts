@@ -92,6 +92,15 @@ export function loadSavedTabs(): StudioTab[] {
   return [];
 }
 
+export function hasSavedTabs(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(TABS_STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function saveTabsToStorage(tabs: StudioTab[]): void {
   if (typeof window === "undefined") return;
   try {

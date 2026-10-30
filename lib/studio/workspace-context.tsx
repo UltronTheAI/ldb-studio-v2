@@ -18,6 +18,7 @@ import type {
 } from "./workspace-types";
 import {
   clearWorkspaceState,
+  hasSavedTabs,
   loadQueryHistory,
   loadSavedQueryDrafts,
   loadSavedTabs,
@@ -210,9 +211,11 @@ export function WorkspaceProvider({
       const saved = loadSavedTabs();
       const meta = loadWorkspaceMetadata();
 
-      if (saved.length > 0) {
+      if (hasSavedTabs()) {
         setTabs(saved);
-        if (meta.activeTabId && saved.some((t) => t.id === meta.activeTabId)) {
+        if (saved.length === 0) {
+          setActiveTabId("");
+        } else if (meta.activeTabId && saved.some((t) => t.id === meta.activeTabId)) {
           setActiveTabId(meta.activeTabId);
         } else {
           setActiveTabId(saved[0].id);
@@ -568,13 +571,8 @@ export function WorkspaceProvider({
   );
 
   const closeAllTabs = useCallback(() => {
-    const defaultOverview: StudioTab = {
-      id: "tab-overview",
-      title: "Overview",
-      type: "overview",
-    };
-    setTabs([defaultOverview]);
-    setActiveTabId("tab-overview");
+    setTabs([]);
+    setActiveTabId("");
   }, []);
 
   const reopenClosedTab = useCallback(() => {
