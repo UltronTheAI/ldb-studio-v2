@@ -51,6 +51,12 @@ export interface DatabaseResolution {
   readonly capabilities: StudioCapabilities;
 }
 
+interface DatabaseDiscoveryDiagnostics {
+  readonly listDatabasesAttempted: boolean;
+  readonly listDatabasesSucceeded: boolean;
+  readonly grpcErrorCode?: string | number | null;
+}
+
 const DATABASE_MANAGEMENT_PERMISSIONS: readonly PermissionName[] = [
   "DatabaseList",
   "DatabaseCreate",
@@ -93,6 +99,39 @@ function hasAnyPermission(
   permission: PermissionName,
 ): boolean {
   return grants.some((grant) => grant.permission === permission);
+}
+
+function diagnosticErrorCode(error: unknown): string | number | null {
+  if (!error || typeof error !== "object") return null;
+  const value = error as Record<string, unknown>;
+  if (typeof value.grpcStatusCode === "number") return value.grpcStatusCode;
+  if (typeof value.grpcStatusName === "string") return value.grpcStatusName;
+  if (typeof value.code === "string") return value.code;
+  return null;
+}
+
+function emitDatabaseDiscoveryDiagnostics(input: {
+  readonly profile: StudioCapabilityProfile;
+  readonly requestedDatabase?: string;
+  readonly scopedDatabase?: string;
+  readonly databasesReturned: number;
+  readonly diagnostics: DatabaseDiscoveryDiagnostics;
+}): void {
+  if (process.env.STUDIO_DATABASE_DISCOVERY_DIAGNOSTICS === "0") return;
+  console.info(
+    JSON.stringify({
+      event: "studio.database_discovery",
+      principal_category: input.profile,
+      list_databases_attempted: input.diagnostics.listDatabasesAttempted,
+      list_databases_succeeded: input.diagnostics.listDatabasesSucceeded,
+      databases_returned: input.databasesReturned,
+      databases_displayed: input.databasesReturned,
+      uri_selection_filtered: Boolean(
+        input.requestedDatabase && input.scopedDatabase !== input.requestedDatabase,
+      ),
+      grpc_error_code: input.diagnostics.grpcErrorCode ?? null,
+    }),
+  );
 }
 
 function buildCapabilities(
@@ -157,11 +196,14 @@ async function getEffectivePermissionGrants(
   principal: Principal,
 ): Promise<{ grants: readonly PermissionGrant[]; verified: boolean }> {
   const principalWithPermissions = principal as Principal & {
+    readonly grants?: readonly PermissionGrant[];
     readonly permissions?: readonly PermissionGrant[];
     readonly effective_permissions?: readonly PermissionGrant[];
   };
   const advertisedGrants =
-    principalWithPermissions.permissions ?? principalWithPermissions.effective_permissions;
+    principalWithPermissions.grants ??
+    principalWithPermissions.permissions ??
+    principalWithPermissions.effective_permissions;
   if (Array.isArray(advertisedGrants)) {
     return { grants: advertisedGrants, verified: true };
   }
@@ -198,11 +240,13 @@ function result(
     databaseCapabilityVerified: boolean;
     databaseDiscoveryVerified: boolean;
     capabilities: StudioCapabilities;
+    requestedDatabase?: string;
+    diagnostics: DatabaseDiscoveryDiagnostics;
   },
 ): DatabaseResolution {
   const databaseCreateAllowed = options.capabilities.databaseCreate;
   const databaseDropAllowed = options.capabilities.databaseDrop;
-  return {
+  const resolution: DatabaseResolution = {
     databases: [...databases],
     scopedDatabase: options.scopedDatabase,
     databaseScope: options.databaseScope,
@@ -215,6 +259,14 @@ function result(
     databaseDropAllowed,
     capabilities: options.capabilities,
   };
+  emitDatabaseDiscoveryDiagnostics({
+    profile: options.capabilities.profile,
+    requestedDatabase: options.requestedDatabase,
+    scopedDatabase: options.scopedDatabase,
+    databasesReturned: databases.length,
+    diagnostics: options.diagnostics,
+  });
+  return resolution;
 }
 
 /**
@@ -237,6 +289,14 @@ export async function resolveDatabaseContext(
     isFreeSharedHosting,
     requestedDatabase,
   );
+  let listDatabasesAttempted = false;
+  let listDatabasesSucceeded = false;
+  let listDatabasesErrorCode: string | number | null = null;
+  const discoveryDiagnostics = (): DatabaseDiscoveryDiagnostics => ({
+    listDatabasesAttempted,
+    listDatabasesSucceeded,
+    grpcErrorCode: listDatabasesErrorCode,
+  });
 
   if (isFreeSharedHosting) {
     if (requestedDatabase) {
@@ -264,6 +324,8 @@ export async function resolveDatabaseContext(
         databaseCapabilityVerified: permissionState.verified,
         databaseDiscoveryVerified: true,
         capabilities,
+        requestedDatabase,
+        diagnostics: discoveryDiagnostics(),
       });
     }
 
@@ -284,6 +346,8 @@ export async function resolveDatabaseContext(
       databaseCapabilityVerified: permissionState.verified,
       databaseDiscoveryVerified: true,
       capabilities,
+      requestedDatabase,
+      diagnostics: discoveryDiagnostics(),
     });
   }
 
@@ -291,8 +355,10 @@ export async function resolveDatabaseContext(
   // URI contains a database path. The path only chooses the initial database.
   const canDiscoverCluster = baseCapabilities.databaseList && permissionState.verified;
   if (canDiscoverCluster) {
+    listDatabasesAttempted = true;
     try {
       const databases = await client.listDatabases();
+      listDatabasesSucceeded = true;
       const capabilities = buildCapabilities(
         permissionState.grants,
         permissionState.verified,
@@ -309,9 +375,12 @@ export async function resolveDatabaseContext(
         databaseCapabilityVerified: permissionState.verified,
         databaseDiscoveryVerified: true,
         capabilities,
+        requestedDatabase,
+        diagnostics: discoveryDiagnostics(),
       });
     } catch (error) {
       if (!(error instanceof AuthorizationError)) throw error;
+      listDatabasesErrorCode = diagnosticErrorCode(error);
       // Fall through to explicit database validation or the authorized
       // database-scoped listing below.
     }
@@ -332,6 +401,8 @@ export async function resolveDatabaseContext(
       databaseCapabilityVerified: permissionState.verified,
       databaseDiscoveryVerified: false,
       capabilities,
+      requestedDatabase,
+      diagnostics: discoveryDiagnostics(),
     });
   }
 
@@ -351,5 +422,7 @@ export async function resolveDatabaseContext(
     databaseCapabilityVerified: permissionState.verified,
     databaseDiscoveryVerified: true,
     capabilities,
+    requestedDatabase,
+    diagnostics: discoveryDiagnostics(),
   });
 }

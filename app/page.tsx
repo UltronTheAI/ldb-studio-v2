@@ -1327,7 +1327,9 @@ export default async function Home({ searchParams }: PageProps) {
       if (scopedDatabase && !databaseInitializationError) {
         try {
           const collections = await client.db(scopedDatabase).listCollections();
-          databases = databaseScope === "allocated" ? databases : [scopedDatabase];
+          // `databases` is the server-authorized discovery result. The URI
+          // database is only the initial selection and must not collapse a
+          // cluster administrator's explorer to one item.
           collectionsMap = { [scopedDatabase]: [...collections] };
         } catch (error) {
           const mapped = mapStudioError(error);
