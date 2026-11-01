@@ -23,6 +23,7 @@ import type {
 import { validateConnectionTarget } from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { mapStudioError, type StudioErrorDescriptor } from "@/lib/liorandb/errors";
+import { resolveDatabaseContext } from "@/lib/liorandb/discovery";
 import { parseJsonValue } from "@/lib/liorandb/json";
 import {
   createStudioSession,
@@ -206,6 +207,9 @@ export async function connectAction(formData: FormData): Promise<void> {
 
   try {
     const existingSession = await getStudioSession();
+    const metadata = validateConnectionTarget(connectionUri);
+    const principal = await withLioranClient(connectionUri, async (client) => client.me());
+
     if (existingSession) {
       try {
         await withLioranClient(
@@ -224,9 +228,6 @@ export async function connectAction(formData: FormData): Promise<void> {
       }
       await destroyStudioSession(existingSession.id);
     }
-
-    const metadata = validateConnectionTarget(connectionUri);
-    const principal = await withLioranClient(connectionUri, async (client) => client.me());
     await createStudioSession({ connectionUri, principal, metadata });
   } catch (error) {
     const mapped = mapStudioError(error);
@@ -246,8 +247,18 @@ export async function autoConnectAction(params: {
       throw new Error("Connection URI cannot be empty.");
     }
 
-    // 1. Disconnect and evict any currently active session
+    // Keep the existing session alive until the replacement URI has
+    // authenticated successfully. Permission failures must not sign the user
+    // out of an otherwise valid workspace.
     const existingSession = await getStudioSession();
+    // 1. Validate connection target using driver and security rules
+    const metadata = validateConnectionTarget(rawUri);
+
+    // 2. Connect to LioranDB cluster over gRPC and authenticate
+    const principal = await withLioranClient(rawUri, async (client) => {
+      return await client.me();
+    });
+
     if (existingSession) {
       try {
         await withLioranClient(
@@ -267,15 +278,7 @@ export async function autoConnectAction(params: {
       await destroyStudioSession(existingSession.id);
     }
 
-    // 2. Validate connection target using driver and security rules
-    const metadata = validateConnectionTarget(rawUri);
-
-    // 3. Connect to LioranDB cluster over gRPC and authenticate
-    const principal = await withLioranClient(rawUri, async (client) => {
-      return await client.me();
-    });
-
-    // 4. Create encrypted HTTP-only session
+    // 3. Create encrypted HTTP-only session
     await createStudioSession({
       connectionUri: rawUri,
       principal,
@@ -292,13 +295,6 @@ export async function autoConnectAction(params: {
       durationMs: Date.now() - start,
     };
   } catch (error) {
-    // Ensure clean state if connection failed
-    try {
-      await destroyStudioSession();
-    } catch {
-      // Ignore
-    }
-
     const mapped = mapStudioError(error);
     return {
       ok: false,
@@ -788,28 +784,27 @@ async function executeWithRetry<T>(
   }
 }
 
-export async function listDatabasesAction(): Promise<ActionResult<{ databases: string[] }>> {
+export async function listDatabasesAction(): Promise<
+  ActionResult<{
+    databases: string[];
+    databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
+    databaseDiscoveryVerified: boolean;
+  }>
+> {
   const start = Date.now();
   try {
     return await runWithSession(async (connectionUri, sessionId, session) => {
       return await withLioranClient(connectionUri, async (client) => {
-        // An explicit URI database is already the principal's requested
-        // namespace. Never fall back to cluster-wide discovery for it.
-        if (session.metadata.database) {
-          await executeWithRetry("ListCollections", () =>
-            client.db(session.metadata.database as string).listCollections(),
-          );
-          return {
-            ok: true,
-            data: { databases: [session.metadata.database] },
-            durationMs: Date.now() - start,
-          };
-        }
-
-        const databases = await executeWithRetry("ListDatabases", () => client.listDatabases());
+        const resolution = await executeWithRetry("ResolveDatabaseContext", () =>
+          resolveDatabaseContext(client, session.metadata.database ?? undefined),
+        );
         return {
           ok: true,
-          data: { databases: [...databases] },
+          data: {
+            databases: resolution.databases,
+            databaseScope: resolution.databaseScope,
+            databaseDiscoveryVerified: resolution.databaseDiscoveryVerified,
+          },
           durationMs: Date.now() - start,
         };
       }, sessionId);
@@ -1376,8 +1371,19 @@ export async function createDatabaseAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri, sessionId) => {
+    return await runWithSession(async (connectionUri, sessionId, session) => {
       return await withLioranClient(connectionUri, async (client) => {
+        const resolution = await resolveDatabaseContext(
+          client,
+          session.metadata.database ?? undefined,
+        );
+        if (resolution.databaseScope !== "cluster") {
+          return {
+            ok: false,
+            error: "Database creation is unavailable for this connection scope.",
+            durationMs: Date.now() - start,
+          };
+        }
         await client.createDatabase(params.databaseName.trim());
         return { ok: true, durationMs: Date.now() - start };
       }, sessionId);
@@ -1409,8 +1415,19 @@ export async function dropDatabaseAction(params: {
     if (params.databaseName !== params.confirmation) {
       throw new Error("Confirmation text does not match database name.");
     }
-    return await runWithSession(async (connectionUri, sessionId) => {
+    return await runWithSession(async (connectionUri, sessionId, session) => {
       return await withLioranClient(connectionUri, async (client) => {
+        const resolution = await resolveDatabaseContext(
+          client,
+          session.metadata.database ?? undefined,
+        );
+        if (resolution.databaseScope !== "cluster") {
+          return {
+            ok: false,
+            error: "Database deletion is unavailable for this connection scope.",
+            durationMs: Date.now() - start,
+          };
+        }
         await client.dropDatabase(params.databaseName);
         return { ok: true, durationMs: Date.now() - start };
       }, sessionId);

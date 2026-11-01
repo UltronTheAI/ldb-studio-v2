@@ -169,7 +169,7 @@ export interface InitialStudioContext {
   transport: string;
   tls: boolean;
   scopedDatabase?: string;
-  databaseScope: "explicit" | "unselected";
+  databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
   databaseDiscoveryVerified: boolean;
   databaseInitializationError?: string;
   databases: string[];

@@ -51,6 +51,7 @@ export interface WorkspaceContextValue {
   collectionsMap: Record<string, string[]>;
   collectionsLoading: Record<string, boolean>;
   isExplorerLoading: boolean;
+  databaseScope: InitialStudioContext["databaseScope"];
   databaseDiscoveryVerified: boolean;
   canUseClusterAdministration: boolean;
   dataClient: StudioDataClient;
@@ -193,11 +194,14 @@ export function WorkspaceProvider({
   );
   const [collectionsLoading, setCollectionsLoading] = useState<Record<string, boolean>>({});
   const [isExplorerLoading, setIsExplorerLoading] = useState(false);
+  const [databaseScope, setDatabaseScope] = useState<InitialStudioContext["databaseScope"]>(
+    initialContext.databaseScope,
+  );
   const [databaseDiscoveryVerified, setDatabaseDiscoveryVerified] = useState(
     initialContext.databaseDiscoveryVerified,
   );
   const canUseClusterAdministration =
-    isLocalMode || (initialContext.databaseScope !== "explicit" && databaseDiscoveryVerified);
+    isLocalMode || (databaseScope === "cluster" && databaseDiscoveryVerified);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const dataClientRef = useRef<StudioDataClient | null>(null);
   if (!dataClientRef.current) {
@@ -661,7 +665,8 @@ export function WorkspaceProvider({
       const res = await dataClient.listDatabases(force);
       if (res.ok && res.data) {
         setDatabases(res.data.databases);
-        setDatabaseDiscoveryVerified(true);
+        setDatabaseScope(res.data.databaseScope);
+        setDatabaseDiscoveryVerified(res.data.databaseDiscoveryVerified);
       } else if (!res.ok) {
         setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
       }
@@ -809,6 +814,7 @@ export function WorkspaceProvider({
         collectionsMap,
         collectionsLoading,
         isExplorerLoading,
+        databaseScope,
         databaseDiscoveryVerified,
         canUseClusterAdministration,
         dataClient,

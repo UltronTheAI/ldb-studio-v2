@@ -44,7 +44,9 @@ export function DatabaseTree() {
     loadDatabaseCollections,
     setStatusMessage,
     initialContext,
+    databaseScope,
     databaseDiscoveryVerified,
+    canUseClusterAdministration,
   } = useWorkspace();
 
   const [contextMenu, setContextMenu] = useState<{
@@ -220,7 +222,7 @@ export function DatabaseTree() {
             className="w-full h-7 pl-7 pr-2 rounded-[5px] bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink)]"
           />
         </div>
-        {databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && (
+        {canUseClusterAdministration && (
           <button
             type="button"
             onClick={() => setShowCreateDbModal(true)}
@@ -250,7 +252,8 @@ export function DatabaseTree() {
                 {initialContext.databaseInitializationError}
               </div>
             )}
-            <form onSubmit={handleSelectDatabase} className="space-y-2">
+            {databaseScope === "unselected" && (
+              <form onSubmit={handleSelectDatabase} className="space-y-2">
               <label className="block text-[11px] font-semibold text-[var(--ink)]">
                 Open an authorized database
               </label>
@@ -269,8 +272,9 @@ export function DatabaseTree() {
               >
                 {isSelectingDatabase ? "Checking access..." : "Open Database"}
               </button>
-            </form>
-            {!databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && (
+              </form>
+            )}
+            {databaseScope === "unselected" && !databaseDiscoveryVerified && (
               <button
                 type="button"
                 onClick={() => void loadDatabases()}
@@ -476,7 +480,7 @@ export function DatabaseTree() {
                   <span>New Query Workbench</span>
                 </button>
                 <div className="h-[1px] bg-[var(--hairline)] my-1" />
-                {databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && isProtectedDatabase(contextMenu.database) ? (
+                {canUseClusterAdministration && isProtectedDatabase(contextMenu.database) ? (
                   <div
                     className="w-full text-left px-3 py-1.5 text-[var(--muted)] flex items-center gap-2 cursor-not-allowed select-none opacity-60"
                     title="The 'default' database is protected and cannot be dropped."
@@ -484,7 +488,7 @@ export function DatabaseTree() {
                     <LockIcon size={13} />
                     <span>Protected Database</span>
                   </div>
-                ) : databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" ? (
+                ) : canUseClusterAdministration ? (
                   <button
                     type="button"
                     onClick={() => {

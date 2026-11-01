@@ -102,6 +102,7 @@ export function StudioDialog({
     <div
       className={`studio-dialog-layer ${className}`}
       role="presentation"
+      style={{ zIndex: 3000 }}
     >
       <div
         className={`absolute inset-0 ${backdropClassName}`}

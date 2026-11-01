@@ -35,6 +35,7 @@ import type { InitialStudioContext } from "@/lib/studio/workspace-types";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { getSanitizedConnectionMetadata, isLocalModeActive } from "@/lib/liorandb/connection";
+import { resolveDatabaseContext } from "@/lib/liorandb/discovery";
 import { mapStudioError } from "@/lib/liorandb/errors";
 import {
   prettyJson,
@@ -268,11 +269,11 @@ async function loadStudioData(
 
     try {
       const connectionMetadata = getSanitizedConnectionMetadata(connectionUri);
-      if (connectionMetadata.database) {
-        data.databases = [connectionMetadata.database];
-      } else {
-        data.databases = await client.listDatabases();
-      }
+      const databaseResolution = await resolveDatabaseContext(
+        client,
+        connectionMetadata.database ?? undefined,
+      );
+      data.databases = databaseResolution.databases;
     } catch (error) {
       const mapped = mapStudioError(error);
       data.errors.databases = {
@@ -1259,12 +1260,32 @@ export default async function Home({ searchParams }: PageProps) {
   try {
     initialContext = await withLioranClient(session.connectionUri, async (client) => {
       const principal = await client.me();
-      const scopedDatabase = session.metadata.database ?? undefined;
+      const requestedDatabase = session.metadata.database ?? undefined;
+      let scopedDatabase = requestedDatabase;
       let databases: string[] = [];
       let collectionsMap: Record<string, string[]> = {};
       let databaseInitializationError: string | undefined;
+      let databaseScope: InitialStudioContext["databaseScope"] = requestedDatabase
+        ? "explicit"
+        : "unselected";
+      let databaseDiscoveryVerified = false;
 
-      if (scopedDatabase) {
+      try {
+        const resolution = await resolveDatabaseContext(client, requestedDatabase);
+        scopedDatabase = resolution.scopedDatabase;
+        databases = resolution.databases;
+        databaseScope = resolution.databaseScope;
+        databaseDiscoveryVerified = resolution.databaseDiscoveryVerified;
+      } catch (error) {
+        const mapped = mapStudioError(error);
+        databaseInitializationError = mapped.isAuthorizationError
+          ? requestedDatabase
+            ? "The URI database is not authorized for collection listing. Reconnect with the correct database scope."
+            : "Database discovery is not permitted for this principal. Enter an authorized database name to continue."
+          : mapped.message;
+      }
+
+      if (scopedDatabase && !databaseInitializationError) {
         try {
           const collections = await client.db(scopedDatabase).listCollections();
           databases = [scopedDatabase];
@@ -1272,7 +1293,9 @@ export default async function Home({ searchParams }: PageProps) {
         } catch (error) {
           const mapped = mapStudioError(error);
           databaseInitializationError = mapped.isAuthorizationError
-            ? "The URI database is not authorized for collection listing. Enter a different authorized database or reconnect with the correct scope."
+            ? databaseScope === "allocated"
+              ? "Your managed database was discovered, but collection access is not authorized for this principal."
+              : "The URI database is not authorized for collection listing. Reconnect with the correct database scope."
             : mapped.message;
         }
       }
@@ -1285,8 +1308,8 @@ export default async function Home({ searchParams }: PageProps) {
         transport: session.metadata.transport,
         tls: session.metadata.tls,
         scopedDatabase,
-        databaseScope: scopedDatabase ? "explicit" : "unselected",
-        databaseDiscoveryVerified: false,
+        databaseScope,
+        databaseDiscoveryVerified,
         databaseInitializationError,
         databases,
         collectionsMap,

@@ -14,9 +14,9 @@
   --primary-disabled: #999999;
 
   /* Application overlay hierarchy. Portaled dialogs sit above workspace chrome. */
-  --z-overlay-toast: 100;
-  --z-overlay-menu: 200;
-  --z-overlay-dialog: 300;
+  --z-overlay-toast: 1000;
+  --z-overlay-menu: 2000;
+  --z-overlay-dialog: 3000;
 
   --text-link: #0d74ce;
   --text-link-secondary: #476cff;
@@ -54,7 +54,8 @@
 .studio-dialog-layer {
   position: fixed;
   inset: 0;
-  z-index: var(--z-overlay-dialog);
+  z-index: var(--z-overlay-dialog, 3000);
+  isolation: isolate;
 }
 
 .studio-overlay-toast {
