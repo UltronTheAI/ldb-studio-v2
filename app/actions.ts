@@ -20,16 +20,16 @@ import type {
   UpdateUserInput,
 } from "@liorandb/driver";
 
-import { validateConnectionTarget } from "@/lib/liorandb/connection";
 import { withLioranClient } from "@/lib/liorandb/client";
 import { mapStudioError, type StudioErrorDescriptor } from "@/lib/liorandb/errors";
 import { resolveDatabaseContext } from "@/lib/liorandb/discovery";
+import { exchangeStudioHandoff, StudioHandoffError } from "@/lib/liorandb/handoff";
 import { parseJsonValue } from "@/lib/liorandb/json";
 import {
-  createStudioSession,
   destroyStudioSession,
   getStudioSession,
 } from "@/lib/liorandb/session";
+import { establishStudioSession } from "@/lib/liorandb/studio-auth";
 import {
   DEFAULT_MAX_MANUAL_BACKUPS,
   MAX_RETENTION_DAYS,
@@ -206,29 +206,7 @@ export async function connectAction(formData: FormData): Promise<void> {
   const connectionUri = formString(formData, "connectionUri");
 
   try {
-    const existingSession = await getStudioSession();
-    const metadata = validateConnectionTarget(connectionUri);
-    const principal = await withLioranClient(connectionUri, async (client) => client.me());
-
-    if (existingSession) {
-      try {
-        await withLioranClient(
-          existingSession.connectionUri,
-          async (client) => {
-            try {
-              await client.logout();
-            } catch {
-              // Best-effort logout
-            }
-          },
-          existingSession.id,
-        );
-      } catch {
-        // Ignore
-      }
-      await destroyStudioSession(existingSession.id);
-    }
-    await createStudioSession({ connectionUri, principal, metadata });
+    await establishStudioSession(connectionUri);
   } catch (error) {
     const mapped = mapStudioError(error);
     redirectWithMessage("/", "error", `${mapped.title}: ${mapped.message}`);
@@ -242,55 +220,14 @@ export async function autoConnectAction(params: {
 }): Promise<ActionResult<{ success: true; host: string; database: string | null }>> {
   const start = Date.now();
   try {
-    const rawUri = params.connectionUri?.trim();
-    if (!rawUri) {
-      throw new Error("Connection URI cannot be empty.");
-    }
-
-    // Keep the existing session alive until the replacement URI has
-    // authenticated successfully. Permission failures must not sign the user
-    // out of an otherwise valid workspace.
-    const existingSession = await getStudioSession();
-    // 1. Validate connection target using driver and security rules
-    const metadata = validateConnectionTarget(rawUri);
-
-    // 2. Connect to LioranDB cluster over gRPC and authenticate
-    const principal = await withLioranClient(rawUri, async (client) => {
-      return await client.me();
-    });
-
-    if (existingSession) {
-      try {
-        await withLioranClient(
-          existingSession.connectionUri,
-          async (client) => {
-            try {
-              await client.logout();
-            } catch {
-              // Best-effort logout
-            }
-          },
-          existingSession.id,
-        );
-      } catch {
-        // Ignore errors from disconnecting old session
-      }
-      await destroyStudioSession(existingSession.id);
-    }
-
-    // 3. Create encrypted HTTP-only session
-    await createStudioSession({
-      connectionUri: rawUri,
-      principal,
-      metadata,
-    });
+    const connection = await establishStudioSession(params.connectionUri);
 
     return {
       ok: true,
       data: {
         success: true,
-        host: metadata.host,
-        database: metadata.database,
+        host: connection.host,
+        database: connection.database,
       },
       durationMs: Date.now() - start,
     };
@@ -299,6 +236,37 @@ export async function autoConnectAction(params: {
     return {
       ok: false,
       error: `${mapped.title}: ${mapped.message}`,
+      errorDescriptor: mapped,
+      durationMs: Date.now() - start,
+    };
+  }
+}
+
+export async function redeemStudioHandoffAction(params: {
+  token: string;
+}): Promise<ActionResult<{ success: true }>> {
+  const start = Date.now();
+  try {
+    const { connectionUri } = await exchangeStudioHandoff(params.token);
+    await establishStudioSession(connectionUri);
+    return {
+      ok: true,
+      data: { success: true },
+      durationMs: Date.now() - start,
+    };
+  } catch (error) {
+    if (error instanceof StudioHandoffError) {
+      return {
+        ok: false,
+        error: error.message,
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const mapped = mapStudioError(error);
+    return {
+      ok: false,
+      error: "Dashboard handoff authentication failed. Return to Dashboard and try again.",
       errorDescriptor: mapped,
       durationMs: Date.now() - start,
     };

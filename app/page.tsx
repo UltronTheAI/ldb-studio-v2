@@ -30,6 +30,7 @@ import { ConnectionPortal } from "./connection-portal";
 import { StudioClientEffects } from "./studio-client-effects";
 import { ThemeToggle } from "./theme-toggle";
 import { StudioShell } from "@/components/studio/StudioShell";
+import { HandoffConnectionScene } from "@/components/studio/HandoffConnectionScene";
 import { UriConnectionScene } from "@/components/studio/UriConnectionScene";
 import type { InitialStudioContext } from "@/lib/studio/workspace-types";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
@@ -843,6 +844,11 @@ function renderDisconnectedState(session: NonNullable<Awaited<ReturnType<typeof 
 
 export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
+  const handoffParam = firstParam(params.handoff);
+  if (handoffParam) {
+    return <HandoffConnectionScene />;
+  }
+
   const connectionParam =
     firstParam(params.uri) ||
     firstParam(params.connection) ||
