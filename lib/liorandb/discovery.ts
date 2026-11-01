@@ -5,6 +5,7 @@ export type DatabaseScope = "explicit" | "allocated" | "cluster" | "unselected";
 export interface TenantAllocation {
   readonly tenantId: string;
   readonly databaseName: string;
+  readonly databases?: readonly string[];
   readonly status?: string;
   readonly storageQuotaBytes?: number;
   readonly storageUsedBytes?: number;
@@ -21,6 +22,7 @@ export interface DatabaseResolution {
 interface AllocationAwareClient extends LioranDBClient {
   /** Added by the driver release that supports DatabaseService/GetMyAllocation. */
   readonly getMyAllocation?: () => Promise<unknown>;
+  readonly listMyDatabases?: () => Promise<readonly string[]>;
 }
 
 function allocationMethod(client: LioranDBClient): (() => Promise<unknown>) | null {
@@ -28,6 +30,11 @@ function allocationMethod(client: LioranDBClient): (() => Promise<unknown>) | nu
   return typeof candidate.getMyAllocation === "function"
     ? candidate.getMyAllocation.bind(client)
     : null;
+}
+
+function allocationDatabases(allocation: TenantAllocation): string[] {
+  const databases = allocation.databases?.filter((database) => typeof database === "string" && database.length > 0);
+  return databases?.length ? [...databases] : [allocation.databaseName];
 }
 
 function isAllocationResponse(value: unknown): value is TenantAllocation {
@@ -66,6 +73,30 @@ export async function resolveDatabaseContext(
   const requestedDatabase = explicitDatabase?.trim();
   if (requestedDatabase) {
     await client.db(requestedDatabase).listCollections();
+    const getMyAllocation = allocationMethod(client);
+    if (getMyAllocation) {
+      try {
+        const allocation = await getMyAllocation();
+        if (isAllocationResponse(allocation)) {
+          const databases = allocationDatabases(allocation);
+          if (databases.includes(requestedDatabase)) {
+            return {
+              databases,
+              scopedDatabase: requestedDatabase,
+              databaseScope: "allocated",
+              databaseDiscoveryVerified: false,
+            };
+          }
+        }
+      } catch (error) {
+        // An explicitly authorized database remains usable when the optional
+        // allocation endpoint is unavailable on a dedicated/older server.
+        if (!isAllocationEndpointUnavailable(error)) {
+          // Keep the explicit database context; the data-path authorization
+          // above is the authority for this connection.
+        }
+      }
+    }
     return {
       databases: [requestedDatabase],
       scopedDatabase: requestedDatabase,
@@ -79,9 +110,10 @@ export async function resolveDatabaseContext(
     try {
       const allocation = await getMyAllocation();
       if (isAllocationResponse(allocation)) {
+        const databases = allocationDatabases(allocation);
         return {
-          databases: [allocation.databaseName],
-          scopedDatabase: allocation.databaseName,
+          databases,
+          scopedDatabase: databases[0],
           databaseScope: "allocated",
           databaseDiscoveryVerified: false,
         };

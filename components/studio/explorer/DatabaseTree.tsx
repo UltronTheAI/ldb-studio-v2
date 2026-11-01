@@ -49,6 +49,9 @@ export function DatabaseTree() {
     canUseClusterAdministration,
   } = useWorkspace();
 
+  const canCreateDatabase =
+    canUseClusterAdministration || databaseScope === "allocated" || databaseScope === "explicit";
+
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -222,7 +225,7 @@ export function DatabaseTree() {
             className="w-full h-7 pl-7 pr-2 rounded-[5px] bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink)]"
           />
         </div>
-        {canUseClusterAdministration && (
+        {canCreateDatabase && (
           <button
             type="button"
             onClick={() => setShowCreateDbModal(true)}

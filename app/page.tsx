@@ -1288,7 +1288,7 @@ export default async function Home({ searchParams }: PageProps) {
       if (scopedDatabase && !databaseInitializationError) {
         try {
           const collections = await client.db(scopedDatabase).listCollections();
-          databases = [scopedDatabase];
+          databases = databaseScope === "allocated" ? databases : [scopedDatabase];
           collectionsMap = { [scopedDatabase]: [...collections] };
         } catch (error) {
           const mapped = mapStudioError(error);

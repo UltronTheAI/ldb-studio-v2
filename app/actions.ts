@@ -1377,10 +1377,14 @@ export async function createDatabaseAction(params: {
           client,
           session.metadata.database ?? undefined,
         );
-        if (resolution.databaseScope !== "cluster") {
+        if (
+          resolution.databaseScope !== "cluster" &&
+          resolution.databaseScope !== "allocated" &&
+          resolution.databaseScope !== "explicit"
+        ) {
           return {
             ok: false,
-            error: "Database creation is unavailable for this connection scope.",
+            error: "Database creation is unavailable until an authorized database-management scope is verified.",
             durationMs: Date.now() - start,
           };
         }
