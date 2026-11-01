@@ -34,6 +34,7 @@ export function ActivityBar() {
     openClusterTab,
     activeTab,
     isLocalMode,
+    canUseClusterAdministration,
   } = useWorkspace();
 
   const activities = React.useMemo(() => {
@@ -41,8 +42,12 @@ export function ActivityBar() {
       { id: "explorer", label: "Database Explorer", icon: DatabaseIcon },
       { id: "query", label: "Query Workbench", icon: TerminalIcon },
       { id: "history", label: "Execution History", icon: HistoryIcon },
-      { id: "admin", label: "Governance & RBAC", icon: ShieldIcon },
-      { id: "cluster", label: "Cluster Topology", icon: NetworkIcon },
+      ...(canUseClusterAdministration
+        ? [
+            { id: "admin" as const, label: "Governance & RBAC", icon: ShieldIcon },
+            { id: "cluster" as const, label: "Cluster Topology", icon: NetworkIcon },
+          ]
+        : []),
     ];
     if (isLocalMode) {
       list.push({
@@ -52,7 +57,7 @@ export function ActivityBar() {
       });
     }
     return list;
-  }, [isLocalMode]);
+  }, [canUseClusterAdministration, isLocalMode]);
 
   const handleActivityClick = (item: ActivityItem) => {
     if (item.disabled) return;

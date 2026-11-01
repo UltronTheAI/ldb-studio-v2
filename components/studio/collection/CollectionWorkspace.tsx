@@ -19,6 +19,7 @@ import { DocumentTable } from "./DocumentTable";
 import { DocumentJsonView } from "./DocumentJsonView";
 import { DocumentTreeView } from "./DocumentTreeView";
 import { DocumentEditorModal } from "./DocumentEditorModal";
+import { StudioDialog } from "../StudioDialog";
 import { CollectionIndexes } from "./CollectionIndexes";
 import { CollectionSchema } from "./CollectionSchema";
 import { TableSkeletonWidget, LoadingOverlayWidget } from "../widgets/LoadingWidget";
@@ -782,7 +783,11 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
 
       {/* Delete Document Confirmation Dialog */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setDeleteTarget(null)}
+          ariaLabel="Confirm document deletion"
+        >
           <div className="w-full max-w-sm rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
             <h3 className="font-sans text-sm font-bold text-[#ef4444] flex items-center gap-1.5">
               <Trash2Icon size={16} />
@@ -813,7 +818,7 @@ export function CollectionWorkspace({ tab }: CollectionWorkspaceProps) {
               </button>
             </div>
           </div>
-        </div>
+        </StudioDialog>
       )}
     </div>
   );

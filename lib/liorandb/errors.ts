@@ -154,10 +154,23 @@ export function mapStudioError(error: unknown): StudioErrorDescriptor {
   }
 
   if (error instanceof AuthorizationError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const grpcStatus = typeof errorObj.grpcStatusName === "string" ? errorObj.grpcStatusName : undefined;
+    const grpcStatusCode = typeof errorObj.grpcStatusCode === "number" ? errorObj.grpcStatusCode : undefined;
+    const requestId = typeof errorObj.requestId === "string" ? errorObj.requestId : undefined;
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode : undefined;
+    const operation = typeof errorObj.operation === "string" ? errorObj.operation : undefined;
+    const endpoint = typeof errorObj.endpoint === "string" ? errorObj.endpoint : undefined;
     return {
       title: "Permission denied",
       message: "Your account is connected, but this action is not allowed for the current principal.",
-      code: error.code,
+      code: serverCode ?? error.code,
+      grpcStatus,
+      grpcStatusCode,
+      requestId,
+      serverCode,
+      operation,
+      endpoint,
       isAuthorizationError: true,
     };
   }

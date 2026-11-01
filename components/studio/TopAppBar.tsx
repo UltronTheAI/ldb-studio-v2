@@ -133,10 +133,10 @@ export function TopAppBar() {
           {showAccountDropdown && (
             <>
               <div
-                className="fixed inset-0 z-40"
+                className="fixed inset-0 studio-overlay-menu"
                 onClick={() => setShowAccountDropdown(false)}
               />
-              <div className="absolute right-0 mt-1 w-56 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-lg py-1.5 z-50 text-xs">
+              <div className="absolute right-0 mt-1 w-56 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-lg py-1.5 studio-overlay-menu text-xs">
                 <div className="px-3 py-2 border-b border-[var(--hairline)] space-y-0.5">
                   <div className="font-bold text-[var(--ink)]">
                     {initialContext.principal.username}

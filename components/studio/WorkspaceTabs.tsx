@@ -83,12 +83,12 @@ export function WorkspaceTabs() {
       ? createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998]"
+              className="fixed inset-0 studio-overlay-menu"
               onClick={() => setContextMenu(null)}
             />
             <div
               style={{ top: contextMenu.y, left: contextMenu.x }}
-              className="fixed z-[9999] min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
+              className="fixed studio-overlay-menu min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
             >
               <button
                 type="button"

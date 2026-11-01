@@ -169,6 +169,9 @@ export interface InitialStudioContext {
   transport: string;
   tls: boolean;
   scopedDatabase?: string;
+  databaseScope: "explicit" | "unselected";
+  databaseDiscoveryVerified: boolean;
+  databaseInitializationError?: string;
   databases: string[];
   collectionsMap: Record<string, string[]>;
   serverInfo?: ServerInfo | null;

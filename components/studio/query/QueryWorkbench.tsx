@@ -22,6 +22,7 @@ import { DocumentJsonView } from "../collection/DocumentJsonView";
 import { DocumentTreeView } from "../collection/DocumentTreeView";
 import { DocumentEditorModal } from "../collection/DocumentEditorModal";
 import { QueryInsertModal } from "./QueryInsertModal";
+import { StudioDialog } from "../StudioDialog";
 import { TableSkeletonWidget } from "../widgets/LoadingWidget";
 import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
 import {
@@ -1380,7 +1381,11 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+        <StudioDialog
+          open
+          onClose={() => setDeleteTarget(null)}
+          ariaLabel="Confirm document deletion"
+        >
           <div className="w-full max-w-md rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-[#ef4444]">
               <Trash2Icon size={18} />
@@ -1411,7 +1416,7 @@ export function QueryWorkbench({ tab }: QueryWorkbenchProps) {
               </button>
             </div>
           </div>
-        </div>
+        </StudioDialog>
       )}
     </div>
   );

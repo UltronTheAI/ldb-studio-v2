@@ -11,6 +11,7 @@ import {
   AlertCircleIcon,
 } from "lucide-react";
 import { TableSkeletonWidget } from "../widgets/LoadingWidget";
+import { StudioDialog } from "../StudioDialog";
 
 interface CollectionIndexesProps {
   database: string;
@@ -242,7 +243,11 @@ export function CollectionIndexes({
 
       {/* Create Index Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setShowCreateModal(false)}
+          ariaLabel="Create Index"
+        >
           <div className="w-full max-w-md rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">
               Create Index on {collection}
@@ -346,12 +351,16 @@ export function CollectionIndexes({
               </div>
             </form>
           </div>
-        </div>
+        </StudioDialog>
       )}
 
       {/* Drop Index Confirmation Modal */}
       {dropIndexTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setDropIndexTarget(null)}
+          ariaLabel="Drop Index"
+        >
           <div className="w-full max-w-sm rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
             <h3 className="font-sans text-sm font-bold text-[#ef4444]">Drop Index</h3>
             <p className="text-xs text-[var(--body)]">
@@ -376,7 +385,7 @@ export function CollectionIndexes({
               </button>
             </div>
           </div>
-        </div>
+        </StudioDialog>
       )}
     </div>
   );

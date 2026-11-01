@@ -51,6 +51,8 @@ export interface WorkspaceContextValue {
   collectionsMap: Record<string, string[]>;
   collectionsLoading: Record<string, boolean>;
   isExplorerLoading: boolean;
+  databaseDiscoveryVerified: boolean;
+  canUseClusterAdministration: boolean;
   dataClient: StudioDataClient;
 
   // Actions
@@ -77,7 +79,7 @@ export interface WorkspaceContextValue {
   setActiveActivity: (activity: ActivitySection) => void;
   toggleDatabaseExpanded: (db: string) => void;
   loadDatabases: (force?: boolean) => Promise<void>;
-  loadDatabaseCollections: (db: string, force?: boolean) => Promise<void>;
+  loadDatabaseCollections: (db: string, force?: boolean) => Promise<boolean>;
   setSearchExplorerQuery: (query: string) => void;
   setStatusMessage: (msg: { text: string; tone: "info" | "success" | "error" } | null) => void;
   setLastExecutionDurationMs: (ms: number | null) => void;
@@ -190,7 +192,12 @@ export function WorkspaceProvider({
     initialContext.collectionsMap,
   );
   const [collectionsLoading, setCollectionsLoading] = useState<Record<string, boolean>>({});
-  const [isExplorerLoading, setIsExplorerLoading] = useState(initialContext.databases.length === 0);
+  const [isExplorerLoading, setIsExplorerLoading] = useState(false);
+  const [databaseDiscoveryVerified, setDatabaseDiscoveryVerified] = useState(
+    initialContext.databaseDiscoveryVerified,
+  );
+  const canUseClusterAdministration =
+    isLocalMode || (initialContext.databaseScope !== "explicit" && databaseDiscoveryVerified);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const dataClientRef = useRef<StudioDataClient | null>(null);
   if (!dataClientRef.current) {
@@ -210,20 +217,32 @@ export function WorkspaceProvider({
       if (ignore) return;
       const saved = loadSavedTabs();
       const meta = loadWorkspaceMetadata();
+      const allowedSavedTabs = canUseClusterAdministration
+        ? saved
+        : saved.filter(
+            (tab) =>
+              tab.type !== "cluster" &&
+              (tab.type !== "admin" || tab.adminState?.subSection === "settings"),
+          );
 
       if (hasSavedTabs()) {
-        setTabs(saved);
-        if (saved.length === 0) {
+        setTabs(allowedSavedTabs);
+        if (allowedSavedTabs.length === 0) {
           setActiveTabId("");
-        } else if (meta.activeTabId && saved.some((t) => t.id === meta.activeTabId)) {
+        } else if (meta.activeTabId && allowedSavedTabs.some((t) => t.id === meta.activeTabId)) {
           setActiveTabId(meta.activeTabId);
         } else {
-          setActiveTabId(saved[0].id);
+          setActiveTabId(allowedSavedTabs[0].id);
         }
       }
 
       if (meta.activeActivity && (meta.activeActivity as string) !== "settings") {
-        if (meta.activeActivity === "backups" && !isLocalMode) {
+        if (
+          !canUseClusterAdministration &&
+          (meta.activeActivity === "admin" || meta.activeActivity === "cluster")
+        ) {
+          setActiveActivity("explorer");
+        } else if (meta.activeActivity === "backups" && !isLocalMode) {
           setActiveActivity("explorer");
         } else {
           setActiveActivity(meta.activeActivity);
@@ -253,7 +272,7 @@ export function WorkspaceProvider({
     return () => {
       ignore = true;
     };
-  }, [isLocalMode]);
+  }, [canUseClusterAdministration, isLocalMode]);
 
   // Save tabs on change (only after client restoration to avoid wiping localStorage with initial default)
   useEffect(() => {
@@ -341,7 +360,14 @@ export function WorkspaceProvider({
 
   const openQueryTab = useCallback(
     (database?: string, collection?: string, initialFilter = "{}") => {
-      const targetDb = database || databases[0] || "default";
+      const targetDb = database || databases[0];
+      if (!targetDb) {
+        setStatusMessage({
+          text: "Select an authorized database before opening a query tab.",
+          tone: "error",
+        });
+        return;
+      }
       const targetCol = collection || collectionsMap[targetDb]?.[0] || "collection";
       const tabId = `query-${Date.now()}-${queryCounter++}`;
       const title = `Query ${queryCounter}`;
@@ -372,12 +398,19 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [databases, collectionsMap],
+    [databases, collectionsMap, setStatusMessage],
   );
 
   const openAggregationTab = useCallback(
     (database?: string, collection?: string) => {
-      const targetDb = database || databases[0] || "default";
+      const targetDb = database || databases[0];
+      if (!targetDb) {
+        setStatusMessage({
+          text: "Select an authorized database before opening an aggregation tab.",
+          tone: "error",
+        });
+        return;
+      }
       const targetCol = collection || collectionsMap[targetDb]?.[0] || "collection";
       const tabId = `agg-${Date.now()}-${queryCounter++}`;
       const title = `Pipeline ${queryCounter}`;
@@ -411,7 +444,7 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [databases, collectionsMap],
+    [databases, collectionsMap, setStatusMessage],
   );
 
   const openIndexesTab = useCallback(
@@ -459,6 +492,13 @@ export function WorkspaceProvider({
   }, [tabs]);
 
   const openClusterTab = useCallback(() => {
+    if (!canUseClusterAdministration) {
+      setStatusMessage({
+        text: "Cluster administration is unavailable until cluster-level access is verified.",
+        tone: "error",
+      });
+      return;
+    }
     const tabId = "tab-cluster";
     const existing = tabs.find((t) => t.id === tabId);
     if (!existing) {
@@ -472,13 +512,20 @@ export function WorkspaceProvider({
       ]);
     }
     setActiveTabId(tabId);
-  }, [tabs]);
+  }, [canUseClusterAdministration, setStatusMessage, tabs]);
 
   const openAdminTab = useCallback(
     (
       subSection: "users" | "roles" | "backups" | "settings",
       settingsPane?: "general" | "cors" | "performance" | "limits" | "backups",
     ) => {
+      if (subSection !== "settings" && !canUseClusterAdministration) {
+        setStatusMessage({
+          text: "Governance administration is unavailable until cluster-level access is verified.",
+          tone: "error",
+        });
+        return;
+      }
       const tabId = `admin-${subSection}`;
       const titles: Record<string, string> = {
         users: "User Governance",
@@ -511,7 +558,7 @@ export function WorkspaceProvider({
       setTabs((prev) => [...prev, newTab]);
       setActiveTabId(tabId);
     },
-    [tabs, updateTabState],
+    [canUseClusterAdministration, setStatusMessage, tabs, updateTabState],
   );
 
   const closeTab = useCallback(
@@ -614,6 +661,7 @@ export function WorkspaceProvider({
       const res = await dataClient.listDatabases(force);
       if (res.ok && res.data) {
         setDatabases(res.data.databases);
+        setDatabaseDiscoveryVerified(true);
       } else if (!res.ok) {
         setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
       }
@@ -625,27 +673,34 @@ export function WorkspaceProvider({
   }, [dataClient, setStatusMessage]);
 
   const loadDatabaseCollections = useCallback(async (db: string, force = false) => {
-    if (!force && Object.prototype.hasOwnProperty.call(collectionsMap, db)) return;
-    setCollectionsLoading((prev) => ({ ...prev, [db]: true }));
+    const database = db.trim();
+    if (!database) return false;
+    if (!force && Object.prototype.hasOwnProperty.call(collectionsMap, database)) return true;
+    setCollectionsLoading((prev) => ({ ...prev, [database]: true }));
     try {
-      const res = await dataClient.listCollections(db, force);
+      const res = await dataClient.listCollections(database, force);
       if (res.ok && res.data) {
-        setCollectionsMap((prev) => ({ ...prev, [db]: res.data?.collections ?? [] }));
+        setDatabases((prev) => (prev.includes(database) ? prev : [...prev, database]));
+        setCollectionsMap((prev) => ({ ...prev, [database]: res.data?.collections ?? [] }));
+        return true;
       } else if (!res.ok) {
-        setStatusMessage({ text: res.error || `Failed to load collections for ${db}`, tone: "error" });
+        setStatusMessage({ text: res.error || `Failed to load collections for ${database}`, tone: "error" });
       }
     } catch (error) {
-      setStatusMessage({ text: error instanceof Error ? error.message : `Failed to load collections for ${db}`, tone: "error" });
+      setStatusMessage({ text: error instanceof Error ? error.message : `Failed to load collections for ${database}`, tone: "error" });
     } finally {
-      setCollectionsLoading((prev) => ({ ...prev, [db]: false }));
+      setCollectionsLoading((prev) => ({ ...prev, [database]: false }));
     }
+    return false;
   }, [collectionsMap, dataClient, setStatusMessage]);
 
   useEffect(() => {
-    if (isRestored && activeActivity === "explorer" && databases.length === 0) {
+    // Local development keeps the previous convenience behavior. Hosted
+    // connections must explicitly request discovery or provide a database.
+    if (isRestored && isLocalMode && activeActivity === "explorer" && databases.length === 0) {
       void loadDatabases();
     }
-  }, [activeActivity, databases.length, isRestored, loadDatabases]);
+  }, [activeActivity, databases.length, isLocalMode, isRestored, loadDatabases]);
 
   const addQueryHistory = useCallback((item: QueryHistoryItem) => {
     setHistory((prev) => [item, ...prev.filter((i) => i.id !== item.id)].slice(0, 50));
@@ -754,6 +809,8 @@ export function WorkspaceProvider({
         collectionsMap,
         collectionsLoading,
         isExplorerLoading,
+        databaseDiscoveryVerified,
+        canUseClusterAdministration,
         dataClient,
         openCollectionTab,
         openQueryTab,

@@ -177,7 +177,7 @@ function buildBackupSchedule(formData: FormData, prefix: string, scheduleType: B
 }
 
 async function runWithSession<T>(
-  callback: (connectionUri: string, sessionId: string) => Promise<T>,
+  callback: (connectionUri: string, sessionId: string, session: NonNullable<Awaited<ReturnType<typeof getStudioSession>>>) => Promise<T>,
 ): Promise<T> {
   const session = await getStudioSession();
   if (!session) {
@@ -185,7 +185,7 @@ async function runWithSession<T>(
   }
 
   try {
-    return await callback(session.connectionUri, session.id);
+    return await callback(session.connectionUri, session.id, session);
   } catch (error) {
     const mapped = mapStudioError(error);
     if (
@@ -791,8 +791,21 @@ async function executeWithRetry<T>(
 export async function listDatabasesAction(): Promise<ActionResult<{ databases: string[] }>> {
   const start = Date.now();
   try {
-    return await runWithSession(async (connectionUri, sessionId) => {
+    return await runWithSession(async (connectionUri, sessionId, session) => {
       return await withLioranClient(connectionUri, async (client) => {
+        // An explicit URI database is already the principal's requested
+        // namespace. Never fall back to cluster-wide discovery for it.
+        if (session.metadata.database) {
+          await executeWithRetry("ListCollections", () =>
+            client.db(session.metadata.database as string).listCollections(),
+          );
+          return {
+            ok: true,
+            data: { databases: [session.metadata.database] },
+            durationMs: Date.now() - start,
+          };
+        }
+
         const databases = await executeWithRetry("ListDatabases", () => client.listDatabases());
         return {
           ok: true,
@@ -803,9 +816,14 @@ export async function listDatabasesAction(): Promise<ActionResult<{ databases: s
     });
   } catch (error) {
     const mapped = mapStudioError(error);
+    const session = await getStudioSession();
     return {
       ok: false,
-      error: mapped.message,
+      error: mapped.isAuthorizationError
+        ? session?.metadata.database
+          ? "The database from the connection URI is not authorized for collection listing. Enter an authorized database name to continue."
+          : "Database discovery is not permitted for this principal. Enter an authorized database name to continue."
+        : mapped.message,
       errorDescriptor: mapped,
       durationMs: Date.now() - start,
     };

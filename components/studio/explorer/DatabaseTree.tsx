@@ -22,6 +22,7 @@ import {
   LockIcon,
 } from "lucide-react";
 import { isProtectedDatabase } from "@/lib/liorandb/protection";
+import { StudioDialog } from "../StudioDialog";
 
 
 export function DatabaseTree() {
@@ -39,8 +40,11 @@ export function DatabaseTree() {
     openIndexesTab,
     activeTab,
     refreshExplorer,
+    loadDatabases,
     loadDatabaseCollections,
     setStatusMessage,
+    initialContext,
+    databaseDiscoveryVerified,
   } = useWorkspace();
 
   const [contextMenu, setContextMenu] = useState<{
@@ -58,6 +62,8 @@ export function DatabaseTree() {
   const [showCreateDbModal, setShowCreateDbModal] = useState(false);
   const [newDbName, setNewDbName] = useState("");
   const [isCreatingDb, setIsCreatingDb] = useState(false);
+  const [databaseNameInput, setDatabaseNameInput] = useState("");
+  const [isSelectingDatabase, setIsSelectingDatabase] = useState(false);
 
   const [dropModal, setDropModal] = useState<{
     type: "database" | "collection";
@@ -132,6 +138,22 @@ export function DatabaseTree() {
     }
   };
 
+  const handleSelectDatabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const database = databaseNameInput.trim();
+    if (!database) return;
+    setIsSelectingDatabase(true);
+    try {
+      const authorized = await loadDatabaseCollections(database);
+      if (authorized) {
+        toggleDatabaseExpanded(database);
+        setDatabaseNameInput("");
+      }
+    } finally {
+      setIsSelectingDatabase(false);
+    }
+  };
+
   const handleConfirmDrop = async () => {
     if (!dropModal) return;
     if (dropModal.type === "database" && isProtectedDatabase(dropModal.database)) {
@@ -198,14 +220,16 @@ export function DatabaseTree() {
             className="w-full h-7 pl-7 pr-2 rounded-[5px] bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink)]"
           />
         </div>
-        <button
-          type="button"
-          onClick={() => setShowCreateDbModal(true)}
-          title="Create Database"
-          className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
-        >
-          <PlusIcon size={14} />
-        </button>
+        {databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && (
+          <button
+            type="button"
+            onClick={() => setShowCreateDbModal(true)}
+            title="Create Database"
+            className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+          >
+            <PlusIcon size={14} />
+          </button>
+        )}
       </div>
 
       {/* Tree Content */}
@@ -217,8 +241,44 @@ export function DatabaseTree() {
             ))}
           </div>
         ) : filteredDatabases.length === 0 ? (
-          <div className="p-4 text-center text-xs text-[var(--muted)]">
-            {searchExplorerQuery ? "No matching databases or collections." : "No databases found."}
+          <div className="p-4 text-xs text-[var(--muted)] space-y-3">
+            <div className="text-center">
+              {searchExplorerQuery ? "No matching databases or collections." : "No database selected."}
+            </div>
+            {initialContext.databaseInitializationError && (
+              <div className="rounded-[6px] border border-[#ef4444]/30 bg-[#ef4444]/10 p-2 text-[11px] leading-4 text-[#ef4444]">
+                {initialContext.databaseInitializationError}
+              </div>
+            )}
+            <form onSubmit={handleSelectDatabase} className="space-y-2">
+              <label className="block text-[11px] font-semibold text-[var(--ink)]">
+                Open an authorized database
+              </label>
+              <input
+                value={databaseNameInput}
+                onChange={(event) => setDatabaseNameInput(event.target.value)}
+                placeholder="database_name"
+                pattern="[A-Za-z0-9_.-]+"
+                required
+                className="w-full h-8 px-2.5 rounded-[6px] border border-[var(--hairline-strong)] bg-[var(--canvas-soft)] text-xs font-mono text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
+              />
+              <button
+                type="submit"
+                disabled={isSelectingDatabase || !databaseNameInput.trim()}
+                className="btn-secondary w-full h-8 px-3 text-xs disabled:opacity-50"
+              >
+                {isSelectingDatabase ? "Checking access..." : "Open Database"}
+              </button>
+            </form>
+            {!databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && (
+              <button
+                type="button"
+                onClick={() => void loadDatabases()}
+                className="w-full text-center text-[11px] font-semibold text-[var(--text-link)] hover:underline"
+              >
+                Discover databases (requires database-list permission)
+              </button>
+            )}
           </div>
         ) : (
           filteredDatabases.map((db) => {
@@ -384,12 +444,12 @@ export function DatabaseTree() {
       {contextMenu && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 studio-overlay-menu"
             onClick={() => setContextMenu(null)}
           />
           <div
             style={{ top: contextMenu.y, left: contextMenu.x }}
-            className="fixed z-50 min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
+            className="fixed studio-overlay-menu min-w-44 rounded-[8px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-xl py-1 text-xs"
           >
             {contextMenu.type === "database" ? (
               <>
@@ -416,7 +476,7 @@ export function DatabaseTree() {
                   <span>New Query Workbench</span>
                 </button>
                 <div className="h-[1px] bg-[var(--hairline)] my-1" />
-                {isProtectedDatabase(contextMenu.database) ? (
+                {databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" && isProtectedDatabase(contextMenu.database) ? (
                   <div
                     className="w-full text-left px-3 py-1.5 text-[var(--muted)] flex items-center gap-2 cursor-not-allowed select-none opacity-60"
                     title="The 'default' database is protected and cannot be dropped."
@@ -424,7 +484,7 @@ export function DatabaseTree() {
                     <LockIcon size={13} />
                     <span>Protected Database</span>
                   </div>
-                ) : (
+                ) : databaseDiscoveryVerified && initialContext.databaseScope !== "explicit" ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -436,6 +496,10 @@ export function DatabaseTree() {
                     <Trash2Icon size={13} />
                     <span>Drop Database...</span>
                   </button>
+                ) : (
+                  <div className="w-full px-3 py-1.5 text-[var(--muted)] text-[11px]">
+                    Database administration is unavailable for this scope.
+                  </div>
                 )}
               </>
             ) : (
@@ -502,8 +566,15 @@ export function DatabaseTree() {
       )}
 
       {/* Create Database Modal */}
-      {showCreateDbModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <StudioDialog
+        open={showCreateDbModal}
+        onClose={() => {
+          setShowCreateDbModal(false);
+          setNewDbName("");
+        }}
+        ariaLabel="Create Database"
+        backdropClassName="bg-black/50"
+      >
           <div className="w-full max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Create Database</h3>
             <p className="mt-1 text-xs text-[var(--muted)]">
@@ -546,12 +617,18 @@ export function DatabaseTree() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </StudioDialog>
 
       {/* Create Collection Modal */}
-      {createColModalDb && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <StudioDialog
+        open={Boolean(createColModalDb)}
+        onClose={() => {
+          setCreateColModalDb(null);
+          setNewColName("");
+        }}
+        ariaLabel="Create Collection"
+        backdropClassName="bg-black/50"
+      >
           <div className="w-full max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">
               Create Collection in &apos;{createColModalDb}&apos;
@@ -593,12 +670,19 @@ export function DatabaseTree() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </StudioDialog>
 
       {/* Confirmation Modal for Destructive Drops */}
-      {dropModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <StudioDialog
+        open={Boolean(dropModal)}
+        onClose={() => {
+          setDropModal(null);
+          setDropConfirmText("");
+        }}
+        ariaLabel="Confirm destructive action"
+        backdropClassName="bg-black/60"
+      >
+        {dropModal && (
           <div className="w-full max-w-md rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
             {dropModal.type === "database" && isProtectedDatabase(dropModal.database) ? (
               <>
@@ -685,8 +769,8 @@ export function DatabaseTree() {
               </>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </StudioDialog>
     </div>
   );
 }

@@ -13,6 +13,11 @@
   --primary-active: #1a1a1a;
   --primary-disabled: #999999;
 
+  /* Application overlay hierarchy. Portaled dialogs sit above workspace chrome. */
+  --z-overlay-toast: 100;
+  --z-overlay-menu: 200;
+  --z-overlay-dialog: 300;
+
   --text-link: #0d74ce;
   --text-link-secondary: #476cff;
   --accent-link-bright: #47c2ff;
@@ -44,6 +49,20 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   color-scheme: light;
+}
+
+.studio-dialog-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay-dialog);
+}
+
+.studio-overlay-toast {
+  z-index: var(--z-overlay-toast);
+}
+
+.studio-overlay-menu {
+  z-index: var(--z-overlay-menu);
 }
 
 @theme inline {

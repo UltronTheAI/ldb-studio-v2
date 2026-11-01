@@ -9,6 +9,7 @@ import {
   LayersIcon,
 } from "lucide-react";
 import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
+import { StudioDialog } from "../StudioDialog";
 
 interface DocumentEditorModalProps {
   isOpen: boolean;
@@ -107,7 +108,12 @@ function DocumentEditorDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <StudioDialog
+      open
+      onClose={onClose}
+      ariaLabel={isInserting ? "Insert Document" : "Edit Document"}
+      panelClassName="w-full max-w-2xl"
+    >
       <div className="w-full max-w-2xl rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-100">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
@@ -204,6 +210,6 @@ function DocumentEditorDialog({
           </div>
         </form>
       </div>
-    </div>
+    </StudioDialog>
   );
 }

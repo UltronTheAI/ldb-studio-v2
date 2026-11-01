@@ -34,7 +34,7 @@ import { UriConnectionScene } from "@/components/studio/UriConnectionScene";
 import type { InitialStudioContext } from "@/lib/studio/workspace-types";
 import type { DiagnosticEvent } from "@/lib/liorandb/client";
 import { withLioranClient } from "@/lib/liorandb/client";
-import { isLocalModeActive } from "@/lib/liorandb/connection";
+import { getSanitizedConnectionMetadata, isLocalModeActive } from "@/lib/liorandb/connection";
 import { mapStudioError } from "@/lib/liorandb/errors";
 import {
   prettyJson,
@@ -267,7 +267,12 @@ async function loadStudioData(
     }
 
     try {
-      data.databases = await client.listDatabases();
+      const connectionMetadata = getSanitizedConnectionMetadata(connectionUri);
+      if (connectionMetadata.database) {
+        data.databases = [connectionMetadata.database];
+      } else {
+        data.databases = await client.listDatabases();
+      }
     } catch (error) {
       const mapped = mapStudioError(error);
       data.errors.databases = {
@@ -1254,6 +1259,23 @@ export default async function Home({ searchParams }: PageProps) {
   try {
     initialContext = await withLioranClient(session.connectionUri, async (client) => {
       const principal = await client.me();
+      const scopedDatabase = session.metadata.database ?? undefined;
+      let databases: string[] = [];
+      let collectionsMap: Record<string, string[]> = {};
+      let databaseInitializationError: string | undefined;
+
+      if (scopedDatabase) {
+        try {
+          const collections = await client.db(scopedDatabase).listCollections();
+          databases = [scopedDatabase];
+          collectionsMap = { [scopedDatabase]: [...collections] };
+        } catch (error) {
+          const mapped = mapStudioError(error);
+          databaseInitializationError = mapped.isAuthorizationError
+            ? "The URI database is not authorized for collection listing. Enter a different authorized database or reconnect with the correct scope."
+            : mapped.message;
+        }
+      }
 
       return {
         principal,
@@ -1262,9 +1284,12 @@ export default async function Home({ searchParams }: PageProps) {
         protocol: session.metadata.protocol,
         transport: session.metadata.transport,
         tls: session.metadata.tls,
-        scopedDatabase: session.metadata.database ?? undefined,
-        databases: [],
-        collectionsMap: {},
+        scopedDatabase,
+        databaseScope: scopedDatabase ? "explicit" : "unselected",
+        databaseDiscoveryVerified: false,
+        databaseInitializationError,
+        databases,
+        collectionsMap,
         serverInfo: null,
         live: null,
         ready: null,

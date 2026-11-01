@@ -127,7 +127,7 @@ export function StudioClientEffects() {
   const isError = activeToast.tone === "error";
 
   return (
-    <div className="pointer-events-none fixed bottom-6 right-6 z-[100] max-w-md">
+    <div className="pointer-events-none fixed bottom-6 right-6 studio-overlay-toast max-w-md">
       <div className="flex items-center gap-3 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] px-4 py-3 text-sm text-[var(--ink)] shadow-[0_8px_24px_rgba(0,0,0,0.1)]">
         <span
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] text-xs font-bold text-white ${

@@ -18,6 +18,7 @@ import {
   SlidersIcon,
 } from "lucide-react";
 import { TableSkeletonWidget } from "../widgets/LoadingWidget";
+import { StudioDialog } from "../StudioDialog";
 import {
   DEFAULT_MAX_MANUAL_BACKUPS,
   filterManualBackups,
@@ -927,7 +928,11 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
 
       {/* Create User Modal */}
       {showCreateUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setShowCreateUserModal(false)}
+          ariaLabel="Create User Account"
+        >
           <div className="w-full max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Create User Account</h3>
             <form action={studioMutationAction} className="space-y-3 text-xs">
@@ -978,12 +983,16 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </StudioDialog>
       )}
 
       {/* Create Role Modal */}
       {showCreateRoleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setShowCreateRoleModal(false)}
+          ariaLabel="Create Granular Role"
+        >
           <div className="w-full max-w-md rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Create Granular Role</h3>
             <form action={studioMutationAction} className="space-y-3 text-xs">
@@ -1030,12 +1039,16 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </StudioDialog>
       )}
 
       {/* Take Backup Modal */}
       {showCreateBackupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setShowCreateBackupModal(false)}
+          ariaLabel="Take Cluster Node Backup"
+        >
           <div className="w-full max-w-sm rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4">
             <h3 className="font-sans text-sm font-bold text-[var(--ink)]">Take Cluster Node Backup</h3>
 
@@ -1103,12 +1116,17 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </StudioDialog>
       )}
 
       {/* Backup Policy & Schedules Modal */}
       {showBackupPolicyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <StudioDialog
+          open
+          onClose={() => setShowBackupPolicyModal(false)}
+          ariaLabel="Automated Backup Schedules"
+          panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto editor-scroll"
+        >
           <div className="w-full max-w-lg rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto editor-scroll">
             <div className="flex items-center justify-between pb-2 border-b border-[var(--hairline)]">
               <h3 className="font-sans text-sm font-bold text-[var(--ink)] flex items-center gap-2">
@@ -1280,7 +1298,7 @@ export function AdminWorkspace({ tab }: AdminWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </StudioDialog>
       )}
     </div>
   );

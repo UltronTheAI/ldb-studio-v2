@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
+import { StudioDialog } from "./StudioDialog";
 import { logoutAction } from "@/app/actions";
 import {
   SearchIcon,
@@ -54,6 +55,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
     refreshExplorer,
     refreshActiveTab,
     isLocalMode,
+    canUseClusterAdministration,
   } = useWorkspace();
 
   const [query, setQuery] = useState("");
@@ -132,27 +134,31 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         icon: DatabaseIcon,
         action: () => openOverviewTab(),
       },
-      {
-        id: "nav-cluster",
-        title: "Go to Cluster Topology & Health",
-        category: "Navigation",
-        icon: NetworkIcon,
-        action: () => openClusterTab(),
-      },
-      {
-        id: "nav-users",
-        title: "Go to User Governance",
-        category: "Navigation",
-        icon: UsersIcon,
-        action: () => openAdminTab("users"),
-      },
-      {
-        id: "nav-roles",
-        title: "Go to Roles & Permissions",
-        category: "Navigation",
-        icon: ShieldIcon,
-        action: () => openAdminTab("roles"),
-      },
+      ...(canUseClusterAdministration
+        ? [
+            {
+              id: "nav-cluster",
+              title: "Go to Cluster Topology & Health",
+              category: "Navigation" as const,
+              icon: NetworkIcon,
+              action: () => openClusterTab(),
+            },
+            {
+              id: "nav-users",
+              title: "Go to User Governance",
+              category: "Navigation" as const,
+              icon: UsersIcon,
+              action: () => openAdminTab("users"),
+            },
+            {
+              id: "nav-roles",
+              title: "Go to Roles & Permissions",
+              category: "Navigation" as const,
+              icon: ShieldIcon,
+              action: () => openAdminTab("roles"),
+            },
+          ]
+        : []),
       ...(isLocalMode
         ? [
             {
@@ -230,6 +236,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
     refreshExplorer,
     refreshActiveTab,
     isLocalMode,
+    canUseClusterAdministration,
   ]);
 
   // Filter commands by query
@@ -270,13 +277,15 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
   }, [filteredCommands, selectedIndex, onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/60 backdrop-blur-xs p-4"
-      onClick={onClose}
+    <StudioDialog
+      open
+      onClose={onClose}
+      ariaLabel="Command Palette"
+      className="flex items-start justify-center pt-20 p-4"
+      panelClassName="w-full max-w-xl max-h-[460px]"
     >
       <div
-        className="w-full max-w-xl rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[460px] animate-in fade-in zoom-in-95 duration-100"
-        onClick={(e) => e.stopPropagation()}
+        className="w-full rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[460px] animate-in fade-in zoom-in-95 duration-100"
       >
         {/* Search Input */}
         <div className="flex items-center px-3.5 border-b border-[var(--hairline)]">
@@ -355,6 +364,6 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
-    </div>
+    </StudioDialog>
   );
 }

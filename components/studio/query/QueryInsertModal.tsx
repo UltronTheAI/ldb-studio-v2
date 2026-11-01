@@ -12,6 +12,7 @@ import {
 import { insertOneDocumentAction, insertManyDocumentsAction } from "@/app/actions";
 import { useWorkspace } from "@/lib/studio/workspace-context";
 import { JsonCodeEditor } from "../widgets/JsonCodeEditor";
+import { StudioDialog } from "../StudioDialog";
 
 interface QueryInsertModalProps {
   isOpen: boolean;
@@ -188,7 +189,12 @@ export function QueryInsertModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+    <StudioDialog
+      open
+      onClose={onClose}
+      ariaLabel={insertMode === "one" ? "Insert Single Document" : "Insert Multiple Documents"}
+      panelClassName="w-full max-w-2xl"
+    >
       <div className="w-full max-w-2xl rounded-[10px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-[var(--canvas-soft)] border-b border-[var(--hairline)]">
@@ -340,6 +346,6 @@ export function QueryInsertModal({
           </div>
         </form>
       </div>
-    </div>
+    </StudioDialog>
   );
 }
