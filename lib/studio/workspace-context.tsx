@@ -52,6 +52,8 @@ export interface WorkspaceContextValue {
   collectionsLoading: Record<string, boolean>;
   isExplorerLoading: boolean;
   databaseScope: InitialStudioContext["databaseScope"];
+  isFreeSharedHosting: boolean;
+  databaseCapabilityVerified: boolean;
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
   canUseClusterAdministration: boolean;
@@ -197,6 +199,12 @@ export function WorkspaceProvider({
   const [isExplorerLoading, setIsExplorerLoading] = useState(false);
   const [databaseScope, setDatabaseScope] = useState<InitialStudioContext["databaseScope"]>(
     initialContext.databaseScope,
+  );
+  const [isFreeSharedHosting, setIsFreeSharedHosting] = useState(
+    initialContext.isFreeSharedHosting,
+  );
+  const [databaseCapabilityVerified, setDatabaseCapabilityVerified] = useState(
+    initialContext.databaseCapabilityVerified,
   );
   const [databaseDiscoveryVerified, setDatabaseDiscoveryVerified] = useState(
     initialContext.databaseDiscoveryVerified,
@@ -671,6 +679,8 @@ export function WorkspaceProvider({
       if (res.ok && res.data) {
         setDatabases(res.data.databases);
         setDatabaseScope(res.data.databaseScope);
+        setIsFreeSharedHosting(res.data.isFreeSharedHosting);
+        setDatabaseCapabilityVerified(res.data.databaseCapabilityVerified);
         setDatabaseDiscoveryVerified(res.data.databaseDiscoveryVerified);
         setClusterAdministrationVerified(res.data.clusterAdministrationVerified);
       } else if (!res.ok) {
@@ -821,6 +831,8 @@ export function WorkspaceProvider({
         collectionsLoading,
         isExplorerLoading,
         databaseScope,
+        isFreeSharedHosting,
+        databaseCapabilityVerified,
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
         canUseClusterAdministration,

@@ -170,6 +170,8 @@ export interface InitialStudioContext {
   tls: boolean;
   scopedDatabase?: string;
   databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
+  isFreeSharedHosting: boolean;
+  databaseCapabilityVerified: boolean;
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
   databaseInitializationError?: string;

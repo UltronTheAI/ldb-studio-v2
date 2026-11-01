@@ -1268,6 +1268,8 @@ export default async function Home({ searchParams }: PageProps) {
       let databaseScope: InitialStudioContext["databaseScope"] = requestedDatabase
         ? "explicit"
         : "unselected";
+      let isFreeSharedHosting = false;
+      let databaseCapabilityVerified = false;
       let databaseDiscoveryVerified = false;
       let clusterAdministrationVerified = false;
 
@@ -1276,6 +1278,8 @@ export default async function Home({ searchParams }: PageProps) {
         scopedDatabase = resolution.scopedDatabase;
         databases = resolution.databases;
         databaseScope = resolution.databaseScope;
+        isFreeSharedHosting = resolution.isFreeSharedHosting;
+        databaseCapabilityVerified = resolution.databaseCapabilityVerified;
         databaseDiscoveryVerified = resolution.databaseDiscoveryVerified;
         clusterAdministrationVerified = resolution.clusterAdministrationVerified;
       } catch (error) {
@@ -1311,6 +1315,8 @@ export default async function Home({ searchParams }: PageProps) {
         tls: session.metadata.tls,
         scopedDatabase,
         databaseScope,
+        isFreeSharedHosting,
+        databaseCapabilityVerified,
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
         databaseInitializationError,

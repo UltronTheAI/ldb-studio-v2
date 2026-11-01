@@ -45,12 +45,25 @@ export function DatabaseTree() {
     setStatusMessage,
     initialContext,
     databaseScope,
+    isFreeSharedHosting,
+    databaseCapabilityVerified,
     databaseDiscoveryVerified,
     canUseClusterAdministration,
   } = useWorkspace();
 
   const canManageDatabases =
-    canUseClusterAdministration || databaseScope === "allocated" || databaseScope === "explicit";
+    databaseCapabilityVerified &&
+    !isFreeSharedHosting &&
+    !initialContext.databaseInitializationError &&
+    (canUseClusterAdministration || databaseScope === "explicit");
+  const hasDatabaseManagementContext =
+    !initialContext.databaseInitializationError &&
+    (isFreeSharedHosting || canUseClusterAdministration || databaseScope === "explicit");
+  const databaseManagementMessage = isFreeSharedHosting
+    ? "Database creation is unavailable on the Free Shared plan."
+    : databaseCapabilityVerified
+      ? "Database creation is unavailable for this connection scope."
+      : "Database management capability could not be verified for this connection.";
 
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -123,6 +136,11 @@ export function DatabaseTree() {
 
   const handleCreateDatabase = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageDatabases) {
+      setStatusMessage({ text: databaseManagementMessage, tone: "error" });
+      setShowCreateDbModal(false);
+      return;
+    }
     if (!newDbName.trim()) return;
     setIsCreatingDb(true);
     try {
@@ -166,6 +184,17 @@ export function DatabaseTree() {
 
   const handleConfirmDrop = async () => {
     if (!dropModal) return;
+    if (dropModal.type === "database" && !canManageDatabases) {
+      setStatusMessage({
+        text: isFreeSharedHosting
+          ? "Database deletion is unavailable on the Free Shared plan."
+          : "Database deletion is unavailable for this connection scope.",
+        tone: "error",
+      });
+      setDropModal(null);
+      setDropConfirmText("");
+      return;
+    }
     if (
       dropModal.type === "database" &&
       canUseClusterAdministration &&
@@ -234,12 +263,16 @@ export function DatabaseTree() {
             className="w-full h-7 pl-7 pr-2 rounded-[5px] bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink)]"
           />
         </div>
-        {canManageDatabases && (
+        {hasDatabaseManagementContext && (
           <button
             type="button"
-            onClick={() => setShowCreateDbModal(true)}
-            title="Create Database"
-            className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition"
+            disabled={!canManageDatabases}
+            onClick={() => {
+              if (canManageDatabases) setShowCreateDbModal(true);
+            }}
+            title={canManageDatabases ? "Create Database" : databaseManagementMessage}
+            aria-label={canManageDatabases ? "Create Database" : databaseManagementMessage}
+            className="p-1.5 rounded-[5px] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-strong)] transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon size={14} />
           </button>
@@ -500,6 +533,13 @@ export function DatabaseTree() {
                     <LockIcon size={13} />
                     <span>Protected Database</span>
                   </div>
+                ) : isFreeSharedHosting ? (
+                  <div
+                    className="w-full px-3 py-1.5 text-[var(--muted)] text-[11px] cursor-not-allowed"
+                    title="Database deletion is unavailable on the Free Shared plan."
+                  >
+                    Database deletion is unavailable on the Free Shared plan.
+                  </div>
                 ) : canManageDatabases ? (
                   <button
                     type="button"
@@ -583,7 +623,7 @@ export function DatabaseTree() {
 
       {/* Create Database Modal */}
       <StudioDialog
-        open={showCreateDbModal}
+        open={showCreateDbModal && canManageDatabases}
         onClose={() => {
           setShowCreateDbModal(false);
           setNewDbName("");

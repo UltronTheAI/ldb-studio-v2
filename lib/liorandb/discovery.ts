@@ -6,6 +6,8 @@ export interface DatabaseResolution {
   readonly databases: string[];
   readonly scopedDatabase?: string;
   readonly databaseScope: DatabaseScope;
+  readonly isFreeSharedHosting: boolean;
+  readonly databaseCapabilityVerified: boolean;
   readonly databaseDiscoveryVerified: boolean;
   readonly clusterAdministrationVerified: boolean;
 }
@@ -40,6 +42,7 @@ export async function resolveDatabaseContext(
   const requestedDatabase = explicitDatabase?.trim();
   const principal = await getPrincipal(client);
   const tenantScoped = isTenantPrincipal(principal);
+  const databaseCapabilityVerified = principal !== undefined;
   const clusterAdministrationVerified = isClusterAdministrator(principal);
 
   if (requestedDatabase) {
@@ -53,6 +56,8 @@ export async function resolveDatabaseContext(
           databases: [...databases],
           scopedDatabase,
           databaseScope: "allocated",
+          isFreeSharedHosting: true,
+          databaseCapabilityVerified,
           databaseDiscoveryVerified: true,
           clusterAdministrationVerified,
         };
@@ -69,6 +74,8 @@ export async function resolveDatabaseContext(
       databases: [requestedDatabase],
       scopedDatabase: requestedDatabase,
       databaseScope: tenantScoped ? "allocated" : "explicit",
+      isFreeSharedHosting: tenantScoped,
+      databaseCapabilityVerified,
       databaseDiscoveryVerified: false,
       clusterAdministrationVerified,
     };
@@ -79,6 +86,8 @@ export async function resolveDatabaseContext(
     databases: [...databases],
     scopedDatabase: databases[0],
     databaseScope: tenantScoped ? "allocated" : "cluster",
+    isFreeSharedHosting: tenantScoped,
+    databaseCapabilityVerified,
     databaseDiscoveryVerified: true,
     clusterAdministrationVerified,
   };

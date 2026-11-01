@@ -334,7 +334,7 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
   const returnTo = sanitizeReturnTo(formString(formData, "returnTo") || "/");
 
   try {
-    await runWithSession(async (connectionUri, sessionId) => {
+    await runWithSession(async (connectionUri, sessionId, session) => {
       await withLioranClient(
         connectionUri,
         async (client) => {
@@ -352,10 +352,22 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             );
             return;
           case "createDatabase":
+            if (
+              (await resolveDatabaseContext(client, session.metadata.database ?? undefined))
+                .isFreeSharedHosting
+            ) {
+              throw new Error("Database creation is unavailable on the Free Shared plan.");
+            }
             await client.createDatabase(formString(formData, "databaseName"));
             return;
           case "dropDatabase": {
             const name = formString(formData, "databaseName");
+            if (
+              (await resolveDatabaseContext(client, session.metadata.database ?? undefined))
+                .isFreeSharedHosting
+            ) {
+              throw new Error("Database deletion is unavailable on the Free Shared plan.");
+            }
             if (isProtectedDatabase(name)) {
               throw new Error("The 'default' database is protected and cannot be dropped.");
             }
@@ -788,6 +800,8 @@ export async function listDatabasesAction(): Promise<
   ActionResult<{
     databases: string[];
     databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
+    isFreeSharedHosting: boolean;
+    databaseCapabilityVerified: boolean;
     databaseDiscoveryVerified: boolean;
     clusterAdministrationVerified: boolean;
   }>
@@ -804,6 +818,8 @@ export async function listDatabasesAction(): Promise<
           data: {
             databases: resolution.databases,
             databaseScope: resolution.databaseScope,
+            isFreeSharedHosting: resolution.isFreeSharedHosting,
+            databaseCapabilityVerified: resolution.databaseCapabilityVerified,
             databaseDiscoveryVerified: resolution.databaseDiscoveryVerified,
             clusterAdministrationVerified: resolution.clusterAdministrationVerified,
           },
@@ -1380,13 +1396,15 @@ export async function createDatabaseAction(params: {
           session.metadata.database ?? undefined,
         );
         if (
-          resolution.databaseScope !== "cluster" &&
-          resolution.databaseScope !== "allocated" &&
-          resolution.databaseScope !== "explicit"
+          resolution.isFreeSharedHosting ||
+          (resolution.databaseScope !== "cluster" &&
+            resolution.databaseScope !== "explicit")
         ) {
           return {
             ok: false,
-            error: "Database creation is unavailable until an authorized database-management scope is verified.",
+            error: resolution.isFreeSharedHosting
+              ? "Database creation is unavailable on the Free Shared plan."
+              : "Database creation is unavailable until an authorized database-management scope is verified.",
             durationMs: Date.now() - start,
           };
         }
@@ -1421,13 +1439,15 @@ export async function dropDatabaseAction(params: {
           session.metadata.database ?? undefined,
         );
         if (
-          resolution.databaseScope !== "cluster" &&
-          resolution.databaseScope !== "allocated" &&
-          resolution.databaseScope !== "explicit"
+          resolution.isFreeSharedHosting ||
+          (resolution.databaseScope !== "cluster" &&
+            resolution.databaseScope !== "explicit")
         ) {
           return {
             ok: false,
-            error: "Database deletion is unavailable for this connection scope.",
+            error: resolution.isFreeSharedHosting
+              ? "Database deletion is unavailable on the Free Shared plan."
+              : "Database deletion is unavailable for this connection scope.",
             durationMs: Date.now() - start,
           };
         }
