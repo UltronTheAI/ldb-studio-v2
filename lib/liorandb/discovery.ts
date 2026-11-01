@@ -49,12 +49,15 @@ export async function resolveDatabaseContext(
     if (tenantScoped) {
       try {
         const databases = await client.listDatabases();
-        const scopedDatabase = databases.includes(requestedDatabase)
-          ? requestedDatabase
-          : databases[0];
+        if (!databases.includes(requestedDatabase)) {
+          // A URI database is an explicit logical scope. Do not silently
+          // replace an unauthorized or stale scope with another allocation
+          // database; ask the server to validate the requested logical name.
+          await client.db(requestedDatabase).listCollections();
+        }
         return {
           databases: [...databases],
-          scopedDatabase,
+          scopedDatabase: requestedDatabase,
           databaseScope: "allocated",
           isFreeSharedHosting: true,
           databaseCapabilityVerified,

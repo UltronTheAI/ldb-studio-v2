@@ -29,7 +29,10 @@ import {
   destroyStudioSession,
   getStudioSession,
 } from "@/lib/liorandb/session";
-import { establishStudioSession } from "@/lib/liorandb/studio-auth";
+import {
+  establishStudioSession,
+  StudioAuthenticationError,
+} from "@/lib/liorandb/studio-auth";
 import {
   DEFAULT_MAX_MANUAL_BACKUPS,
   MAX_RETENTION_DAYS,
@@ -246,6 +249,20 @@ export async function redeemStudioHandoffAction(params: {
   token: string;
 }): Promise<ActionResult<{ success: true }>> {
   const start = Date.now();
+
+  const handoffAuthenticationMessage = (error: StudioAuthenticationError): string => {
+    switch (error.stage) {
+      case "connection_uri_validation":
+        return "Dashboard returned a database connection that Studio cannot use. Return to Dashboard and open Studio again.";
+      case "principal_authentication":
+        return "The assigned LioranDB credentials or logical database scope were rejected by the server. Return to Dashboard and open Studio again.";
+      case "grpc_connection":
+        return "Studio could not connect to the assigned LioranDB instance. Check its status in Dashboard and open Studio again.";
+      case "studio_session_creation":
+        return "LioranDB authentication succeeded, but Studio could not create its secure session. Return to Dashboard and open Studio again.";
+    }
+  };
+
   try {
     const { connectionUri } = await exchangeStudioHandoff(params.token);
     await establishStudioSession(connectionUri);
@@ -259,15 +276,45 @@ export async function redeemStudioHandoffAction(params: {
       return {
         ok: false,
         error: error.message,
+        errorDescriptor: {
+          title: "Dashboard handoff failed",
+          message: error.message,
+          code: error.code,
+          stage: error.stage,
+          retryable: false,
+        },
         durationMs: Date.now() - start,
       };
     }
 
-    const mapped = mapStudioError(error);
+    if (error instanceof StudioAuthenticationError) {
+      const message = handoffAuthenticationMessage(error);
+      return {
+        ok: false,
+        error: message,
+        errorDescriptor: {
+          title: error.descriptor.title,
+          message,
+          code: error.code,
+          stage: error.stage,
+          grpcStatus: error.descriptor.grpcStatus,
+          grpcStatusCode: error.descriptor.grpcStatusCode,
+          retryable: false,
+        },
+        durationMs: Date.now() - start,
+      };
+    }
+
     return {
       ok: false,
-      error: "Dashboard handoff authentication failed. Return to Dashboard and try again.",
-      errorDescriptor: mapped,
+      error: "Studio could not complete the Dashboard handoff. Return to Dashboard and open Studio again.",
+      errorDescriptor: {
+        title: "Dashboard handoff failed",
+        message: "Studio could not complete the Dashboard handoff. Return to Dashboard and open Studio again.",
+        code: "HANDOFF_FAILED",
+        stage: "dashboard_exchange",
+        retryable: false,
+      },
       durationMs: Date.now() - start,
     };
   }

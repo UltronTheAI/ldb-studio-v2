@@ -10,8 +10,7 @@ import { CheckIcon, DatabaseIcon, ShieldIcon, XIcon } from "@/lib/lucide";
 export function HandoffConnectionScene() {
   const [status, setStatus] = useState<"connecting" | "success" | "failed">("connecting");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isPending, startTransition] = useTransition();
-  const tokenRef = useRef<string | null>(null);
+  const [, startTransition] = useTransition();
   const startedRef = useRef(false);
 
   const redeem = (token: string) => {
@@ -26,7 +25,10 @@ export function HandoffConnectionScene() {
           return;
         }
         setStatus("failed");
-        setErrorMessage(result.error || "Dashboard handoff authentication failed.");
+        setErrorMessage(
+          result.error ||
+            "Studio could not complete the Dashboard handoff. Return to Dashboard and open Studio again.",
+        );
       });
     });
   };
@@ -46,13 +48,8 @@ export function HandoffConnectionScene() {
       return;
     }
 
-    tokenRef.current = token;
     redeem(token);
   }, []);
-
-  const retry = () => {
-    if (tokenRef.current) redeem(tokenRef.current);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[var(--canvas)] text-[var(--ink)]">
@@ -78,8 +75,8 @@ export function HandoffConnectionScene() {
                 <div className="h-14 w-14 animate-spin rounded-full border-[3px] border-[#0d74ce]/20 border-t-[#0d74ce]" />
                 <DatabaseIcon size={24} className="absolute text-[#0d74ce]" />
               </div>
-              <h1 className="font-sans text-[22px] font-semibold tracking-tight">Connecting to LioranDB</h1>
-              <p className="mt-2 text-sm text-[var(--body)]">Securely exchanging your Dashboard handoff and authenticating the assigned database.</p>
+              <h1 className="font-sans text-[22px] font-semibold tracking-tight">Verifying Dashboard handoff…</h1>
+              <p className="mt-2 text-sm text-[var(--body)]">Studio is securely exchanging the one-time handoff and authenticating the assigned database on the server.</p>
               <div className="mt-7 flex items-center justify-center gap-2 text-xs text-[#0d74ce]">
                 <ShieldIcon size={14} /> Credentials remain server-side.
               </div>
@@ -89,8 +86,8 @@ export function HandoffConnectionScene() {
           {status === "success" && (
             <div className="rounded-[16px] border border-[var(--hairline-strong)] bg-[var(--surface-card)] p-8 text-center shadow-xl">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#10b981]/15 text-[#10b981]"><CheckIcon size={32} strokeWidth={2.5} /></div>
-              <h1 className="font-sans text-[22px] font-semibold tracking-tight">Connected Successfully</h1>
-              <p className="mt-2 text-sm text-[var(--body)]">Loading your authorized Studio workspace...</p>
+              <h1 className="font-sans text-[22px] font-semibold tracking-tight">Opening Studio…</h1>
+              <p className="mt-2 text-sm text-[var(--body)]">Your authorized database workspace is loading.</p>
             </div>
           )}
 
@@ -104,8 +101,7 @@ export function HandoffConnectionScene() {
                 </div>
               </div>
               <div className="mt-7 flex flex-wrap justify-end gap-2">
-                <button type="button" onClick={retry} disabled={isPending} className="btn-secondary text-xs">Try Again</button>
-                <a href="https://app.liorandb.com/" rel="noreferrer noopener" className="btn-primary text-xs">Return to Dashboard</a>
+                <a href="https://app.liorandb.com/" rel="noreferrer noopener" className="btn-primary text-xs">Return to Dashboard for a new handoff</a>
               </div>
             </div>
           )}

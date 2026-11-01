@@ -53,6 +53,7 @@ export interface StudioErrorDescriptor {
   readonly title: string;
   readonly message: string;
   readonly code: string;
+  readonly stage?: string;
   readonly category?: string;
   readonly grpcStatus?: string;
   readonly grpcStatusCode?: number;

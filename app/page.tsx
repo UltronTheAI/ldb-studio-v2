@@ -1292,7 +1292,7 @@ export default async function Home({ searchParams }: PageProps) {
         const mapped = mapStudioError(error);
         databaseInitializationError = mapped.isAuthorizationError
           ? requestedDatabase
-            ? "The URI database is not authorized for collection listing. Reconnect with the correct database scope."
+            ? "The requested logical database is not authorized for collection listing. Return to Dashboard and open Studio again."
             : "Database discovery is not permitted for this principal. Enter an authorized database name to continue."
           : mapped.message;
       }
@@ -1307,7 +1307,7 @@ export default async function Home({ searchParams }: PageProps) {
           databaseInitializationError = mapped.isAuthorizationError
             ? databaseScope === "allocated"
               ? "Your managed database was discovered, but collection access is not authorized for this principal."
-              : "The URI database is not authorized for collection listing. Reconnect with the correct database scope."
+                : "The requested logical database is not authorized for collection listing. Return to Dashboard and open Studio again."
             : mapped.message;
         }
       }
