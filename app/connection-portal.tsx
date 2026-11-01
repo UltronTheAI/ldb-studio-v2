@@ -33,20 +33,20 @@ const INITIAL_DEFAULT_CONNECTIONS: SavedConnection[] = [
   {
     id: "conn_cloud_prod",
     name: "Production Cluster (Cloud)",
-    uri: "liorandb://admin:password@swaraj.db.liorandb.com:443/default",
+    uri: "liorandb://admin@swaraj.db.liorandb.com:443/default",
     createdAt: 1731300000000,
     lastUsedAt: 1731310000000,
   },
   {
     id: "conn_staging_replica",
     name: "Staging Replica (Raft Follower)",
-    uri: "liorandb://operator:secretKey99@staging.db.liorandb.com:443/staging",
+    uri: "liorandb://operator@staging.db.liorandb.com:443/staging",
     createdAt: 1731305000000,
   },
   {
     id: "conn_local_daemon",
     name: "Local Development Daemon",
-    uri: "liorandb://root:localPass@127.0.0.1:8765/dev",
+    uri: "liorandb://root@127.0.0.1:8765/dev",
     createdAt: 1731308000000,
   },
 ];
@@ -56,6 +56,23 @@ const LEGACY_STORAGE_KEYS = [
   "liorandb_studio_saved_connections",
   "liorandb_studio_saved_connections_v1",
 ];
+
+function sanitizeConnectionUriForStorage(uri: string): string {
+  try {
+    const parsed = new URL(uri);
+    parsed.password = "";
+    return parsed.toString();
+  } catch {
+    return uri.replace(/(\/\/[^:@/?#]+):[^@/?#]+@/, "$1@");
+  }
+}
+
+function sanitizeConnectionsForStorage(connections: SavedConnection[]): SavedConnection[] {
+  return connections.map((connection) => ({
+    ...connection,
+    uri: sanitizeConnectionUriForStorage(connection.uri),
+  }));
+}
 
 function subscribeConnections(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -184,7 +201,8 @@ export function persistAndActivateConnection(uri: string): void {
       } catch {}
     }
 
-    const existingIndex = currentList.findIndex((c) => c.uri === uri);
+    const safeUri = sanitizeConnectionUriForStorage(uri);
+    const existingIndex = currentList.findIndex((c) => sanitizeConnectionUriForStorage(c.uri) === safeUri);
     let updated: SavedConnection[];
     if (existingIndex >= 0) {
       updated = currentList.map((c, i) =>
@@ -195,13 +213,13 @@ export function persistAndActivateConnection(uri: string): void {
       const newEntry: SavedConnection = {
         id: `conn_auto_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         name: `Connection (${parsed.host})`,
-        uri,
+        uri: safeUri,
         createdAt: Date.now(),
         lastUsedAt: Date.now(),
       };
       updated = [newEntry, ...currentList];
     }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeConnectionsForStorage(updated)));
     LEGACY_STORAGE_KEYS.forEach((k) => {
       try {
         window.localStorage.removeItem(k);
@@ -237,7 +255,7 @@ export function ConnectionPortal({
     try {
       const parsed = JSON.parse(storedJson);
       if (Array.isArray(parsed)) {
-        return parsed;
+        return sanitizeConnectionsForStorage(parsed as SavedConnection[]);
       }
       return INITIAL_DEFAULT_CONNECTIONS;
     } catch {
@@ -260,7 +278,7 @@ export function ConnectionPortal({
 
   // Direct connection input state
   const [directUri, setDirectUri] = useState(
-    "liorandb://admin:password@swaraj.db.liorandb.com:443/default"
+    "liorandb://admin@swaraj.db.liorandb.com:443/default"
   );
   const [saveDirectProfile, setSaveDirectProfile] = useState(true);
   const [directProfileName, setDirectProfileName] = useState("");
@@ -373,7 +391,7 @@ export function ConnectionPortal({
   // Save changes to localStorage
   const persistConnections = (updated: SavedConnection[]) => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeConnectionsForStorage(updated)));
       LEGACY_STORAGE_KEYS.forEach((k) => {
         try {
           window.localStorage.removeItem(k);
@@ -385,6 +403,23 @@ export function ConnectionPortal({
     }
   };
 
+  // Migrate profiles created by older Studio versions so credentials do not
+  // remain in localStorage after the next page load.
+  useEffect(() => {
+    try {
+      const current = window.localStorage.getItem(STORAGE_KEY);
+      if (!current) return;
+      const parsed = JSON.parse(current);
+      if (!Array.isArray(parsed)) return;
+      const sanitized = JSON.stringify(sanitizeConnectionsForStorage(parsed as SavedConnection[]));
+      if (sanitized !== current) {
+        window.localStorage.setItem(STORAGE_KEY, sanitized);
+      }
+    } catch {
+      // Ignore malformed or unavailable browser storage.
+    }
+  }, [storedJson]);
+
   // Immediate connect handler
   const handleConnectWithUri = (uri: string, idToMarkUsed?: string) => {
     if (idToMarkUsed) {
@@ -392,6 +427,20 @@ export function ConnectionPortal({
         c.id === idToMarkUsed ? { ...c, lastUsedAt: Date.now() } : c
       );
       persistConnections(updated);
+    }
+
+    let hasPassword = false;
+    try {
+      hasPassword = Boolean(new URL(uri).password);
+    } catch {
+      // The server-side URI parser will return the detailed validation error.
+    }
+
+    if (!hasPassword) {
+      setDirectUri(uri);
+      setActiveTab("direct");
+      setDirectProfileName("");
+      return;
     }
 
     if (hiddenUriInputRef.current && submitFormRef.current) {
@@ -409,7 +458,8 @@ export function ConnectionPortal({
 
     if (saveDirectProfile) {
       const trimmedUri = directUri.trim();
-      const existing = connections.find((c) => c.uri === trimmedUri);
+      const safeUri = sanitizeConnectionUriForStorage(trimmedUri);
+      const existing = connections.find((c) => c.uri === safeUri);
       if (!existing) {
         const newConnection: SavedConnection = {
           id: `conn_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -1008,7 +1058,7 @@ export function ConnectionPortal({
               type={showDirectPassword ? "text" : "password"}
               value={directUri}
               onChange={(e) => setDirectUri(e.target.value)}
-              placeholder="liorandb://admin:password@swaraj.db.liorandb.com:443/default"
+              placeholder="liorandb://username:<password>@host:port[/database]"
               className="expo-input font-mono text-xs"
               required
               suppressHydrationWarning

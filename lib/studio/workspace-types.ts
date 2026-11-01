@@ -1,11 +1,13 @@
 import type {
   Document,
   CollectionIndexDefinition,
+  PermissionGrant,
   Principal,
   ServerInfo,
   ReadyStatus,
   ClusterSummary,
 } from "@liorandb/driver";
+import type { StudioCapabilities } from "@/lib/liorandb/discovery";
 
 export type StudioTabType =
   | "collection"
@@ -175,6 +177,10 @@ export interface InitialStudioContext {
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
   databaseManagementAllowed: boolean;
+  databaseCreateAllowed: boolean;
+  databaseDropAllowed: boolean;
+  capabilities: StudioCapabilities;
+  effectivePermissionGrants: readonly PermissionGrant[];
   databaseInitializationError?: string;
   databases: string[];
   collectionsMap: Record<string, string[]>;

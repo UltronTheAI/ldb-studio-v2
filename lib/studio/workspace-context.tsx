@@ -59,6 +59,9 @@ export interface WorkspaceContextValue {
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
   databaseManagementAllowed: boolean;
+  databaseCreateAllowed: boolean;
+  databaseDropAllowed: boolean;
+  capabilities: InitialStudioContext["capabilities"];
   canUseClusterAdministration: boolean;
   dataClient: StudioDataClient;
 
@@ -168,6 +171,7 @@ export function WorkspaceProvider({
     initialContext.host,
     initialContext.port,
     initialContext.scopedDatabase ?? "*",
+    initialContext.principal.permissions_version,
   ].join("|");
 
   // Deterministic initial state to match SSR exactly and eliminate hydration mismatches
@@ -229,9 +233,15 @@ export function WorkspaceProvider({
   const [databaseManagementAllowed, setDatabaseManagementAllowed] = useState(
     initialContext.databaseManagementAllowed,
   );
+  const [databaseCreateAllowed, setDatabaseCreateAllowed] = useState(
+    initialContext.databaseCreateAllowed,
+  );
+  const [databaseDropAllowed, setDatabaseDropAllowed] = useState(
+    initialContext.databaseDropAllowed,
+  );
+  const [capabilities, setCapabilities] = useState(initialContext.capabilities);
   const canUseClusterAdministration =
-    isLocalMode ||
-    (databaseScope === "cluster" && databaseDiscoveryVerified && clusterAdministrationVerified);
+    databaseScope === "cluster" && databaseDiscoveryVerified && clusterAdministrationVerified;
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const dataClientRef = useRef<StudioDataClient | null>(null);
   if (!dataClientRef.current) {
@@ -715,6 +725,17 @@ export function WorkspaceProvider({
         );
         setTabs((previous) => {
           const filtered = previous.filter((tab) => {
+            const refreshedCanUseClusterAdministration =
+              res.data!.databaseScope === "cluster" &&
+              res.data!.databaseDiscoveryVerified &&
+              res.data!.clusterAdministrationVerified;
+            if (
+              !refreshedCanUseClusterAdministration &&
+              (tab.type === "cluster" ||
+                (tab.type === "admin" && tab.adminState?.subSection !== "settings"))
+            ) {
+              return false;
+            }
             const database = tabDatabase(tab);
             return !database || authorizedDatabases.has(database);
           });
@@ -724,12 +745,24 @@ export function WorkspaceProvider({
           setActiveTabId((current) => nextTabs.some((tab) => tab.id === current) ? current : "tab-overview");
           return nextTabs;
         });
+        if (
+          !(res.data.databaseScope === "cluster" &&
+            res.data.databaseDiscoveryVerified &&
+            res.data.clusterAdministrationVerified)
+        ) {
+          setActiveActivity((current) =>
+            current === "admin" || current === "cluster" ? "explorer" : current,
+          );
+        }
         setDatabaseScope(res.data.databaseScope);
         setIsFreeSharedHosting(res.data.isFreeSharedHosting);
         setDatabaseCapabilityVerified(res.data.databaseCapabilityVerified);
         setDatabaseDiscoveryVerified(res.data.databaseDiscoveryVerified);
         setClusterAdministrationVerified(res.data.clusterAdministrationVerified);
         setDatabaseManagementAllowed(res.data.databaseManagementAllowed);
+        setDatabaseCreateAllowed(res.data.databaseCreateAllowed);
+        setDatabaseDropAllowed(res.data.databaseDropAllowed);
+        setCapabilities(res.data.capabilities);
       } else if (!res.ok) {
         setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
       }
@@ -743,6 +776,10 @@ export function WorkspaceProvider({
   const loadDatabaseCollections = useCallback(async (db: string, force = false) => {
     const database = db.trim();
     if (!database) return false;
+    if (isFreeSharedHosting && !databases.includes(database)) {
+      setStatusMessage({ text: "Database is not available for this connection.", tone: "error" });
+      return false;
+    }
     if (!force && Object.prototype.hasOwnProperty.call(collectionsMap, database)) return true;
     setCollectionsLoading((prev) => ({ ...prev, [database]: true }));
     try {
@@ -760,7 +797,7 @@ export function WorkspaceProvider({
       setCollectionsLoading((prev) => ({ ...prev, [database]: false }));
     }
     return false;
-  }, [collectionsMap, dataClient, setStatusMessage]);
+  }, [collectionsMap, dataClient, databases, isFreeSharedHosting, setStatusMessage]);
 
   useEffect(() => {
     // Local development keeps the previous convenience behavior. Hosted
@@ -888,6 +925,9 @@ export function WorkspaceProvider({
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
         databaseManagementAllowed,
+        databaseCreateAllowed,
+        databaseDropAllowed,
+        capabilities,
         canUseClusterAdministration,
         dataClient,
         openCollectionTab,

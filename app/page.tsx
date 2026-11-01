@@ -1279,6 +1279,28 @@ export default async function Home({ searchParams }: PageProps) {
       let databaseDiscoveryVerified = false;
       let clusterAdministrationVerified = false;
       let databaseManagementAllowed = false;
+      let databaseCreateAllowed = false;
+      let databaseDropAllowed = false;
+      let capabilities: InitialStudioContext["capabilities"] = {
+        profile: "database-scoped-user",
+        databaseList: false,
+        databaseCreate: false,
+        databaseDrop: false,
+        collectionList: false,
+        collectionCreate: false,
+        collectionDrop: false,
+        documentRead: false,
+        documentInsert: false,
+        documentUpdate: false,
+        documentDelete: false,
+        indexList: false,
+        indexCreate: false,
+        indexDrop: false,
+        queryExecute: false,
+        clusterAdministration: false,
+        effectivePermissionGrants: [],
+        permissionsVerified: false,
+      };
 
       try {
         const resolution = await resolveDatabaseContext(client, requestedDatabase);
@@ -1290,6 +1312,9 @@ export default async function Home({ searchParams }: PageProps) {
         databaseDiscoveryVerified = resolution.databaseDiscoveryVerified;
         clusterAdministrationVerified = resolution.clusterAdministrationVerified;
         databaseManagementAllowed = resolution.databaseManagementAllowed;
+        databaseCreateAllowed = resolution.databaseCreateAllowed;
+        databaseDropAllowed = resolution.databaseDropAllowed;
+        capabilities = resolution.capabilities;
       } catch (error) {
         const mapped = mapStudioError(error);
         databaseInitializationError = mapped.isAuthorizationError
@@ -1328,6 +1353,10 @@ export default async function Home({ searchParams }: PageProps) {
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
         databaseManagementAllowed,
+        databaseCreateAllowed,
+        databaseDropAllowed,
+        capabilities,
+        effectivePermissionGrants: capabilities.effectivePermissionGrants,
         databaseInitializationError,
         databases,
         collectionsMap,

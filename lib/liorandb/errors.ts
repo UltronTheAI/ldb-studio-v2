@@ -58,6 +58,15 @@ export class AssignedDatabaseUnavailableError extends Error {
   }
 }
 
+export class StudioPermissionError extends Error {
+  readonly code = "STUDIO_PERMISSION_DENIED";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "StudioPermissionError";
+  }
+}
+
 export interface StudioErrorDescriptor {
   readonly title: string;
   readonly message: string;
@@ -89,6 +98,15 @@ export function mapStudioError(error: unknown): StudioErrorDescriptor {
       title: "Assigned database unavailable",
       message: error.message,
       code: error.code,
+    };
+  }
+
+  if (error instanceof StudioPermissionError) {
+    return {
+      title: "Permission denied",
+      message: error.message,
+      code: error.code,
+      isAuthorizationError: true,
     };
   }
 
