@@ -174,6 +174,7 @@ export interface InitialStudioContext {
   databaseCapabilityVerified: boolean;
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
+  databaseManagementAllowed: boolean;
   databaseInitializationError?: string;
   databases: string[];
   collectionsMap: Record<string, string[]>;

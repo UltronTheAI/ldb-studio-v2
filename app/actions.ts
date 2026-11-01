@@ -367,21 +367,37 @@ export async function studioMutationAction(formData: FormData): Promise<void> {
             );
             return;
           case "createDatabase":
-            if (
-              (await resolveDatabaseContext(client, session.metadata.database ?? undefined))
-                .isFreeSharedHosting
-            ) {
-              throw new Error("Database creation is unavailable on the Free Shared plan.");
+            {
+              const resolution = await resolveDatabaseContext(client, session.metadata.database ?? undefined);
+              if (
+                !resolution.databaseCapabilityVerified ||
+                !resolution.databaseManagementAllowed ||
+                resolution.isFreeSharedHosting ||
+                (resolution.databaseScope !== "cluster" && resolution.databaseScope !== "explicit")
+              ) {
+                throw new Error(
+                  resolution.isFreeSharedHosting
+                    ? "Database management is unavailable on the Free Shared plan."
+                    : "Database management capability could not be verified for this connection.",
+                );
+              }
             }
             await client.createDatabase(formString(formData, "databaseName"));
             return;
           case "dropDatabase": {
             const name = formString(formData, "databaseName");
+            const resolution = await resolveDatabaseContext(client, session.metadata.database ?? undefined);
             if (
-              (await resolveDatabaseContext(client, session.metadata.database ?? undefined))
-                .isFreeSharedHosting
+              !resolution.databaseCapabilityVerified ||
+              !resolution.databaseManagementAllowed ||
+              resolution.isFreeSharedHosting ||
+              (resolution.databaseScope !== "cluster" && resolution.databaseScope !== "explicit")
             ) {
-              throw new Error("Database deletion is unavailable on the Free Shared plan.");
+              throw new Error(
+                resolution.isFreeSharedHosting
+                  ? "Database management is unavailable on the Free Shared plan."
+                  : "Database management capability could not be verified for this connection.",
+              );
             }
             if (isProtectedDatabase(name)) {
               throw new Error("The 'default' database is protected and cannot be dropped.");
@@ -819,6 +835,7 @@ export async function listDatabasesAction(): Promise<
     databaseCapabilityVerified: boolean;
     databaseDiscoveryVerified: boolean;
     clusterAdministrationVerified: boolean;
+    databaseManagementAllowed: boolean;
   }>
 > {
   const start = Date.now();
@@ -837,6 +854,7 @@ export async function listDatabasesAction(): Promise<
             databaseCapabilityVerified: resolution.databaseCapabilityVerified,
             databaseDiscoveryVerified: resolution.databaseDiscoveryVerified,
             clusterAdministrationVerified: resolution.clusterAdministrationVerified,
+            databaseManagementAllowed: resolution.databaseManagementAllowed,
           },
           durationMs: Date.now() - start,
         };
@@ -849,7 +867,7 @@ export async function listDatabasesAction(): Promise<
       ok: false,
       error: mapped.isAuthorizationError
         ? session?.metadata.database
-          ? "The database from the connection URI is not authorized for collection listing. Enter an authorized database name to continue."
+          ? "The requested logical database is not authorized for collection listing. Return to Dashboard and open Studio again."
           : "Database discovery is not permitted for this principal. Enter an authorized database name to continue."
         : mapped.message,
       errorDescriptor: mapped,
@@ -1411,6 +1429,8 @@ export async function createDatabaseAction(params: {
           session.metadata.database ?? undefined,
         );
         if (
+          !resolution.databaseCapabilityVerified ||
+          !resolution.databaseManagementAllowed ||
           resolution.isFreeSharedHosting ||
           (resolution.databaseScope !== "cluster" &&
             resolution.databaseScope !== "explicit")
@@ -1418,8 +1438,8 @@ export async function createDatabaseAction(params: {
           return {
             ok: false,
             error: resolution.isFreeSharedHosting
-              ? "Database creation is unavailable on the Free Shared plan."
-              : "Database creation is unavailable until an authorized database-management scope is verified.",
+              ? "Database management is unavailable on the Free Shared plan."
+              : "Database management capability could not be verified for this connection.",
             durationMs: Date.now() - start,
           };
         }
@@ -1454,6 +1474,8 @@ export async function dropDatabaseAction(params: {
           session.metadata.database ?? undefined,
         );
         if (
+          !resolution.databaseCapabilityVerified ||
+          !resolution.databaseManagementAllowed ||
           resolution.isFreeSharedHosting ||
           (resolution.databaseScope !== "cluster" &&
             resolution.databaseScope !== "explicit")
@@ -1461,8 +1483,8 @@ export async function dropDatabaseAction(params: {
           return {
             ok: false,
             error: resolution.isFreeSharedHosting
-              ? "Database deletion is unavailable on the Free Shared plan."
-              : "Database deletion is unavailable for this connection scope.",
+              ? "Database management is unavailable on the Free Shared plan."
+              : "Database management capability could not be verified for this connection.",
             durationMs: Date.now() - start,
           };
         }

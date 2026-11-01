@@ -2,15 +2,13 @@
 
 import React from "react";
 import { useWorkspace } from "@/lib/studio/workspace-context";
-import { clearQueryHistory } from "@/lib/studio/workspace-storage";
 import { ClockIcon } from "lucide-react";
 
 export function HistoryExplorer() {
-  const { history, openQueryTab } = useWorkspace();
+  const { history, openQueryTab, clearQueryHistory } = useWorkspace();
 
   const handleClear = () => {
     clearQueryHistory();
-    window.location.reload();
   };
 
   return (

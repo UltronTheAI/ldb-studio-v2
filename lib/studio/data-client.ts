@@ -29,6 +29,10 @@ export class StudioDataClient {
     this.manager = new StudioRequestManager(diagnostics);
   }
 
+  clearCache(): void {
+    this.manager.clear();
+  }
+
   listDatabases(force = false) {
     return this.manager.request(
       studioQueryKey(this.scope, "databases"),

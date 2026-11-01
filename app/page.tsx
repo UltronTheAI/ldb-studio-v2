@@ -1278,6 +1278,7 @@ export default async function Home({ searchParams }: PageProps) {
       let databaseCapabilityVerified = false;
       let databaseDiscoveryVerified = false;
       let clusterAdministrationVerified = false;
+      let databaseManagementAllowed = false;
 
       try {
         const resolution = await resolveDatabaseContext(client, requestedDatabase);
@@ -1288,6 +1289,7 @@ export default async function Home({ searchParams }: PageProps) {
         databaseCapabilityVerified = resolution.databaseCapabilityVerified;
         databaseDiscoveryVerified = resolution.databaseDiscoveryVerified;
         clusterAdministrationVerified = resolution.clusterAdministrationVerified;
+        databaseManagementAllowed = resolution.databaseManagementAllowed;
       } catch (error) {
         const mapped = mapStudioError(error);
         databaseInitializationError = mapped.isAuthorizationError
@@ -1325,6 +1327,7 @@ export default async function Home({ searchParams }: PageProps) {
         databaseCapabilityVerified,
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
+        databaseManagementAllowed,
         databaseInitializationError,
         databases,
         collectionsMap,

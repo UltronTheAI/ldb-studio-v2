@@ -49,6 +49,15 @@ export class ProhibitedTargetError extends Error {
   }
 }
 
+export class AssignedDatabaseUnavailableError extends Error {
+  readonly code = "LDB_DATABASE_NOT_FOUND";
+
+  constructor() {
+    super("Your assigned database is currently unavailable. Please contact support.");
+    this.name = "AssignedDatabaseUnavailableError";
+  }
+}
+
 export interface StudioErrorDescriptor {
   readonly title: string;
   readonly message: string;
@@ -75,6 +84,14 @@ export function redactMessage(message: string): string {
 }
 
 export function mapStudioError(error: unknown): StudioErrorDescriptor {
+  if (error instanceof AssignedDatabaseUnavailableError) {
+    return {
+      title: "Assigned database unavailable",
+      message: error.message,
+      code: error.code,
+    };
+  }
+
   if (error instanceof LocalTargetNotReachableError) {
     return {
       title: "Local database detected",
@@ -102,6 +119,37 @@ export function mapStudioError(error: unknown): StudioErrorDescriptor {
         "The server still treats this collection name as dropped. Use a different collection name, or recreate the database before reusing the same name.",
       code: error.serverCode,
     };
+  }
+
+  if (error instanceof NotFoundError || error instanceof ApiError) {
+    const errorObj = error as unknown as Record<string, unknown>;
+    const code = typeof errorObj.code === "string" ? errorObj.code.toUpperCase() : "";
+    const serverCode = typeof errorObj.serverCode === "string" ? errorObj.serverCode.toUpperCase() : "";
+    if (
+      code === "LDB_DATABASE_NOT_FOUND" ||
+      serverCode === "DATABASE_NOT_FOUND" ||
+      serverCode === "LDB_DATABASE_NOT_FOUND"
+    ) {
+      return {
+        title: "Assigned database unavailable",
+        message: "Your assigned database is currently unavailable. Please contact support.",
+        code: serverCode || code,
+      };
+    }
+    if (serverCode === "TENANT_ALLOCATION_NOT_FOUND") {
+      return {
+        title: "Tenant allocation unavailable",
+        message: "The shared-hosting allocation could not be found. Please contact support.",
+        code: serverCode,
+      };
+    }
+    if (serverCode === "UNSUPPORTED_DATABASE_NAMESPACE") {
+      return {
+        title: "Database namespace incompatible",
+        message: "The server does not accept this database scope. Reconnect through Dashboard or contact support.",
+        code: serverCode,
+      };
+    }
   }
 
   if (

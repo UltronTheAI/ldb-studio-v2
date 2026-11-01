@@ -1,4 +1,5 @@
-import { LioranDBClient, type Principal } from "@liorandb/driver";
+import { LioranDBClient, type Principal, type TenantAllocation } from "@liorandb/driver";
+import { AssignedDatabaseUnavailableError } from "./errors";
 
 export type DatabaseScope = "explicit" | "allocated" | "cluster" | "unselected";
 
@@ -10,6 +11,7 @@ export interface DatabaseResolution {
   readonly databaseCapabilityVerified: boolean;
   readonly databaseDiscoveryVerified: boolean;
   readonly clusterAdministrationVerified: boolean;
+  readonly databaseManagementAllowed: boolean;
 }
 
 function isTenantPrincipal(principal: Principal | undefined): boolean {
@@ -30,10 +32,32 @@ async function getPrincipal(client: LioranDBClient): Promise<Principal | undefin
   }
 }
 
+async function getTenantAllocation(
+  client: LioranDBClient,
+): Promise<TenantAllocation | undefined> {
+  try {
+    return await client.getMyAllocation();
+  } catch {
+    // Older tenant-aware servers may expose ListMyDatabases without the
+    // allocation metadata endpoint. Keep the tenant role as the safe
+    // restriction and use the tenant-scoped list API below.
+    return undefined;
+  }
+}
+
+async function listTenantDatabases(
+  client: LioranDBClient,
+  allocation?: TenantAllocation,
+): Promise<string[]> {
+  if (allocation) return [...allocation.databases];
+  return [...(await client.listMyDatabases())];
+}
+
 /**
  * Resolves database context using only APIs exposed by the installed official
  * driver. The server owns tenant namespace mapping: names returned by
- * listDatabases are authoritative logical names and are passed through as-is.
+ * listMyDatabases/getMyAllocation are authoritative logical names for tenant
+ * principals. Dedicated connections retain cluster listDatabases discovery.
  */
 export async function resolveDatabaseContext(
   client: LioranDBClient,
@@ -41,14 +65,16 @@ export async function resolveDatabaseContext(
 ): Promise<DatabaseResolution> {
   const requestedDatabase = explicitDatabase?.trim();
   const principal = await getPrincipal(client);
-  const tenantScoped = isTenantPrincipal(principal);
+  const allocation = await getTenantAllocation(client);
+  const tenantScoped = Boolean(allocation) || isTenantPrincipal(principal);
   const databaseCapabilityVerified = principal !== undefined;
   const clusterAdministrationVerified = isClusterAdministrator(principal);
+  const databaseManagementAllowed = allocation?.databaseManagementAllowed ?? !tenantScoped;
 
   if (requestedDatabase) {
     if (tenantScoped) {
       try {
-        const databases = await client.listDatabases();
+        const databases = await listTenantDatabases(client, allocation);
         if (!databases.includes(requestedDatabase)) {
           // A URI database is an explicit logical scope. Do not silently
           // replace an unauthorized or stale scope with another allocation
@@ -63,6 +89,7 @@ export async function resolveDatabaseContext(
           databaseCapabilityVerified,
           databaseDiscoveryVerified: true,
           clusterAdministrationVerified,
+          databaseManagementAllowed,
         };
       } catch {
         // Older tenant-aware servers may validate an explicit database but
@@ -81,6 +108,24 @@ export async function resolveDatabaseContext(
       databaseCapabilityVerified,
       databaseDiscoveryVerified: false,
       clusterAdministrationVerified,
+      databaseManagementAllowed,
+    };
+  }
+
+  if (tenantScoped) {
+    const databases = await listTenantDatabases(client, allocation);
+    if (databases.length === 0) {
+      throw new AssignedDatabaseUnavailableError();
+    }
+    return {
+      databases,
+      scopedDatabase: databases[0],
+      databaseScope: "allocated",
+      isFreeSharedHosting: true,
+      databaseCapabilityVerified,
+      databaseDiscoveryVerified: true,
+      clusterAdministrationVerified,
+      databaseManagementAllowed,
     };
   }
 
@@ -93,5 +138,6 @@ export async function resolveDatabaseContext(
     databaseCapabilityVerified,
     databaseDiscoveryVerified: true,
     clusterAdministrationVerified,
+    databaseManagementAllowed,
   };
 }

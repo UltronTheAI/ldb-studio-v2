@@ -18,6 +18,7 @@ import type {
 } from "./workspace-types";
 import {
   clearWorkspaceState,
+  clearQueryHistory,
   hasSavedTabs,
   loadQueryHistory,
   loadSavedQueryDrafts,
@@ -28,6 +29,7 @@ import {
   saveQueryHistoryItem,
   saveTabsToStorage,
   saveWorkspaceMetadata,
+  type WorkspaceStorageScope,
 } from "./workspace-storage";
 import { StudioDataClient } from "./data-client";
 
@@ -56,6 +58,7 @@ export interface WorkspaceContextValue {
   databaseCapabilityVerified: boolean;
   databaseDiscoveryVerified: boolean;
   clusterAdministrationVerified: boolean;
+  databaseManagementAllowed: boolean;
   canUseClusterAdministration: boolean;
   dataClient: StudioDataClient;
 
@@ -90,6 +93,7 @@ export interface WorkspaceContextValue {
   addQueryHistory: (item: QueryHistoryItem) => void;
   saveDraft: (draft: SavedQueryDraft) => void;
   removeDraft: (id: string) => void;
+  clearQueryHistory: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   refreshExplorer: () => Promise<void>;
   refreshActiveTab: () => void;
@@ -100,6 +104,10 @@ export interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 let queryCounter = 1;
+
+function tabDatabase(tab: StudioTab): string | undefined {
+  return tab.database ?? tab.queryState?.database ?? tab.aggregationState?.database ?? tab.indexesState?.database;
+}
 
 function getDefaultTabs(initialContext: InitialStudioContext): StudioTab[] {
   const overviewTab: StudioTab = {
@@ -155,6 +163,12 @@ export function WorkspaceProvider({
       (typeof process !== "undefined" &&
         (process.env.NEXT_PUBLIC_LOCAL === "true" || process.env.NEXT_PUBLIC_LOCAL === "1")),
   );
+  const storageScope: WorkspaceStorageScope = [
+    initialContext.principal.user_id,
+    initialContext.host,
+    initialContext.port,
+    initialContext.scopedDatabase ?? "*",
+  ].join("|");
 
   // Deterministic initial state to match SSR exactly and eliminate hydration mismatches
   const [tabs, setTabs] = useState<StudioTab[]>(() => getDefaultTabs(initialContext));
@@ -181,11 +195,11 @@ export function WorkspaceProvider({
           msg.text.toLowerCase().includes("session expired") ||
           msg.text.toLowerCase().includes("no active studio session"))
       ) {
-        clearWorkspaceState();
+        clearWorkspaceState(storageScope);
         window.location.replace("/api/auth/logout");
       }
     },
-    [],
+    [storageScope],
   );
   const [lastExecutionDurationMs, setLastExecutionDurationMs] = useState<number | null>(null);
   const [history, setHistory] = useState<QueryHistoryItem[]>([]);
@@ -212,6 +226,9 @@ export function WorkspaceProvider({
   const [clusterAdministrationVerified, setClusterAdministrationVerified] = useState(
     initialContext.clusterAdministrationVerified,
   );
+  const [databaseManagementAllowed, setDatabaseManagementAllowed] = useState(
+    initialContext.databaseManagementAllowed,
+  );
   const canUseClusterAdministration =
     isLocalMode ||
     (databaseScope === "cluster" && databaseDiscoveryVerified && clusterAdministrationVerified);
@@ -232,17 +249,19 @@ export function WorkspaceProvider({
     let ignore = false;
     void Promise.resolve().then(() => {
       if (ignore) return;
-      const saved = loadSavedTabs();
-      const meta = loadWorkspaceMetadata();
-      const allowedSavedTabs = canUseClusterAdministration
-        ? saved
-        : saved.filter(
-            (tab) =>
-              tab.type !== "cluster" &&
-              (tab.type !== "admin" || tab.adminState?.subSection === "settings"),
-          );
+      const saved = loadSavedTabs(storageScope);
+      const meta = loadWorkspaceMetadata(storageScope);
+      const authorizedDatabases = new Set(initialContext.databases);
+      const allowedSavedTabs = saved.filter((tab) => {
+        if (tab.type === "cluster" && !canUseClusterAdministration) return false;
+        if (tab.type === "admin" && !canUseClusterAdministration && tab.adminState?.subSection !== "settings") {
+          return false;
+        }
+        const database = tabDatabase(tab);
+        return !database || authorizedDatabases.has(database);
+      });
 
-      if (hasSavedTabs()) {
+      if (hasSavedTabs(storageScope)) {
         setTabs(allowedSavedTabs);
         if (allowedSavedTabs.length === 0) {
           setActiveTabId("");
@@ -274,13 +293,13 @@ export function WorkspaceProvider({
       if (meta.expandedDatabases && Array.isArray(meta.expandedDatabases)) {
         const map: Record<string, boolean> = {};
         for (const db of meta.expandedDatabases) {
-          map[db] = true;
+          if (authorizedDatabases.has(db)) map[db] = true;
         }
         setExpandedDatabases(map);
       }
 
-      setHistory(loadQueryHistory());
-      setSavedDrafts(loadSavedQueryDrafts());
+      setHistory(loadQueryHistory(storageScope).filter((item) => authorizedDatabases.has(item.database)));
+      setSavedDrafts(loadSavedQueryDrafts(storageScope).filter((draft) => authorizedDatabases.has(draft.database)));
 
       isRestoredRef.current = true;
       setIsRestored(true);
@@ -289,13 +308,13 @@ export function WorkspaceProvider({
     return () => {
       ignore = true;
     };
-  }, [canUseClusterAdministration, isLocalMode]);
+  }, [canUseClusterAdministration, initialContext.databases, isLocalMode, storageScope]);
 
   // Save tabs on change (only after client restoration to avoid wiping localStorage with initial default)
   useEffect(() => {
     if (!isRestoredRef.current) return;
-    saveTabsToStorage(tabs);
-  }, [tabs]);
+    saveTabsToStorage(tabs, storageScope);
+  }, [storageScope, tabs]);
 
   // Save workspace metadata on change (only after client restoration)
   useEffect(() => {
@@ -306,8 +325,8 @@ export function WorkspaceProvider({
       isSidebarCollapsed,
       activeTabId,
       expandedDatabases: Object.keys(expandedDatabases).filter((k) => expandedDatabases[k]),
-    });
-  }, [activeActivity, sidebarWidth, isSidebarCollapsed, activeTabId, expandedDatabases]);
+    }, storageScope);
+  }, [activeActivity, isSidebarCollapsed, activeTabId, expandedDatabases, sidebarWidth, storageScope]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -677,12 +696,40 @@ export function WorkspaceProvider({
     try {
       const res = await dataClient.listDatabases(force);
       if (res.ok && res.data) {
-        setDatabases(res.data.databases);
+        const authorizedDatabases = new Set(res.data.databases);
+        setDatabases((previous) => {
+          const changed = previous.length !== res.data!.databases.length ||
+            previous.some((database, index) => database !== res.data!.databases[index]);
+          if (changed) dataClient.clearCache();
+          return res.data!.databases;
+        });
+        setCollectionsMap((previous) =>
+          Object.fromEntries(
+            Object.entries(previous).filter(([database]) => authorizedDatabases.has(database)),
+          ),
+        );
+        setExpandedDatabases((previous) =>
+          Object.fromEntries(
+            Object.entries(previous).filter(([database]) => authorizedDatabases.has(database)),
+          ),
+        );
+        setTabs((previous) => {
+          const filtered = previous.filter((tab) => {
+            const database = tabDatabase(tab);
+            return !database || authorizedDatabases.has(database);
+          });
+          const nextTabs = filtered.length > 0
+            ? filtered
+            : [{ id: "tab-overview", title: "Overview", type: "overview" as const }];
+          setActiveTabId((current) => nextTabs.some((tab) => tab.id === current) ? current : "tab-overview");
+          return nextTabs;
+        });
         setDatabaseScope(res.data.databaseScope);
         setIsFreeSharedHosting(res.data.isFreeSharedHosting);
         setDatabaseCapabilityVerified(res.data.databaseCapabilityVerified);
         setDatabaseDiscoveryVerified(res.data.databaseDiscoveryVerified);
         setClusterAdministrationVerified(res.data.clusterAdministrationVerified);
+        setDatabaseManagementAllowed(res.data.databaseManagementAllowed);
       } else if (!res.ok) {
         setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
       }
@@ -725,18 +772,23 @@ export function WorkspaceProvider({
 
   const addQueryHistory = useCallback((item: QueryHistoryItem) => {
     setHistory((prev) => [item, ...prev.filter((i) => i.id !== item.id)].slice(0, 50));
-    saveQueryHistoryItem(item);
-  }, []);
+    saveQueryHistoryItem(item, storageScope);
+  }, [storageScope]);
 
   const saveDraft = useCallback((draft: SavedQueryDraft) => {
     setSavedDrafts((prev) => [draft, ...prev.filter((d) => d.id !== draft.id)].slice(0, 30));
-    saveQueryDraftToStorage(draft);
-  }, []);
+    saveQueryDraftToStorage(draft, storageScope);
+  }, [storageScope]);
 
   const removeDraft = useCallback((id: string) => {
     setSavedDrafts((prev) => prev.filter((d) => d.id !== id));
-    removeQueryDraftFromStorage(id);
-  }, []);
+    removeQueryDraftFromStorage(id, storageScope);
+  }, [storageScope]);
+
+  const clearHistory = useCallback(() => {
+    clearQueryHistory(storageScope);
+    setHistory([]);
+  }, [storageScope]);
 
   const refreshExplorer = useCallback(async () => {
     await loadDatabases(true);
@@ -835,6 +887,7 @@ export function WorkspaceProvider({
         databaseCapabilityVerified,
         databaseDiscoveryVerified,
         clusterAdministrationVerified,
+        databaseManagementAllowed,
         canUseClusterAdministration,
         dataClient,
         openCollectionTab,
@@ -864,6 +917,7 @@ export function WorkspaceProvider({
         addQueryHistory,
         saveDraft,
         removeDraft,
+        clearQueryHistory: clearHistory,
         setCommandPaletteOpen,
         refreshExplorer,
         refreshActiveTab,

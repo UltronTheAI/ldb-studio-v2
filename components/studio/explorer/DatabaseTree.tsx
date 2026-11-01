@@ -48,11 +48,13 @@ export function DatabaseTree() {
     isFreeSharedHosting,
     databaseCapabilityVerified,
     databaseDiscoveryVerified,
+    databaseManagementAllowed,
     canUseClusterAdministration,
   } = useWorkspace();
 
   const canManageDatabases =
     databaseCapabilityVerified &&
+    databaseManagementAllowed &&
     !isFreeSharedHosting &&
     !initialContext.databaseInitializationError &&
     (canUseClusterAdministration || databaseScope === "explicit");
@@ -60,8 +62,8 @@ export function DatabaseTree() {
     !initialContext.databaseInitializationError &&
     (isFreeSharedHosting || canUseClusterAdministration || databaseScope === "explicit");
   const databaseManagementMessage = isFreeSharedHosting
-    ? "Database creation is unavailable on the Free Shared plan."
-    : databaseCapabilityVerified
+    ? "Database management is unavailable on the Free Shared plan."
+    : databaseCapabilityVerified && databaseManagementAllowed
       ? "Database creation is unavailable for this connection scope."
       : "Database management capability could not be verified for this connection.";
 
@@ -122,7 +124,7 @@ export function DatabaseTree() {
           text: `Collection '${newColName.trim()}' created in '${createColModalDb}'`,
           tone: "success",
         });
-        await refreshExplorer();
+        await loadDatabaseCollections(createColModalDb, true);
         openCollectionTab(createColModalDb, newColName.trim());
         setCreateColModalDb(null);
         setNewColName("");
@@ -187,7 +189,7 @@ export function DatabaseTree() {
     if (dropModal.type === "database" && !canManageDatabases) {
       setStatusMessage({
         text: isFreeSharedHosting
-          ? "Database deletion is unavailable on the Free Shared plan."
+          ? "Database management is unavailable on the Free Shared plan."
           : "Database deletion is unavailable for this connection scope.",
         tone: "error",
       });
@@ -217,7 +219,7 @@ export function DatabaseTree() {
         });
         if (res.ok) {
           setStatusMessage({ text: `Database '${dropModal.database}' dropped`, tone: "success" });
-          await refreshExplorer();
+          await loadDatabaseCollections(dropModal.database, true);
           setDropModal(null);
           setDropConfirmText("");
         } else {
@@ -536,9 +538,9 @@ export function DatabaseTree() {
                 ) : isFreeSharedHosting ? (
                   <div
                     className="w-full px-3 py-1.5 text-[var(--muted)] text-[11px] cursor-not-allowed"
-                    title="Database deletion is unavailable on the Free Shared plan."
+                    title="Database management is unavailable on the Free Shared plan."
                   >
-                    Database deletion is unavailable on the Free Shared plan.
+                    Database management is unavailable on the Free Shared plan.
                   </div>
                 ) : canManageDatabases ? (
                   <button

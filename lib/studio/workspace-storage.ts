@@ -10,6 +10,12 @@ const METADATA_STORAGE_KEY = "liorandb_studio_metadata_v1";
 const HISTORY_STORAGE_KEY = "liorandb_studio_query_history_v1";
 const DRAFTS_STORAGE_KEY = "liorandb_studio_saved_drafts_v1";
 
+export type WorkspaceStorageScope = string;
+
+function scopedStorageKey(baseKey: string, scope?: WorkspaceStorageScope): string {
+  return scope ? `${baseKey}:${encodeURIComponent(scope)}` : baseKey;
+}
+
 /**
  * Strips heavy data buffers (such as loaded documents) and any potential
  * credentials before serializing tabs to localStorage.
@@ -57,10 +63,10 @@ function sanitizeTabForStorage(tab: StudioTab): StudioTab {
   };
 }
 
-export function loadSavedTabs(): StudioTab[] {
+export function loadSavedTabs(scope?: WorkspaceStorageScope): StudioTab[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(TABS_STORAGE_KEY);
+    const raw = localStorage.getItem(scopedStorageKey(TABS_STORAGE_KEY, scope));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as StudioTab[];
     if (Array.isArray(parsed)) {
@@ -92,29 +98,29 @@ export function loadSavedTabs(): StudioTab[] {
   return [];
 }
 
-export function hasSavedTabs(): boolean {
+export function hasSavedTabs(scope?: WorkspaceStorageScope): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return localStorage.getItem(TABS_STORAGE_KEY) !== null;
+    return localStorage.getItem(scopedStorageKey(TABS_STORAGE_KEY, scope)) !== null;
   } catch {
     return false;
   }
 }
 
-export function saveTabsToStorage(tabs: StudioTab[]): void {
+export function saveTabsToStorage(tabs: StudioTab[], scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
   try {
     const sanitized = tabs.slice(0, 20).map(sanitizeTabForStorage);
-    localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(sanitized));
+    localStorage.setItem(scopedStorageKey(TABS_STORAGE_KEY, scope), JSON.stringify(sanitized));
   } catch {
     // Storage quota or serialization issue
   }
 }
 
-export function loadWorkspaceMetadata(): Partial<WorkspaceMetadata> {
+export function loadWorkspaceMetadata(scope?: WorkspaceStorageScope): Partial<WorkspaceMetadata> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(METADATA_STORAGE_KEY);
+    const raw = localStorage.getItem(scopedStorageKey(METADATA_STORAGE_KEY, scope));
     if (!raw) return {};
     return JSON.parse(raw) as Partial<WorkspaceMetadata>;
   } catch {
@@ -122,12 +128,15 @@ export function loadWorkspaceMetadata(): Partial<WorkspaceMetadata> {
   }
 }
 
-export function saveWorkspaceMetadata(metadata: Partial<WorkspaceMetadata>): void {
+export function saveWorkspaceMetadata(
+  metadata: Partial<WorkspaceMetadata>,
+  scope?: WorkspaceStorageScope,
+): void {
   if (typeof window === "undefined") return;
   try {
-    const current = loadWorkspaceMetadata();
+    const current = loadWorkspaceMetadata(scope);
     localStorage.setItem(
-      METADATA_STORAGE_KEY,
+      scopedStorageKey(METADATA_STORAGE_KEY, scope),
       JSON.stringify({ ...current, ...metadata }),
     );
   } catch {
@@ -135,10 +144,10 @@ export function saveWorkspaceMetadata(metadata: Partial<WorkspaceMetadata>): voi
   }
 }
 
-export function loadQueryHistory(): QueryHistoryItem[] {
+export function loadQueryHistory(scope?: WorkspaceStorageScope): QueryHistoryItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const raw = localStorage.getItem(scopedStorageKey(HISTORY_STORAGE_KEY, scope));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as QueryHistoryItem[];
     if (Array.isArray(parsed)) {
@@ -150,26 +159,26 @@ export function loadQueryHistory(): QueryHistoryItem[] {
   return [];
 }
 
-export function saveQueryHistoryItem(item: QueryHistoryItem): void {
+export function saveQueryHistoryItem(item: QueryHistoryItem, scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
   try {
-    const current = loadQueryHistory();
+    const current = loadQueryHistory(scope);
     const updated = [item, ...current.filter((i) => i.id !== item.id)].slice(0, 50);
-    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(scopedStorageKey(HISTORY_STORAGE_KEY, scope), JSON.stringify(updated));
   } catch {
     // Ignore
   }
 }
 
-export function clearQueryHistory(): void {
+export function clearQueryHistory(scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(HISTORY_STORAGE_KEY);
+  localStorage.removeItem(scopedStorageKey(HISTORY_STORAGE_KEY, scope));
 }
 
-export function loadSavedQueryDrafts(): SavedQueryDraft[] {
+export function loadSavedQueryDrafts(scope?: WorkspaceStorageScope): SavedQueryDraft[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(DRAFTS_STORAGE_KEY);
+    const raw = localStorage.getItem(scopedStorageKey(DRAFTS_STORAGE_KEY, scope));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as SavedQueryDraft[];
     if (Array.isArray(parsed)) {
@@ -181,24 +190,24 @@ export function loadSavedQueryDrafts(): SavedQueryDraft[] {
   return [];
 }
 
-export function saveQueryDraftToStorage(draft: SavedQueryDraft): void {
+export function saveQueryDraftToStorage(draft: SavedQueryDraft, scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
   try {
-    const current = loadSavedQueryDrafts();
+    const current = loadSavedQueryDrafts(scope);
     const filtered = current.filter((d) => d.id !== draft.id);
     const updated = [draft, ...filtered].slice(0, 30);
-    localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(scopedStorageKey(DRAFTS_STORAGE_KEY, scope), JSON.stringify(updated));
   } catch {
     // Ignore
   }
 }
 
-export function removeQueryDraftFromStorage(id: string): void {
+export function removeQueryDraftFromStorage(id: string, scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
   try {
-    const current = loadSavedQueryDrafts();
+    const current = loadSavedQueryDrafts(scope);
     const updated = current.filter((d) => d.id !== id);
-    localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(scopedStorageKey(DRAFTS_STORAGE_KEY, scope), JSON.stringify(updated));
   } catch {
     // Ignore
   }
@@ -209,11 +218,11 @@ export function removeQueryDraftFromStorage(id: string): void {
  * database connections, ensuring stale tabs or queries from a previous database
  * are not restored into a newly connected database.
  */
-export function clearWorkspaceState(): void {
+export function clearWorkspaceState(scope?: WorkspaceStorageScope): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.removeItem(TABS_STORAGE_KEY);
-    localStorage.removeItem(METADATA_STORAGE_KEY);
+    localStorage.removeItem(scopedStorageKey(TABS_STORAGE_KEY, scope));
+    localStorage.removeItem(scopedStorageKey(METADATA_STORAGE_KEY, scope));
   } catch {
     // Ignore storage quota or access errors
   }
