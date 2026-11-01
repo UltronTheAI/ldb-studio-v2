@@ -49,7 +49,7 @@ export function DatabaseTree() {
     canUseClusterAdministration,
   } = useWorkspace();
 
-  const canCreateDatabase =
+  const canManageDatabases =
     canUseClusterAdministration || databaseScope === "allocated" || databaseScope === "explicit";
 
   const [contextMenu, setContextMenu] = useState<{
@@ -128,11 +128,16 @@ export function DatabaseTree() {
     try {
       const res = await createDatabaseAction({ databaseName: newDbName.trim() });
       if (res.ok) {
+        const createdDatabase = res.data?.database ?? newDbName.trim();
         setStatusMessage({
-          text: `Database '${newDbName.trim()}' created`,
+          text: `Database '${createdDatabase}' created`,
           tone: "success",
         });
         await refreshExplorer();
+        await loadDatabaseCollections(createdDatabase, true);
+        if (!expandedDatabases[createdDatabase]) {
+          toggleDatabaseExpanded(createdDatabase);
+        }
         setShowCreateDbModal(false);
         setNewDbName("");
       } else {
@@ -161,7 +166,11 @@ export function DatabaseTree() {
 
   const handleConfirmDrop = async () => {
     if (!dropModal) return;
-    if (dropModal.type === "database" && isProtectedDatabase(dropModal.database)) {
+    if (
+      dropModal.type === "database" &&
+      canUseClusterAdministration &&
+      isProtectedDatabase(dropModal.database)
+    ) {
       setStatusMessage({
         text: "The 'default' database is protected and cannot be dropped.",
         tone: "error",
@@ -225,7 +234,7 @@ export function DatabaseTree() {
             className="w-full h-7 pl-7 pr-2 rounded-[5px] bg-[var(--canvas-soft)] border border-[var(--hairline-strong)] text-xs text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink)]"
           />
         </div>
-        {canCreateDatabase && (
+        {canManageDatabases && (
           <button
             type="button"
             onClick={() => setShowCreateDbModal(true)}
@@ -491,7 +500,7 @@ export function DatabaseTree() {
                     <LockIcon size={13} />
                     <span>Protected Database</span>
                   </div>
-                ) : canUseClusterAdministration ? (
+                ) : canManageDatabases ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -691,7 +700,9 @@ export function DatabaseTree() {
       >
         {dropModal && (
           <div className="w-full max-w-md rounded-[10px] border border-[#ef4444]/40 bg-[var(--surface-card)] p-5 shadow-2xl space-y-3">
-            {dropModal.type === "database" && isProtectedDatabase(dropModal.database) ? (
+            {dropModal.type === "database" &&
+            canUseClusterAdministration &&
+            isProtectedDatabase(dropModal.database) ? (
               <>
                 <div className="flex items-center gap-2 text-[var(--muted)]">
                   <LockIcon size={18} />

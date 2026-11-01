@@ -24,7 +24,7 @@ export function StudioDialog({
   children,
   ariaLabel = "Dialog",
   ariaLabelledBy,
-  className = "flex items-center justify-center p-4",
+  className = "flex min-h-full items-center justify-center overflow-y-auto p-4",
   backdropClassName = "bg-black/60 backdrop-blur-xs",
   panelClassName = "w-full max-w-md",
   closeOnBackdrop = true,
@@ -102,7 +102,7 @@ export function StudioDialog({
     <div
       className={`studio-dialog-layer ${className}`}
       role="presentation"
-      style={{ zIndex: 3000 }}
+      style={{ zIndex: "var(--z-overlay-dialog)" }}
     >
       <div
         className={`absolute inset-0 ${backdropClassName}`}

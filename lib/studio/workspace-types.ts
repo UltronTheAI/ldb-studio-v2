@@ -171,6 +171,7 @@ export interface InitialStudioContext {
   scopedDatabase?: string;
   databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
   databaseDiscoveryVerified: boolean;
+  clusterAdministrationVerified: boolean;
   databaseInitializationError?: string;
   databases: string[];
   collectionsMap: Record<string, string[]>;

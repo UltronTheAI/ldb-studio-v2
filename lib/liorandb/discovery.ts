@@ -1,137 +1,79 @@
-import { LioranDBClient, NotFoundError } from "@liorandb/driver";
+import { LioranDBClient, type Principal } from "@liorandb/driver";
 
 export type DatabaseScope = "explicit" | "allocated" | "cluster" | "unselected";
-
-export interface TenantAllocation {
-  readonly tenantId: string;
-  readonly databaseName: string;
-  readonly databases?: readonly string[];
-  readonly status?: string;
-  readonly storageQuotaBytes?: number;
-  readonly storageUsedBytes?: number;
-  readonly remainingStorageBytes?: number;
-}
 
 export interface DatabaseResolution {
   readonly databases: string[];
   readonly scopedDatabase?: string;
   readonly databaseScope: DatabaseScope;
   readonly databaseDiscoveryVerified: boolean;
+  readonly clusterAdministrationVerified: boolean;
 }
 
-interface AllocationAwareClient extends LioranDBClient {
-  /** Added by the driver release that supports DatabaseService/GetMyAllocation. */
-  readonly getMyAllocation?: () => Promise<unknown>;
-  readonly listMyDatabases?: () => Promise<readonly string[]>;
+function isTenantPrincipal(principal: Principal | undefined): boolean {
+  return Boolean(principal?.roles.some((role) => role.startsWith("tenant_role:")));
 }
 
-function allocationMethod(client: LioranDBClient): (() => Promise<unknown>) | null {
-  const candidate = client as AllocationAwareClient;
-  return typeof candidate.getMyAllocation === "function"
-    ? candidate.getMyAllocation.bind(client)
-    : null;
+function isClusterAdministrator(principal: Principal | undefined): boolean {
+  return Boolean(principal?.roles.includes("admin"));
 }
 
-function allocationDatabases(allocation: TenantAllocation): string[] {
-  const databases = allocation.databases?.filter((database) => typeof database === "string" && database.length > 0);
-  return databases?.length ? [...databases] : [allocation.databaseName];
-}
-
-function isAllocationResponse(value: unknown): value is TenantAllocation {
-  if (!value || typeof value !== "object") return false;
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.tenantId === "string" &&
-    record.tenantId.length > 0 &&
-    typeof record.databaseName === "string" &&
-    /^[A-Za-z0-9_.-]+$/.test(record.databaseName)
-  );
-}
-
-function isAllocationEndpointUnavailable(error: unknown): boolean {
-  if (error instanceof NotFoundError) return true;
-  const details = error as Record<string, unknown>;
-  return (
-    details.serverCode === "UNIMPLEMENTED" ||
-    details.grpcStatusName === "UNIMPLEMENTED" ||
-    details.grpcStatusCode === 12
-  );
+async function getPrincipal(client: LioranDBClient): Promise<Principal | undefined> {
+  try {
+    return await client.me();
+  } catch {
+    // Older/dedicated servers can still validate an explicit database or
+    // authorize listDatabases even when the principal endpoint is unavailable.
+    return undefined;
+  }
 }
 
 /**
- * Resolves the safest database context for the authenticated principal.
- *
- * An explicit URI database is validated directly. When the installed driver
- * supports GetMyAllocation, that tenant-scoped result is used and no
- * cluster-wide list is attempted. Older drivers/servers retain the existing
- * listDatabases fallback for administrators and local development.
+ * Resolves database context using only APIs exposed by the installed official
+ * driver. The server owns tenant namespace mapping: names returned by
+ * listDatabases are authoritative logical names and are passed through as-is.
  */
 export async function resolveDatabaseContext(
   client: LioranDBClient,
   explicitDatabase?: string,
 ): Promise<DatabaseResolution> {
   const requestedDatabase = explicitDatabase?.trim();
+  const principal = await getPrincipal(client);
+  const tenantScoped = isTenantPrincipal(principal);
+  const clusterAdministrationVerified = isClusterAdministrator(principal);
+
   if (requestedDatabase) {
     await client.db(requestedDatabase).listCollections();
-    const getMyAllocation = allocationMethod(client);
-    if (getMyAllocation) {
+    if (tenantScoped) {
       try {
-        const allocation = await getMyAllocation();
-        if (isAllocationResponse(allocation)) {
-          const databases = allocationDatabases(allocation);
-          if (databases.includes(requestedDatabase)) {
-            return {
-              databases,
-              scopedDatabase: requestedDatabase,
-              databaseScope: "allocated",
-              databaseDiscoveryVerified: false,
-            };
-          }
-        }
-      } catch (error) {
-        // An explicitly authorized database remains usable when the optional
-        // allocation endpoint is unavailable on a dedicated/older server.
-        if (!isAllocationEndpointUnavailable(error)) {
-          // Keep the explicit database context; the data-path authorization
-          // above is the authority for this connection.
-        }
+        const databases = await client.listDatabases();
+        return {
+          databases: [...databases],
+          scopedDatabase: requestedDatabase,
+          databaseScope: "allocated",
+          databaseDiscoveryVerified: true,
+          clusterAdministrationVerified,
+        };
+      } catch {
+        // Older tenant-aware servers may validate an explicit database but
+        // not expose tenant-scoped listing yet. Keep that authorized context.
       }
     }
     return {
       databases: [requestedDatabase],
       scopedDatabase: requestedDatabase,
-      databaseScope: "explicit",
+      databaseScope: tenantScoped ? "allocated" : "explicit",
       databaseDiscoveryVerified: false,
+      clusterAdministrationVerified,
     };
-  }
-
-  const getMyAllocation = allocationMethod(client);
-  if (getMyAllocation) {
-    try {
-      const allocation = await getMyAllocation();
-      if (isAllocationResponse(allocation)) {
-        const databases = allocationDatabases(allocation);
-        return {
-          databases,
-          scopedDatabase: databases[0],
-          databaseScope: "allocated",
-          databaseDiscoveryVerified: false,
-        };
-      }
-    } catch (error) {
-      // Dedicated servers and older servers may legitimately return not found
-      // or unimplemented. Only those cases fall through to admin discovery;
-      // authorization errors remain authorization errors.
-      if (!isAllocationEndpointUnavailable(error)) {
-        throw error;
-      }
-    }
   }
 
   const databases = await client.listDatabases();
   return {
     databases: [...databases],
-    databaseScope: "cluster",
+    scopedDatabase: databases[0],
+    databaseScope: tenantScoped ? "allocated" : "cluster",
     databaseDiscoveryVerified: true,
+    clusterAdministrationVerified,
   };
 }

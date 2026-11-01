@@ -53,6 +53,7 @@ export interface WorkspaceContextValue {
   isExplorerLoading: boolean;
   databaseScope: InitialStudioContext["databaseScope"];
   databaseDiscoveryVerified: boolean;
+  clusterAdministrationVerified: boolean;
   canUseClusterAdministration: boolean;
   dataClient: StudioDataClient;
 
@@ -200,8 +201,12 @@ export function WorkspaceProvider({
   const [databaseDiscoveryVerified, setDatabaseDiscoveryVerified] = useState(
     initialContext.databaseDiscoveryVerified,
   );
+  const [clusterAdministrationVerified, setClusterAdministrationVerified] = useState(
+    initialContext.clusterAdministrationVerified,
+  );
   const canUseClusterAdministration =
-    isLocalMode || (databaseScope === "cluster" && databaseDiscoveryVerified);
+    isLocalMode ||
+    (databaseScope === "cluster" && databaseDiscoveryVerified && clusterAdministrationVerified);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const dataClientRef = useRef<StudioDataClient | null>(null);
   if (!dataClientRef.current) {
@@ -667,6 +672,7 @@ export function WorkspaceProvider({
         setDatabases(res.data.databases);
         setDatabaseScope(res.data.databaseScope);
         setDatabaseDiscoveryVerified(res.data.databaseDiscoveryVerified);
+        setClusterAdministrationVerified(res.data.clusterAdministrationVerified);
       } else if (!res.ok) {
         setStatusMessage({ text: res.error || "Failed to load databases", tone: "error" });
       }
@@ -816,6 +822,7 @@ export function WorkspaceProvider({
         isExplorerLoading,
         databaseScope,
         databaseDiscoveryVerified,
+        clusterAdministrationVerified,
         canUseClusterAdministration,
         dataClient,
         openCollectionTab,

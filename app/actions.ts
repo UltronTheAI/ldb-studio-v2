@@ -789,6 +789,7 @@ export async function listDatabasesAction(): Promise<
     databases: string[];
     databaseScope: "explicit" | "allocated" | "cluster" | "unselected";
     databaseDiscoveryVerified: boolean;
+    clusterAdministrationVerified: boolean;
   }>
 > {
   const start = Date.now();
@@ -804,6 +805,7 @@ export async function listDatabasesAction(): Promise<
             databases: resolution.databases,
             databaseScope: resolution.databaseScope,
             databaseDiscoveryVerified: resolution.databaseDiscoveryVerified,
+            clusterAdministrationVerified: resolution.clusterAdministrationVerified,
           },
           durationMs: Date.now() - start,
         };
@@ -1368,7 +1370,7 @@ export async function dropIndexAction(params: {
 
 export async function createDatabaseAction(params: {
   databaseName: string;
-}): Promise<ActionResult<void>> {
+}): Promise<ActionResult<{ database: string }>> {
   const start = Date.now();
   try {
     return await runWithSession(async (connectionUri, sessionId, session) => {
@@ -1388,8 +1390,8 @@ export async function createDatabaseAction(params: {
             durationMs: Date.now() - start,
           };
         }
-        await client.createDatabase(params.databaseName.trim());
-        return { ok: true, durationMs: Date.now() - start };
+        const result = await client.createDatabase(params.databaseName.trim());
+        return { ok: true, data: { database: result.database }, durationMs: Date.now() - start };
       }, sessionId);
     });
   } catch (error) {
@@ -1409,13 +1411,6 @@ export async function dropDatabaseAction(params: {
 }): Promise<ActionResult<void>> {
   const start = Date.now();
   try {
-    if (isProtectedDatabase(params.databaseName)) {
-      return {
-        ok: false,
-        error: "The 'default' database is protected and cannot be dropped.",
-        durationMs: Date.now() - start,
-      };
-    }
     if (params.databaseName !== params.confirmation) {
       throw new Error("Confirmation text does not match database name.");
     }
@@ -1425,10 +1420,21 @@ export async function dropDatabaseAction(params: {
           client,
           session.metadata.database ?? undefined,
         );
-        if (resolution.databaseScope !== "cluster") {
+        if (
+          resolution.databaseScope !== "cluster" &&
+          resolution.databaseScope !== "allocated" &&
+          resolution.databaseScope !== "explicit"
+        ) {
           return {
             ok: false,
             error: "Database deletion is unavailable for this connection scope.",
+            durationMs: Date.now() - start,
+          };
+        }
+        if (resolution.databaseScope === "cluster" && isProtectedDatabase(params.databaseName)) {
+          return {
+            ok: false,
+            error: "The 'default' database is protected and cannot be dropped.",
             durationMs: Date.now() - start,
           };
         }
