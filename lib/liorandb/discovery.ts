@@ -43,21 +43,27 @@ export async function resolveDatabaseContext(
   const clusterAdministrationVerified = isClusterAdministrator(principal);
 
   if (requestedDatabase) {
-    await client.db(requestedDatabase).listCollections();
     if (tenantScoped) {
       try {
         const databases = await client.listDatabases();
+        const scopedDatabase = databases.includes(requestedDatabase)
+          ? requestedDatabase
+          : databases[0];
         return {
           databases: [...databases],
-          scopedDatabase: requestedDatabase,
+          scopedDatabase,
           databaseScope: "allocated",
           databaseDiscoveryVerified: true,
           clusterAdministrationVerified,
         };
       } catch {
         // Older tenant-aware servers may validate an explicit database but
-        // not expose tenant-scoped listing yet. Keep that authorized context.
+        // not expose tenant-scoped listing yet. Validate that explicit scope
+        // directly as a compatibility fallback.
+        await client.db(requestedDatabase).listCollections();
       }
+    } else {
+      await client.db(requestedDatabase).listCollections();
     }
     return {
       databases: [requestedDatabase],
